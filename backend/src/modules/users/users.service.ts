@@ -5,6 +5,25 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 import { UserRole, UserStatus } from '@prisma/client';
 
+// Fields that must never leave the DB layer
+const SAFE_USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  phone: true,
+  role: true,
+  status: true,
+  suspended: true,
+  suspendedReason: true,
+  emailVerified: true,
+  emailVerifiedAt: true,
+  lastLoginAt: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  // passwordHash, lastLoginIp, refreshTokens — intentionally excluded
+} as const;
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -29,7 +48,7 @@ export class UsersService {
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        include: { profile: true, providerProfile: true },
+        select: { ...SAFE_USER_SELECT, profile: true, providerProfile: true },
         skip: dto.skip,
         take: dto.limit,
         orderBy: { createdAt: 'desc' },
@@ -43,7 +62,8 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id, deletedAt: null },
-      include: {
+      select: {
+        ...SAFE_USER_SELECT,
         profile: true,
         providerProfile: {
           include: { skills: { include: { service: true } }, availability: true },

@@ -3,6 +3,7 @@ import { EventListenerService } from './event-listener.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WalletService } from '../wallet/wallet.service';
+import { PaymentsService } from '../payments/payments.service';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,10 @@ const mockWallet = {
   credit: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockPayments = {
+  initiateRefund: jest.fn().mockResolvedValue(undefined),
+};
+
 // ── Test suite ────────────────────────────────────────────────────────────────
 
 describe('EventListenerService', () => {
@@ -42,6 +47,7 @@ describe('EventListenerService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotif },
         { provide: WalletService, useValue: mockWallet },
+        { provide: PaymentsService, useValue: mockPayments },
       ],
     }).compile();
 

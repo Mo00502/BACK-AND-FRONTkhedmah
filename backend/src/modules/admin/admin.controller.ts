@@ -143,6 +143,13 @@ export class AdminController {
     return this.admin.getDisputes(+page, +limit);
   }
 
+  @Get('disputes/:disputeId')
+  @ThrottleDefault()
+  @ApiOperation({ summary: 'Get dispute detail by ID' })
+  getDispute(@Param('disputeId') disputeId: string) {
+    return this.admin.getDisputeById(disputeId);
+  }
+
   @Post('disputes/:disputeId/resolve')
   @ThrottleStrict()
   @ApiOperation({ summary: 'Resolve a dispute (REFUND | RELEASE | SPLIT | DISMISSED)' })
@@ -181,7 +188,7 @@ export class AdminController {
     return this.admin.getConsultations(+page, +limit, status);
   }
 
-  @Delete('consultations/:consultationId')
+  @Patch('consultations/:consultationId/cancel')
   @ThrottleStrict()
   @ApiOperation({ summary: 'Admin: force-cancel a consultation with a reason' })
   cancelConsultation(

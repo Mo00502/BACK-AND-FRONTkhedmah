@@ -202,30 +202,23 @@ export class MaterialsPaymentService {
     }
 
     const newStatus = approve ? 'APPROVED' : 'REJECTED';
+    const now = new Date();
 
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.materialsAdjustmentRequest.update({
-        where: { id: adjustmentId },
-        data: {
-          status: newStatus as any,
-          respondedAt: new Date(),
-          respondedById: customerId,
-        },
-      }),
-      // If approved, increase paidAmount (in practice this triggers a new charge)
-      ...(approve
-        ? [
-            this.prisma.materialsPayment.update({
-              where: { id: adj.materialsPaymentId },
-              data: {
-                paidAmount: {
-                  increment: Number(adj.requestedAdditionalAmount),
-                },
-              },
-            }),
-          ]
-        : []),
-    ]);
+    // Atomic claim: updateMany with status=PENDING + expiresAt > now guard
+    // prevents a race where the request expires between the check above and the write.
+    const { count } = await this.prisma.materialsAdjustmentRequest.updateMany({
+      where: { id: adjustmentId, status: 'PENDING' as any, expiresAt: { gt: now } },
+      data: { status: newStatus as any, respondedAt: now, respondedById: customerId },
+    });
+    if (count === 0) {
+      throw new BadRequestException('Adjustment request has expired or was already responded to');
+    }
+
+    const updated = await this.prisma.materialsAdjustmentRequest.findUnique({
+      where: { id: adjustmentId },
+    });
+    // paidAmount is NOT incremented here — it is incremented only after the
+    // customer completes the additional Moyasar payment via payForAdjustment().
 
     this.events.emit('materials.adjustment.responded', {
       adjustmentId,
@@ -234,6 +227,79 @@ export class MaterialsPaymentService {
     });
 
     return updated;
+  }
+
+  // ── Customer pays for an approved adjustment (creates a new Moyasar charge) ─
+  async payForAdjustment(customerId: string, adjustmentId: string, method: string) {
+    const adj = await this.prisma.materialsAdjustmentRequest.findUnique({
+      where: { id: adjustmentId },
+      include: { materialsPayment: { include: { request: true } } },
+    });
+    if (!adj) throw new NotFoundException('Adjustment request not found');
+    if (adj.materialsPayment.request.customerId !== customerId) {
+      throw new ForbiddenException('Only the order customer can pay for this adjustment');
+    }
+    if ((adj.status as string) !== 'APPROVED') {
+      throw new BadRequestException('Adjustment must be in APPROVED status before payment');
+    }
+    if (new Date() > adj.expiresAt) {
+      throw new BadRequestException('Adjustment request has expired');
+    }
+
+    const amount = Number(adj.requestedAdditionalAmount);
+    const requestId = adj.materialsPayment.requestId;
+
+    // Create a pending payment record; link to adjustment via metadata
+    const payment = await this.prisma.payment.create({
+      data: {
+        requestId,
+        amount,
+        method: method as any,
+        status: 'PENDING',
+        metadata: {
+          type: 'materials_adjustment',
+          adjustmentId,
+          materialsPaymentId: adj.materialsPaymentId,
+        },
+      },
+    });
+
+    const moyasarKey = process.env.MOYASAR_SECRET_KEY;
+    const moyasarBase = 'https://api.moyasar.com/v1';
+
+    try {
+      const axios = (await import('axios')).default;
+      const { data: moyasarResp } = await axios.post(
+        `${moyasarBase}/payments`,
+        {
+          amount: Math.round(amount * 100),
+          currency: 'SAR',
+          description: `Khedmah — زيادة ميزانية مواد | طلب ${requestId}`,
+          source: { type: method === 'APPLE_PAY' ? 'applepay' : 'creditcard' },
+          metadata: { paymentId: payment.id, adjustmentId, type: 'materials_adjustment' },
+        },
+        { auth: { username: moyasarKey ?? '', password: '' } },
+      );
+
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { moyasarRef: moyasarResp.id },
+      });
+
+      return { paymentId: payment.id, checkoutUrl: moyasarResp.source?.url ?? null };
+    } catch {
+      await this.prisma.payment.delete({ where: { id: payment.id } });
+      throw new BadRequestException('Failed to initiate payment with Moyasar');
+    }
+  }
+
+  // ── Called by PaymentsService webhook when an adjustment payment is confirmed ─
+  async onAdjustmentPaymentConfirmed(adjustmentId: string, materialsPaymentId: string, amount: number) {
+    await this.prisma.materialsPayment.update({
+      where: { id: materialsPaymentId },
+      data: { paidAmount: { increment: amount } },
+    });
+    this.logger.log(`Materials paidAmount incremented by ${amount} SAR for adjustment ${adjustmentId}`);
   }
 
   // ── Admin reviews a logged usage entry ────────────────────────────────────

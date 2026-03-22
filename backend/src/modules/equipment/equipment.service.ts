@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EquipmentVisibility, EquipmentInquiryStatus } from '@prisma/client';
+import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 
 // Fields safe to show in marketplace listings (no internal bookkeeping fields)
 const LISTING_SELECT = {
@@ -67,6 +68,7 @@ export class EquipmentService {
       minPrice?: number;
       maxPrice?: number;
     } = {},
+    pagination: PaginationDto = new PaginationDto(),
   ) {
     const { category, region, city, q, available, rentalType, minPrice, maxPrice } = filters;
 
@@ -82,37 +84,45 @@ export class EquipmentService {
           }
         : {};
 
-    return this.prisma.equipment.findMany({
-      where: {
-        status: 'ACTIVE',
-        visibility: EquipmentVisibility.PUBLIC,
-        category: (category as any) || undefined,
-        region: region || undefined,
-        city: city || undefined,
-        isAvailable: available ?? undefined,
-        ...(q
-          ? {
-              OR: [
-                { name: { contains: q, mode: 'insensitive' } },
-                { description: { contains: q, mode: 'insensitive' } },
-                { brand: { contains: q, mode: 'insensitive' } },
-                { model: { contains: q, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
-        ...priceFilter,
-      },
-      select: {
-        ...LISTING_SELECT,
-        owner: {
-          select: {
-            id: true,
-            profile: { select: { nameAr: true, nameEn: true, avatarUrl: true, city: true } },
+    const where: any = {
+      status: 'ACTIVE',
+      visibility: EquipmentVisibility.PUBLIC,
+      category: (category as any) || undefined,
+      region: region || undefined,
+      city: city || undefined,
+      isAvailable: available ?? undefined,
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: 'insensitive' } },
+              { description: { contains: q, mode: 'insensitive' } },
+              { brand: { contains: q, mode: 'insensitive' } },
+              { model: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...priceFilter,
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.equipment.findMany({
+        where,
+        select: {
+          ...LISTING_SELECT,
+          owner: {
+            select: {
+              id: true,
+              profile: { select: { nameAr: true, nameEn: true, avatarUrl: true, city: true } },
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+      }),
+      this.prisma.equipment.count({ where }),
+    ]);
+    return paginate(items, total, pagination);
   }
 
   /**

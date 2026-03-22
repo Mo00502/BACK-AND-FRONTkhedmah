@@ -177,6 +177,15 @@ export class ConsultationsService {
       customerId: c.customerId,
     });
 
+    if (totalAmount && Number(totalAmount) > 0) {
+      this.events.emit('consultation.charge_required', {
+        consultationId,
+        customerId: c.customerId,
+        providerId,
+        amount: Number(totalAmount),
+      });
+    }
+
     return updated;
   }
 

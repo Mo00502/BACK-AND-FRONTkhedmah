@@ -35,6 +35,7 @@ const buildPrismaMock = () => ({
     create: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),
+    count: jest.fn(),
   },
   equipmentRental: {
     create: jest.fn(),
@@ -78,17 +79,20 @@ describe('EquipmentService', () => {
     it('should return all active equipment when no filters provided', async () => {
       const list = [mockEquipment()];
       prisma.equipment.findMany.mockResolvedValue(list);
+      prisma.equipment.count.mockResolvedValue(1);
 
       const result = await service.search();
 
       expect(prisma.equipment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ status: 'ACTIVE' }) }),
       );
-      expect(result).toEqual(list);
+      expect(result.items).toEqual(list);
+      expect(result.total).toBe(1);
     });
 
     it('should pass region and text filters to prisma', async () => {
       prisma.equipment.findMany.mockResolvedValue([]);
+      prisma.equipment.count.mockResolvedValue(0);
 
       await service.search({ region: 'جدة', q: 'رافعة' });
 

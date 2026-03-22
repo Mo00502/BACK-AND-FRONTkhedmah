@@ -3,11 +3,13 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompaniesService } from '../companies/companies.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { RequirementStatus } from '@prisma/client';
+import { RequirementStatus, TenderStatus, CommissionStatus } from '@prisma/client';
+import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 
 const COMMISSION_RATE = 0.02;
 
@@ -21,19 +23,29 @@ export class TendersService {
 
   // ── Tenders ──────────────────────────────────────────────────────────────
 
-  async list(filters: { status?: string; category?: string; region?: string } = {}) {
-    return this.prisma.tender.findMany({
-      where: {
-        status: (filters.status as any) || 'OPEN',
-        category: filters.category || undefined,
-        region: filters.region || undefined,
-      },
-      include: {
-        company: { select: { id: true, nameAr: true, classification: true, verified: true } },
-        // Intentionally NO _count.bids — exposing bid count violates bid privacy rules.
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async list(
+    filters: { status?: string; category?: string; region?: string } = {},
+    pagination: PaginationDto = new PaginationDto(),
+  ) {
+    const where = {
+      status: (filters.status as TenderStatus | undefined) ?? TenderStatus.OPEN,
+      category: filters.category || undefined,
+      region: filters.region || undefined,
+    };
+    const [items, total] = await Promise.all([
+      this.prisma.tender.findMany({
+        where,
+        include: {
+          company: { select: { id: true, nameAr: true, classification: true, verified: true } },
+          // Intentionally NO _count.bids — exposing bid count violates bid privacy rules.
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+      }),
+      this.prisma.tender.count({ where }),
+    ]);
+    return paginate(items, total, pagination);
   }
 
   /**
@@ -91,7 +103,7 @@ export class TendersService {
    * Returns ALL bids for a tender — restricted to the tender owner only.
    * Includes company name, rating, and proposal details for each bidder.
    */
-  async listBids(tenderId: string, callerId: string) {
+  async listBids(tenderId: string, callerId: string, pagination: PaginationDto = new PaginationDto()) {
     const tender = await this.prisma.tender.findUnique({
       where: { id: tenderId },
       include: { company: { select: { ownerId: true } } },
@@ -101,25 +113,32 @@ export class TendersService {
       throw new ForbiddenException('Only the tender owner can view submitted bids');
     }
 
-    return this.prisma.tenderBid.findMany({
-      where: { tenderId },
-      include: {
-        company: {
-          select: {
-            id: true,
-            nameAr: true,
-            nameEn: true,
-            classification: true,
-            verified: true,
-            rating: true,
-            region: true,
-            city: true,
+    const where = { tenderId };
+    const [items, total] = await Promise.all([
+      this.prisma.tenderBid.findMany({
+        where,
+        include: {
+          company: {
+            select: {
+              id: true,
+              nameAr: true,
+              nameEn: true,
+              classification: true,
+              verified: true,
+              rating: true,
+              region: true,
+              city: true,
+            },
           },
+          submitter: { select: { id: true, username: true } },
         },
-        submitter: { select: { id: true, username: true } },
-      },
-      orderBy: { amount: 'asc' },
-    });
+        orderBy: { amount: 'asc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+      }),
+      this.prisma.tenderBid.count({ where }),
+    ]);
+    return paginate(items, total, pagination);
   }
 
   async create(userId: string, data: Record<string, any>) {
@@ -233,6 +252,7 @@ export class TendersService {
    * Cannot edit after deadline or once the tender is no longer OPEN.
    */
   async updateBid(
+    tenderId: string,
     bidId: string,
     userId: string,
     data: { amount?: number; durationMonths?: number; note?: string },
@@ -241,7 +261,7 @@ export class TendersService {
       where: { id: bidId },
       include: { tender: { select: { status: true, deadline: true } } },
     });
-    if (!bid) throw new NotFoundException('Bid not found');
+    if (!bid || bid.tenderId !== tenderId) throw new NotFoundException('Bid not found');
     if (bid.submittedBy !== userId) throw new ForbiddenException('You can only edit your own bids');
     if (bid.tender.status !== 'OPEN')
       throw new BadRequestException('Cannot edit a bid after the tender has closed');
@@ -262,12 +282,12 @@ export class TendersService {
   /**
    * Allows a bidder to withdraw their own pending bid before the deadline.
    */
-  async withdrawBid(bidId: string, userId: string) {
+  async withdrawBid(tenderId: string, bidId: string, userId: string) {
     const bid = await this.prisma.tenderBid.findUnique({
       where: { id: bidId },
       include: { tender: { select: { status: true, deadline: true } } },
     });
-    if (!bid) throw new NotFoundException('Bid not found');
+    if (!bid || bid.tenderId !== tenderId) throw new NotFoundException('Bid not found');
     if (bid.submittedBy !== userId)
       throw new ForbiddenException('You can only withdraw your own bids');
     if (bid.tender.status !== 'OPEN')
@@ -283,25 +303,42 @@ export class TendersService {
     });
   }
 
-  async myBids(userId: string) {
-    return this.prisma.tenderBid.findMany({
-      where: { submittedBy: userId },
-      include: { tender: { select: { id: true, title: true, status: true, deadline: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async myBids(userId: string, pagination: PaginationDto = new PaginationDto()) {
+    const where = { submittedBy: userId };
+    const [items, total] = await Promise.all([
+      this.prisma.tenderBid.findMany({
+        where,
+        include: { tender: { select: { id: true, title: true, status: true, deadline: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+      }),
+      this.prisma.tenderBid.count({ where }),
+    ]);
+    return paginate(items, total, pagination);
   }
 
   // ── Commissions ───────────────────────────────────────────────────────────
 
-  async listCommissions(filters: { status?: string } = {}) {
-    return this.prisma.tenderCommission.findMany({
-      where: { status: (filters.status as any) || undefined },
-      include: {
-        tender: { select: { id: true, title: true, category: true, region: true } },
-        company: { select: { id: true, nameAr: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listCommissions(
+    filters: { status?: string } = {},
+    pagination: PaginationDto = new PaginationDto(),
+  ) {
+    const where = { status: (filters.status as CommissionStatus | undefined) || undefined };
+    const [items, total] = await Promise.all([
+      this.prisma.tenderCommission.findMany({
+        where,
+        include: {
+          tender: { select: { id: true, title: true, category: true, region: true } },
+          company: { select: { id: true, nameAr: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+      }),
+      this.prisma.tenderCommission.count({ where }),
+    ]);
+    return paginate(items, total, pagination);
   }
 
   async updateCommissionStatus(id: string, status: string) {
@@ -336,6 +373,8 @@ export class TendersService {
   }
 
   async listRequirements(tenderId: string) {
+    const tender = await this.prisma.tender.findUnique({ where: { id: tenderId }, select: { id: true } });
+    if (!tender) throw new NotFoundException('Tender not found');
     return this.prisma.projectRequirement.findMany({
       where: { tenderId },
       include: { _count: { select: { offers: true } } },
@@ -345,6 +384,16 @@ export class TendersService {
   // ── Supplier Offers ───────────────────────────────────────────────────────
 
   async submitOffer(requirementId: string, userId: string, data: Record<string, any>) {
+    const requirement = await this.prisma.projectRequirement.findUnique({
+      where: { id: requirementId },
+    });
+    if (!requirement) throw new NotFoundException('Requirement not found');
+
+    const existing = await this.prisma.supplierOffer.findFirst({
+      where: { requirementId, supplierId: userId, status: { not: 'WITHDRAWN' as any } },
+    });
+    if (existing) throw new ConflictException('You have already submitted an offer for this requirement');
+
     let companyId: string | null = null;
     try {
       const co = await this.companies.getMyCompany(userId);

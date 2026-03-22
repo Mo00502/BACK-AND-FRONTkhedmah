@@ -159,7 +159,7 @@
     if (localStorage.getItem('khedmah_theme') === 'dark') {
       document.documentElement.classList.add('dark');
     }
-    if (!API.isLoggedIn()) {
+    if (!localStorage.getItem('khedmah_demo')) {
       window.location.href = 'login.html';
     }
   })();

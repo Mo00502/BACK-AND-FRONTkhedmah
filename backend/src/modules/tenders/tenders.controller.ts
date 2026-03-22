@@ -22,7 +22,14 @@ import {
   ThrottleRelaxed,
   ThrottleStrict,
 } from '../../common/decorators/throttle.decorator';
-import { UserRole } from '@prisma/client';
+import { UserRole, CommissionStatus } from '@prisma/client';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { IsEnum } from 'class-validator';
+
+class UpdateCommissionStatusDto {
+  @IsEnum(CommissionStatus)
+  status: CommissionStatus;
+}
 
 @ApiTags('tenders')
 @ApiBearerAuth()
@@ -40,15 +47,16 @@ export class TendersController {
     @Query('status') status?: string,
     @Query('category') category?: string,
     @Query('region') region?: string,
+    @Query() pagination?: PaginationDto,
   ) {
-    return this.tenders.list({ status, category, region });
+    return this.tenders.list({ status, category, region }, pagination);
   }
 
   @Get('my-bids')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'Get my submitted bids' })
-  myBids(@CurrentUser() user: any) {
-    return this.tenders.myBids(user.id);
+  myBids(@CurrentUser() user: any, @Query() pagination?: PaginationDto) {
+    return this.tenders.myBids(user.id, pagination);
   }
 
   /**
@@ -60,8 +68,8 @@ export class TendersController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'List all commissions (admin only)' })
-  commissions(@Query('status') status?: string) {
-    return this.tenders.listCommissions({ status });
+  commissions(@Query('status') status?: string, @Query() pagination?: PaginationDto) {
+    return this.tenders.listCommissions({ status }, pagination);
   }
 
   @Get(':id')
@@ -80,8 +88,8 @@ export class TendersController {
   @Get(':id/bids')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'List all bids (tender owner only)' })
-  listBids(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.tenders.listBids(id, user.id);
+  listBids(@Param('id') id: string, @CurrentUser() user: any, @Query() pagination?: PaginationDto) {
+    return this.tenders.listBids(id, user.id, pagination);
   }
 
   @Post()
@@ -104,19 +112,20 @@ export class TendersController {
   @ThrottleDefault()
   @ApiOperation({ summary: 'Update own bid before deadline' })
   updateBid(
+    @Param('id') tenderId: string,
     @Param('bidId') bidId: string,
     @CurrentUser() user: any,
     @Body() body: { amount?: number; durationMonths?: number; note?: string },
   ) {
-    return this.tenders.updateBid(bidId, user.id, body);
+    return this.tenders.updateBid(tenderId, bidId, user.id, body);
   }
 
   @Delete(':id/bids/:bidId')
   @HttpCode(HttpStatus.OK)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Withdraw own bid before deadline' })
-  withdrawBid(@Param('bidId') bidId: string, @CurrentUser() user: any) {
-    return this.tenders.withdrawBid(bidId, user.id);
+  withdrawBid(@Param('id') tenderId: string, @Param('bidId') bidId: string, @CurrentUser() user: any) {
+    return this.tenders.withdrawBid(tenderId, bidId, user.id);
   }
 
   @Post(':id/award/:bidId')
@@ -132,8 +141,8 @@ export class TendersController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Update commission lifecycle status (admin only)' })
-  updateCommissionStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.tenders.updateCommissionStatus(id, status);
+  updateCommissionStatus(@Param('id') id: string, @Body() dto: UpdateCommissionStatusDto) {
+    return this.tenders.updateCommissionStatus(id, dto.status);
   }
 
   // ── Requirements ─────────────────────────────────────────────────────────

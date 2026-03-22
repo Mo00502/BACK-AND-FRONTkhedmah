@@ -16,6 +16,7 @@ import { EquipmentService } from './equipment.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ThrottleDefault, ThrottleRelaxed } from '../../common/decorators/throttle.decorator';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('equipment')
 @ApiBearerAuth()
@@ -43,6 +44,7 @@ export class EquipmentController {
     @Query('rentalType') rentalType?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
+    @Query() pagination?: PaginationDto,
   ) {
     return this.equipment.search({
       category,
@@ -53,7 +55,7 @@ export class EquipmentController {
       rentalType: rentalType as any,
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
-    });
+    }, pagination);
   }
 
   /**

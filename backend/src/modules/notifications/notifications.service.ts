@@ -340,9 +340,8 @@ export class NotificationsService {
     // Find approved, active providers who offer this service (optionally in the same city)
     const providerWhere: any = {
       verificationStatus: 'APPROVED',
-      suspended: false,
-      user: { status: 'ACTIVE', deletedAt: null },
-      services: { some: { serviceId: event.serviceId } },
+      user: { status: 'ACTIVE', suspended: false, deletedAt: null },
+      skills: { some: { serviceId: event.serviceId } },
     };
     if (event.city) {
       providerWhere.user = { ...providerWhere.user, profile: { city: event.city } };

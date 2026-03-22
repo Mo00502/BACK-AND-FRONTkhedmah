@@ -202,7 +202,7 @@ export class AuthService {
       throw new ForbiddenException('This account has been banned');
     }
 
-    if (user.status === 'SUSPENDED') {
+    if (user.status === 'SUSPENDED' || user.suspended) {
       throw new ForbiddenException('This account is suspended');
     }
 

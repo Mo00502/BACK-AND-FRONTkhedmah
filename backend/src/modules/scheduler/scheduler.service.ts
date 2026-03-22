@@ -36,10 +36,15 @@ export class SchedulerService {
 
     let released = 0;
     for (const escrow of held) {
-      await this.prisma.escrow.update({
-        where: { id: escrow.id },
+      // Atomic claim: only the instance that transitions status HELD → RELEASED
+      // emits the event. If another cron instance already released it, count = 0
+      // and we skip — preventing double wallet credits on concurrent runs.
+      const { count } = await this.prisma.escrow.updateMany({
+        where: { id: escrow.id, status: 'HELD' },
         data: { status: 'RELEASED', releasedAt: new Date() },
       });
+      if (count === 0) continue;
+
       this.events.emit('escrow.released', {
         escrowId: escrow.id,
         requestId: escrow.requestId,
@@ -148,7 +153,7 @@ export class SchedulerService {
       if (agg._count.score > 0) {
         await this.prisma.providerProfile.update({
           where: { id: p.id },
-          data: { ratingAvg: agg._avg.score ?? 0, ratingCount: agg._count.score },
+          data: { ratingAvg: parseFloat((agg._avg.score ?? 0).toFixed(2)), ratingCount: agg._count.score },
         });
         updated++;
       }
@@ -189,8 +194,9 @@ export class SchedulerService {
       try {
         await this.materials.reconcile(mp.requestId, 'system');
         reconciled++;
-      } catch {
+      } catch (err) {
         errors++;
+        this.logger.error(`autoReconcileMaterials failed for request ${mp.requestId}: ${err}`);
       }
     }
 
@@ -253,10 +259,11 @@ export class SchedulerService {
 
     let processed = 0;
     for (const escrow of ready) {
-      await this.prisma.escrow.update({
-        where: { id: escrow.id },
+      const { count } = await this.prisma.escrow.updateMany({
+        where: { id: escrow.id, status: 'READY_FOR_RELEASE' },
         data: { status: 'RELEASED', releasedAt: new Date() },
       });
+      if (count === 0) continue;
 
       this.events.emit('escrow.released', {
         escrowId: escrow.id,

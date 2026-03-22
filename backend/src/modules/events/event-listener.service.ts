@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WalletService } from '../wallet/wallet.service';
+import { PaymentsService } from '../payments/payments.service';
 
 /**
  * Central event listener — handles cross-cutting notifications and
@@ -20,6 +21,7 @@ export class EventListenerService {
     private prisma: PrismaService,
     private notif: NotificationsService,
     private wallet: WalletService,
+    private payments: PaymentsService,
   ) {}
 
   // ── Escrow events ────────────────────────────────────────────────────────
@@ -104,6 +106,71 @@ export class EventListenerService {
   }
 
   // ── Dispute events ──────────────────────────────────────────────────────
+
+  @OnEvent('dispute.refund_ordered')
+  async onDisputeRefundOrdered(payload: {
+    disputeId: string;
+    requestId: string;
+    paymentId: string;
+    adminId: string;
+  }) {
+    try {
+      if (!payload.paymentId) {
+        this.logger.warn(`dispute.refund_ordered: no paymentId for request ${payload.requestId}`);
+        return;
+      }
+      await this.payments.initiateRefund(
+        payload.adminId,
+        payload.paymentId,
+        `حل نزاع — معرف النزاع: ${payload.disputeId}`,
+      );
+      this.logger.log(`Refund initiated for dispute ${payload.disputeId}, payment ${payload.paymentId}`);
+    } catch (err) {
+      this.logger.error(`onDisputeRefundOrdered failed for dispute ${payload.disputeId}: ${err}`);
+    }
+  }
+
+  @OnEvent('dispute.split_release')
+  async onDisputeSplitRelease(payload: {
+    requestId: string;
+    providerId?: string;
+    providerAmount: number;
+    escrowId: string;
+  }) {
+    try {
+      if (!payload.providerId || payload.providerAmount <= 0) return;
+      await this.wallet.credit(
+        payload.providerId,
+        payload.providerAmount,
+        'حل نزاع — نصف مستحقات الخدمة',
+        payload.escrowId,
+      );
+      this.logger.log(`Split release: provider ${payload.providerId} credited ${payload.providerAmount} SAR`);
+    } catch (err) {
+      this.logger.error(`onDisputeSplitRelease failed for request ${payload.requestId}: ${err}`);
+    }
+  }
+
+  @OnEvent('dispute.split_refund')
+  async onDisputeSplitRefund(payload: {
+    disputeId: string;
+    requestId: string;
+    paymentId: string;
+    refundAmount: number;
+    adminId: string;
+  }) {
+    try {
+      if (!payload.paymentId) return;
+      await this.payments.initiateRefund(
+        payload.adminId,
+        payload.paymentId,
+        `حل نزاع (تقسيم) — استرداد نصف المبلغ | نزاع: ${payload.disputeId}`,
+      );
+      this.logger.log(`Split refund initiated for dispute ${payload.disputeId}, amount ${payload.refundAmount} SAR`);
+    } catch (err) {
+      this.logger.error(`onDisputeSplitRefund failed for dispute ${payload.disputeId}: ${err}`);
+    }
+  }
 
   @OnEvent('dispute.opened')
   async onDisputeOpened(payload: {
@@ -289,6 +356,36 @@ export class EventListenerService {
   }
 
   // ── Wallet events ────────────────────────────────────────────────────────
+
+  // ── Consultation events ──────────────────────────────────────────────────
+
+  @OnEvent('consultation.charge_required')
+  async onConsultationChargeRequired(payload: {
+    consultationId: string;
+    customerId: string;
+    providerId: string;
+    amount: number;
+  }) {
+    try {
+      await this.wallet.debit(
+        payload.customerId,
+        payload.amount,
+        `رسوم استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
+        payload.consultationId,
+      );
+      await this.wallet.credit(
+        payload.providerId,
+        payload.amount,
+        `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
+        payload.consultationId,
+      );
+      this.logger.log(
+        `Consultation charged: customer ${payload.customerId} -${payload.amount} SAR, provider ${payload.providerId} +${payload.amount} SAR`,
+      );
+    } catch (err) {
+      this.logger.error(`onConsultationChargeRequired failed for consultation ${payload.consultationId}: ${err}`);
+    }
+  }
 
   @OnEvent('wallet.debited')
   async onWalletDebited(payload: { userId: string; amount: number; newBalance: number }) {

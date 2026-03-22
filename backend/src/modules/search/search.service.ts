@@ -116,7 +116,7 @@ export class SearchService {
         orderBy: { deadline: 'asc' },
         include: {
           company: { select: { name: true, region: true } as any },
-          _count: { select: { bids: true } },
+          // Intentionally NO _count.bids — exposing bid count violates bid privacy rules
         },
       }),
       this.prisma.tender.count({ where }),

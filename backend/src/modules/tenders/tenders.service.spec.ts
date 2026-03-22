@@ -13,6 +13,7 @@ const mockPrisma = {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    count: jest.fn(),
   },
   tenderBid: {
     findUnique: jest.fn(),
@@ -21,6 +22,7 @@ const mockPrisma = {
     findMany: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),
+    count: jest.fn(),
   },
   tenderCommission: {
     create: jest.fn(),
@@ -89,15 +91,18 @@ describe('TendersService', () => {
   describe('list', () => {
     it('returns open tenders by default', async () => {
       mockPrisma.tender.findMany.mockResolvedValue([demoTender]);
+      mockPrisma.tender.count.mockResolvedValue(1);
       const result = await service.list();
       expect(mockPrisma.tender.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ status: 'OPEN' }) }),
       );
-      expect(result).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
     it('filters by status when provided', async () => {
       mockPrisma.tender.findMany.mockResolvedValue([]);
+      mockPrisma.tender.count.mockResolvedValue(0);
       await service.list({ status: 'AWARDED' });
       expect(mockPrisma.tender.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ status: 'AWARDED' }) }),

@@ -96,8 +96,8 @@
         return _fetch(method, path, body, { ...opts, _retried: true });
       }
       // Refresh failed — clear session and send to login
+      const role = Store.getUser()?.role;   // read role BEFORE clearing
       Store.clearAll();
-      const role = Store.getUser()?.role;
       window.location.href = role === 'ADMIN' ? 'admin-login.html' : 'login.html';
       throw new ApiError(401, 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.');
     }
@@ -276,7 +276,7 @@
   };
 
   const reviews = {
-    create: (requestId, data) => http.post(`/reviews/${requestId}`, data),
+    create: (requestId, data) => http.post(`/reviews/requests/${requestId}`, data),
     list:   (userId, p = {})  => http.get(`/reviews/user/${userId}?` + new URLSearchParams(p)),
   };
 
@@ -284,32 +284,40 @@
     list:      (p = {})  => http.get('/notifications?' + new URLSearchParams(p)),
     markRead:  (id)      => http.patch(`/notifications/${id}/read`),
     markAllRead: ()      => http.patch('/notifications/read-all'),
-    registerToken: (data) => http.post('/notifications/device-tokens', data),
+    registerToken: (data) => http.post('/notifications/device-token', data),
   };
 
   const chat = {
-    conversations: ()     => http.get('/chat/conversations'),
-    messages:      (id, p = {}) => http.get(`/chat/conversations/${id}/messages?` + new URLSearchParams(p)),
-    send:          (id, data)   => http.post(`/chat/conversations/${id}/messages`, data),
-    create:        (data)       => http.post('/chat/conversations', data),
-    markRead:      (id)         => http.patch(`/chat/conversations/${id}/read`),
+    conversations:   ()              => http.get('/chat/conversations'),
+    unread:          ()              => http.get('/chat/unread'),
+    messages:        (id, p = {})    => http.get(`/chat/conversations/${id}/messages?` + new URLSearchParams(p)),
+    send:            (id, data)      => http.post(`/chat/conversations/${id}/messages`, data),
+    createDirect:    (userId)        => http.post(`/chat/direct/${userId}`, {}),
+    createForRequest:(requestId)     => http.post(`/chat/request/${requestId}`, {}),
+    createForTender: (tenderId)      => http.post(`/chat/tender/${tenderId}`, {}),
+    // markRead: no backend endpoint exists — unread count clears on next message fetch
   };
 
   const admin = {
-    stats:               ()       => http.get('/admin/stats'),
+    dashboard:           ()       => http.get('/admin/dashboard'),
+    stats:               ()       => http.get('/admin/dashboard'),          // alias
+    monthlyStats:        ()       => http.get('/admin/stats/monthly'),
     users:               (p = {}) => http.get('/admin/users?' + new URLSearchParams(p)),
-    suspendUser:         (id, data) => http.patch(`/admin/users/${id}/suspend`, data),
-    unsuspendUser:       (id)     => http.patch(`/admin/users/${id}/unsuspend`),
-    pendingProviders:    ()       => http.get('/admin/providers/pending'),
-    approveProvider:     (id)     => http.patch(`/admin/providers/${id}/approve`),
-    rejectProvider:      (id, data) => http.patch(`/admin/providers/${id}/reject`, data),
+    suspendUser:         (id, data) => http.post(`/admin/users/${id}/suspend`, data),
+    unsuspendUser:       (id)     => http.post(`/admin/users/${id}/reinstate`),
+    pendingProviders:    ()       => http.get('/admin/verifications/pending'),
+    approveProvider:     (id)     => http.patch(`/admin/verifications/${id}/approve`),
+    rejectProvider:      (id, data) => http.patch(`/admin/verifications/${id}/reject`, data),
     disputes:            (p = {}) => http.get('/admin/disputes?' + new URLSearchParams(p)),
-    resolveDispute:      (id, data) => http.patch(`/admin/disputes/${id}/resolve`, data),
+    resolveDispute:      (id, data) => http.post(`/admin/disputes/${id}/resolve`, data),
     withdrawals:         (p = {}) => http.get('/wallet/admin/withdrawals?' + new URLSearchParams(p)),
     approveWithdrawal:   (id, data) => http.patch(`/wallet/admin/withdrawals/${id}/approve`, data),
     rejectWithdrawal:    (id, data) => http.patch(`/wallet/admin/withdrawals/${id}/reject`, data),
     health:              ()       => http.get('/health'),
-    auditLogs:           (p = {}) => http.get('/admin/audit?' + new URLSearchParams(p)),
+    weeklyReport:        ()       => http.get('/admin/reports/weekly'),
+    overdueCommissions:  ()       => http.get('/admin/commissions/overdue'),
+    consultations:       (p = {}) => http.get('/admin/consultations?' + new URLSearchParams(p)),
+    cancelConsultation:  (id, data) => http.patch(`/admin/consultations/${id}/cancel`, data),
   };
 
   const tenders = {
@@ -317,7 +325,7 @@
     get:      (id)          => http.get(`/tenders/${id}`),
     create:   (data)        => http.post('/tenders', data),
     bid:      (id, data)    => http.post(`/tenders/${id}/bids`, data),
-    award:    (id, bidId)   => http.patch(`/tenders/${id}/bids/${bidId}/award`),
+    award:    (id, bidId)   => http.post(`/tenders/${id}/award/${bidId}`),
     milestones: (id)        => http.get(`/tenders/${id}/milestones`),
   };
 
