@@ -35,9 +35,11 @@ const mockPrisma = {
   consultation: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findUniqueOrThrow: jest.fn(),
     findMany: jest.fn(),
     count: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
 };
 
@@ -211,17 +213,18 @@ describe('ConsultationsService', () => {
 
   describe('complete', () => {
     it('sets status to COMPLETED and emits consultation.completed', async () => {
+      const completed = makeConsult({ status: ConsultationStatus.COMPLETED, providerId: 'provider-1' });
       mockPrisma.consultation.findUnique.mockResolvedValue(
         makeConsult({ status: ConsultationStatus.IN_SESSION, providerId: 'provider-1' }),
       );
-      mockPrisma.consultation.update.mockResolvedValue(
-        makeConsult({ status: ConsultationStatus.COMPLETED, providerId: 'provider-1' }),
-      );
+      mockPrisma.consultation.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.consultation.findUniqueOrThrow.mockResolvedValue(completed);
 
       await service.complete('provider-1', 'consult-1', 'ملاحظات المزود');
 
-      expect(mockPrisma.consultation.update).toHaveBeenCalledWith(
+      expect(mockPrisma.consultation.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({ id: 'consult-1', status: ConsultationStatus.IN_SESSION }),
           data: expect.objectContaining({ status: ConsultationStatus.COMPLETED }),
         }),
       );
@@ -241,14 +244,15 @@ describe('ConsultationsService', () => {
           pricePerHour: 200,
         }),
       );
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockPrisma.consultation.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.consultation.findUniqueOrThrow.mockResolvedValue(
         makeConsult({ status: ConsultationStatus.COMPLETED }),
       );
 
       await service.complete('provider-1', 'consult-1');
 
       // 30 min = 0.5 hrs → 200 * 0.5 = 100 SAR (above the 0.25 min-charge floor)
-      const updateCall = mockPrisma.consultation.update.mock.calls[0][0];
+      const updateCall = mockPrisma.consultation.updateMany.mock.calls[0][0];
       expect(Number(updateCall.data.totalAmount)).toBeGreaterThan(0);
     });
 
@@ -262,14 +266,15 @@ describe('ConsultationsService', () => {
           pricePerHour: 200,
         }),
       );
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockPrisma.consultation.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.consultation.findUniqueOrThrow.mockResolvedValue(
         makeConsult({ status: ConsultationStatus.COMPLETED }),
       );
 
       await service.complete('provider-1', 'consult-1');
 
       // min charge = 0.25 * 200 = 50 SAR
-      const updateCall = mockPrisma.consultation.update.mock.calls[0][0];
+      const updateCall = mockPrisma.consultation.updateMany.mock.calls[0][0];
       expect(Number(updateCall.data.totalAmount)).toBeCloseTo(50, 0);
     });
   });

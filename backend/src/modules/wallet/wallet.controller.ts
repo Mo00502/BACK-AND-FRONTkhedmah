@@ -66,6 +66,7 @@ export class WalletController {
   }
 
   @Post('withdraw')
+  @Roles(UserRole.PROVIDER)
   @ThrottleStrict()
   @ApiOperation({ summary: 'Request a bank withdrawal (holds balance until processed)' })
   requestWithdrawal(@CurrentUser('id') userId: string, @Body() dto: RequestWithdrawalDto) {

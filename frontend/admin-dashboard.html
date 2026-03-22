@@ -780,8 +780,21 @@
                     const approveBtn = item.querySelector('.btn-approve');
                     const actions = item.querySelector('.verify-actions');
                     if (actions) {
-                        actions.innerHTML = `<button class="btn-xs btn-approve" onclick="approveProvider(this,'${name}','${id}')">قبول ✓</button>
-                            <button class="btn-xs btn-reject" onclick="openRejectModal('${id}','${name}')">رفض ✕</button>`;
+                        const approveB = document.createElement('button');
+                        approveB.className = 'btn-xs btn-approve';
+                        approveB.textContent = 'قبول ✓';
+                        approveB.dataset.name = name;
+                        approveB.dataset.id = id;
+                        approveB.onclick = function() { approveProvider(this, this.dataset.name, this.dataset.id); };
+                        const rejectB = document.createElement('button');
+                        rejectB.className = 'btn-xs btn-reject';
+                        rejectB.textContent = 'رفض ✕';
+                        rejectB.dataset.name = name;
+                        rejectB.dataset.id = id;
+                        rejectB.onclick = function() { openRejectModal(this.dataset.id, this.dataset.name); };
+                        actions.innerHTML = '';
+                        actions.appendChild(approveB);
+                        actions.appendChild(rejectB);
                     }
                     if (reviewList) reviewList.appendChild(item);
                 }

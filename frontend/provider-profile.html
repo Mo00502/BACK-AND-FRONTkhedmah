@@ -1010,7 +1010,7 @@
 
         // Tags
         const tagsEl = document.getElementById('profTags');
-        tagsEl.innerHTML = data.tags.map(t => `<span class="tag-chip">${t}</span>`).join('');
+        tagsEl.innerHTML = data.tags.map(t => `<span class="tag-chip">${escHtml(t)}</span>`).join('');
 
         // Bio
         document.getElementById('profBio').textContent = data.bio;
@@ -1021,12 +1021,12 @@
         if (data.sameDay) document.getElementById('sameDayRow').style.display = 'flex';
 
         // Best at
-        document.getElementById('bestAtGrid').innerHTML = data.bestAt.map(b => `<span class="best-at-chip">${b}</span>`).join('');
+        document.getElementById('bestAtGrid').innerHTML = data.bestAt.map(b => `<span class="best-at-chip">${escHtml(b)}</span>`).join('');
 
         // Location
         document.getElementById('profCity2').textContent = data.city;
         const districtsEl = document.getElementById('profDistricts');
-        districtsEl.innerHTML = '<div class="districts-chips">' + data.districts.map(d => `<span class="district-chip">${d}</span>`).join('') + '</div>';
+        districtsEl.innerHTML = '<div class="districts-chips">' + data.districts.map(d => `<span class="district-chip">${escHtml(d)}</span>`).join('') + '</div>';
 
         const modes = { onsite: '📍 خدمة في الموقع فقط', remote: '💻 خدمة عن بُعد فقط', both: '📍💻 في الموقع وعن بُعد' };
         document.getElementById('profMode').innerHTML = `<div class="mode-badge">${modes[data.serviceMode] || ''}</div>`;
@@ -1045,7 +1045,7 @@
         if (data.certifications && data.certifications.length > 0) {
             document.getElementById('certsSection').style.display = 'block';
             document.getElementById('certsList').innerHTML = data.certifications.map(c =>
-                `<div class="cert-item"><span class="cert-ico">🏅</span><span>${c}</span></div>`
+                `<div class="cert-item"><span class="cert-ico">🏅</span><span>${escHtml(c)}</span></div>`
             ).join('');
         }
 
@@ -1054,12 +1054,12 @@
         document.getElementById('servicesList').innerHTML = data.services.map(s => `
             <div class="service-row">
                 <div class="svc-info">
-                    <div class="svc-name ${s.featured ? 'featured' : ''}">${s.name}</div>
-                    <div class="svc-desc">${s.desc}</div>
+                    <div class="svc-name ${s.featured ? 'featured' : ''}">${escHtml(s.name)}</div>
+                    <div class="svc-desc">${escHtml(s.desc)}</div>
                 </div>
                 <div class="svc-price">
-                    <div class="svc-amount">${s.price === 0 ? 'حسب الاتفاق' : s.price + ' ر.س'}</div>
-                    <div class="svc-unit">${s.unit}</div>
+                    <div class="svc-amount">${s.price === 0 ? 'حسب الاتفاق' : escHtml(String(s.price)) + ' ر.س'}</div>
+                    <div class="svc-unit">${escHtml(s.unit)}</div>
                 </div>
             </div>`
         ).join('');
@@ -1067,10 +1067,10 @@
         // Portfolio
         document.getElementById('portfolioGrid').innerHTML = data.portfolio.map(p => `
             <div class="port-item">
-                <div class="port-ico">${p.emoji}</div>
-                <div class="port-title">${p.title}</div>
-                <div class="port-type">${p.type}</div>
-                <div class="port-year">${p.year}</div>
+                <div class="port-ico">${escHtml(p.emoji)}</div>
+                <div class="port-title">${escHtml(p.title)}</div>
+                <div class="port-type">${escHtml(p.type)}</div>
+                <div class="port-year">${escHtml(String(p.year))}</div>
             </div>`
         ).join('');
 
@@ -1078,11 +1078,11 @@
         document.getElementById('reviewsList').innerHTML = data.reviews.map(r => `
             <div class="review-card">
                 <div class="review-header">
-                    <span class="reviewer-name">${r.name}</span>
-                    <span class="review-date">${r.date}</span>
+                    <span class="reviewer-name">${escHtml(r.name)}</span>
+                    <span class="review-date">${escHtml(r.date)}</span>
                 </div>
                 <div class="review-stars">${'⭐'.repeat(r.rating)}</div>
-                <div class="review-text">${r.text}</div>
+                <div class="review-text">${escHtml(r.text)}</div>
             </div>`
         ).join('');
 
@@ -1100,6 +1100,10 @@
         document.getElementById('ctaPriceUnit').textContent = `/ ${data.priceUnit}`;
         document.getElementById('ctaBookBtn').href = `quote-request.html?category=${encodeURIComponent(data.category)}`;
         document.getElementById('ctaChatBtn').href = `chat.html?type=service&providerId=${encodeURIComponent(id)}`;
+    }
+
+    function escHtml(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function loadProfile() {

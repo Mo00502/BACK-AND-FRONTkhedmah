@@ -395,4 +395,93 @@ export class EventListenerService {
       `تم خصم ${payload.amount} ريال. رصيدك الحالي: ${payload.newBalance} ريال.`,
     );
   }
+
+  // ── Dispute resolution notification ─────────────────────────────────────
+
+  @OnEvent('dispute.resolved')
+  async onDisputeResolved(payload: {
+    disputeId: string;
+    resolution: string;
+    reporterId: string;
+    againstId: string;
+  }) {
+    const resolutionLabels: Record<string, string> = {
+      REFUND: 'تم استرداد المبلغ لصالحك',
+      RELEASE: 'تم إطلاق المبلغ للمزود',
+      SPLIT: 'تم تقسيم المبلغ بين الطرفين',
+      DISMISSED: 'تم رفض النزاع',
+    };
+    const label = resolutionLabels[payload.resolution] ?? payload.resolution;
+    await Promise.all([
+      this.notif.notifyUser(
+        payload.reporterId,
+        '✅ تم حل النزاع',
+        `قرار النزاع: ${label}. معرف النزاع: ${payload.disputeId.slice(0, 8).toUpperCase()}`,
+        { disputeId: payload.disputeId },
+      ),
+      this.notif.notifyUser(
+        payload.againstId,
+        '✅ تم حل النزاع',
+        `قرار النزاع: ${label}. معرف النزاع: ${payload.disputeId.slice(0, 8).toUpperCase()}`,
+        { disputeId: payload.disputeId },
+      ),
+    ]);
+    this.logger.log(`Dispute ${payload.disputeId} resolved: ${payload.resolution}`);
+  }
+
+  // ── Support ticket reopened ──────────────────────────────────────────────
+
+  @OnEvent('support.ticket_reopened')
+  async onTicketReopened(payload: { ticketId: string; userId: string }) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await this.notif.sendEmail(
+        adminEmail,
+        `🔄 تذكرة دعم أُعيد فتحها — ${payload.ticketId.slice(0, 8).toUpperCase()}`,
+        `<p>أعاد العميل فتح تذكرة الدعم <strong>${payload.ticketId}</strong>. يرجى المتابعة.</p>`,
+      );
+    }
+    this.logger.log(`Support ticket reopened: ${payload.ticketId}`);
+  }
+
+  // ── Admin consultation cancelled ─────────────────────────────────────────
+
+  @OnEvent('admin.consultation_cancelled')
+  async onConsultationCancelledByAdmin(payload: {
+    consultationId: string;
+    adminId: string;
+    reason: string;
+    customerId: string;
+    providerId: string;
+  }) {
+    await Promise.all([
+      this.notif.notifyUser(
+        payload.customerId,
+        '❌ تم إلغاء الاستشارة',
+        `ألغى المشرف الاستشارة. السبب: ${payload.reason}`,
+        { consultationId: payload.consultationId },
+      ),
+      this.notif.notifyUser(
+        payload.providerId,
+        '❌ تم إلغاء الاستشارة',
+        `ألغى المشرف الاستشارة. السبب: ${payload.reason}`,
+        { consultationId: payload.consultationId },
+      ),
+    ]);
+  }
+
+  // ── Materials adjustment batch expired ───────────────────────────────────
+
+  @OnEvent('materials.adjustment.batch_expired')
+  async onAdjustmentBatchExpired(payload: { count: number }) {
+    this.logger.warn(`${payload.count} materials adjustment requests expired (batch)`);
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await this.notif.sendEmail(
+        adminEmail,
+        `⏰ ${payload.count} طلب تعديل مواد انتهت صلاحيته`,
+        `<p>انتهت صلاحية <strong>${payload.count}</strong> طلب تعديل ميزانية مواد دون موافقة العميل.</p>`,
+      );
+    }
+  }
 }

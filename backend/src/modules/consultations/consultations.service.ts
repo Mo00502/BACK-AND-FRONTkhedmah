@@ -158,11 +158,11 @@ export class ConsultationsService {
     let totalAmount = c.totalAmount;
     if (c.startedAt && c.pricePerHour) {
       const hoursElapsed = (Date.now() - c.startedAt.getTime()) / (1000 * 60 * 60);
-      totalAmount = (Number(c.pricePerHour) * Math.max(hoursElapsed, 0.25)) as any; // min 15 min charge
+      totalAmount = parseFloat((Number(c.pricePerHour) * Math.max(hoursElapsed, 0.25)).toFixed(2)) as any; // min 15 min charge, rounded to 2dp
     }
 
-    const updated = await this.prisma.consultation.update({
-      where: { id: consultationId },
+    const { count } = await this.prisma.consultation.updateMany({
+      where: { id: consultationId, status: ConsultationStatus.IN_SESSION },
       data: {
         status: ConsultationStatus.COMPLETED,
         completedAt: new Date(),
@@ -170,6 +170,10 @@ export class ConsultationsService {
         totalAmount: totalAmount ?? undefined,
       },
     });
+    if (count === 0) throw new BadRequestException('Consultation is no longer in session');
+
+    // Re-fetch to return updated record
+    const updated = await this.prisma.consultation.findUniqueOrThrow({ where: { id: consultationId } });
 
     this.events.emit('consultation.completed', {
       consultationId,
@@ -182,7 +186,7 @@ export class ConsultationsService {
         consultationId,
         customerId: c.customerId,
         providerId,
-        amount: Number(totalAmount),
+        amount: parseFloat(Number(totalAmount).toFixed(2)),
       });
     }
 

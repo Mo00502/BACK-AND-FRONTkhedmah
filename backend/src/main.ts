@@ -15,7 +15,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { RolesGuard } from './common/guards/roles.guard';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   const config = app.get(ConfigService);
   const isProd = config.get('NODE_ENV') === 'production';
 

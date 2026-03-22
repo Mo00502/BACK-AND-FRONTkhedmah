@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Decimal } from '@prisma/client/runtime/library';
+import { WalletTxType } from '@prisma/client';
 
 @Injectable()
 export class WalletService {
@@ -47,7 +48,7 @@ export class WalletService {
       this.prisma.walletTransaction.create({
         data: {
           walletId: wallet.id,
-          type: 'CREDIT',
+          type: WalletTxType.CREDIT,
           amount,
           balanceAfter: newBalance,
           description,
@@ -85,7 +86,7 @@ export class WalletService {
       this.prisma.walletTransaction.create({
         data: {
           walletId: wallet.id,
-          type: 'DEBIT',
+          type: WalletTxType.DEBIT,
           amount,
           balanceAfter: newBalance,
           description,
@@ -150,7 +151,7 @@ export class WalletService {
       await tx.walletTransaction.create({
         data: {
           walletId: wallet.id,
-          type: 'HOLD',
+          type: WalletTxType.HOLD,
           amount,
           balanceAfter: wallet.balance, // total balance unchanged; only heldBalance increases
           description: 'حجز مبلغ طلب السحب',
@@ -223,7 +224,7 @@ export class WalletService {
       this.prisma.walletTransaction.create({
         data: {
           walletId: wallet.id,
-          type: 'DEBIT',
+          type: WalletTxType.DEBIT,
           amount: Number(wr.amount),
           balanceAfter: newBalance,
           description: `سحب للحساب البنكي — ${wr.bankName}`,
@@ -266,7 +267,7 @@ export class WalletService {
       this.prisma.walletTransaction.create({
         data: {
           walletId: wallet.id,
-          type: 'RELEASE',
+          type: WalletTxType.RELEASE,
           amount: Number(wr.amount),
           balanceAfter: wallet.balance,
           description: 'تحرير مبلغ طلب سحب مرفوض',

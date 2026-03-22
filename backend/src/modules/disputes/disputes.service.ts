@@ -96,7 +96,9 @@ export class DisputesService {
   async escalate(userId: string, disputeId: string) {
     const dispute = await this.prisma.dispute.findUnique({ where: { id: disputeId } });
     if (!dispute) throw new NotFoundException('Dispute not found');
-    if (dispute.reporterId !== userId) throw new ForbiddenException('Access denied');
+    if (dispute.reporterId !== userId && dispute.againstId !== userId) {
+      throw new ForbiddenException('Only dispute participants can escalate');
+    }
     if (dispute.status !== 'OPEN')
       throw new BadRequestException('Only open disputes can be escalated');
 

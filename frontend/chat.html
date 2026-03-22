@@ -1067,7 +1067,9 @@ function renderMessage(m, data) {
     if (m.type === 'day') {
         const el = document.createElement('div');
         el.className = 'day-sep';
-        el.innerHTML = `<span>${m.text}</span>`;
+        const span = document.createElement('span');
+        span.textContent = m.text;
+        el.appendChild(span);
         area.appendChild(el); return;
     }
     if (m.type === 'sys') {
@@ -1106,7 +1108,7 @@ function renderMessage(m, data) {
     if (m.location) {
         inner += `<div class="m-bubble"><div class="m-location" onclick="showToast('فتح الخريطة...')">📍 ${escHtml(m.loc || 'الموقع الحالي')}</div></div>`;
     }
-    inner += `<div class="m-time">${m.time}</div>`;
+    inner += `<div class="m-time">${escHtml(m.time || '')}</div>`;
     inner += '</div>';
 
     wrapper.innerHTML = inner;

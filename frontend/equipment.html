@@ -142,6 +142,10 @@
     if (!localStorage.getItem('khedmah_demo')) {
       window.location.href = 'login.html';
     }
+    try {
+      const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+      if (u.role === 'provider') window.location.href = 'provider-dashboard.html';
+    } catch(e) {}
   })();
 </script>
 

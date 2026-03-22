@@ -94,9 +94,9 @@ export class SchedulerService {
     const start = Date.now();
     const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
-    // Tokens not seen for 90 days (by creation date) are likely uninstalled apps — deactivate them
+    // Tokens not seen for 90 days (by last update) are likely uninstalled apps — deactivate them
     const { count } = await this.prisma.deviceToken.updateMany({
-      where: { active: true, createdAt: { lte: cutoff } },
+      where: { active: true, updatedAt: { lte: cutoff } } as any,
       data: { active: false },
     });
 

@@ -416,6 +416,10 @@ export class TendersService {
       throw new ForbiddenException('Only the tender owner can select a winning offer');
     }
 
+    // Verify the offer belongs to this requirement
+    const offer = await this.prisma.supplierOffer.findUnique({ where: { id: offerId } });
+    if (!offer || offer.requirementId !== requirementId) throw new NotFoundException('Offer not found');
+
     await this.prisma.$transaction([
       this.prisma.supplierOffer.update({ where: { id: offerId }, data: { status: 'ACCEPTED' } }),
       this.prisma.supplierOffer.updateMany({

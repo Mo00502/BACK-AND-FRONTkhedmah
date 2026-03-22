@@ -476,6 +476,16 @@
     </style>
 </head>
 <body>
+<script>
+(function(){
+  var demo = localStorage.getItem('khedmah_demo');
+  if (!demo) { window.location.href = 'login.html'; return; }
+  try {
+    var u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+    if (u.role !== 'CUSTOMER') { window.location.href = 'provider-dashboard.html'; }
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+</script>
 <script src="js/api.js"></script>
 
     <!-- ── NAV ──────────────────────────────────────────────────── -->

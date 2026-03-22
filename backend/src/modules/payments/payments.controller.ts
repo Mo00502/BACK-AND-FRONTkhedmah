@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, Param, Headers, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Headers, Req, UseGuards, RawBodyRequest } from '@nestjs/common';
+import { Request } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -109,7 +110,11 @@ export class PaymentsController {
   @Post('webhook/moyasar')
   @SkipThrottle() // Moyasar calls this — never throttle
   @ApiOperation({ summary: 'Moyasar payment webhook (Moyasar calls this)' })
-  webhook(@Body() payload: any, @Headers('x-moyasar-signature') sig: string) {
-    return this.payments.handleWebhook(payload, sig);
+  webhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Body() payload: any,
+    @Headers('x-moyasar-signature') sig: string,
+  ) {
+    return this.payments.handleWebhook(payload, sig, req.rawBody ?? Buffer.from(JSON.stringify(payload)));
   }
 }

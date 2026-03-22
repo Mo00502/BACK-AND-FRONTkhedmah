@@ -31,6 +31,10 @@ export class ProvidersService {
       where.skills = { some: { serviceId: dto.serviceId } };
     }
 
+    if (dto.city) {
+      where.user = { ...where.user, profile: { city: dto.city } };
+    }
+
     const [providers, total] = await Promise.all([
       this.prisma.providerProfile.findMany({
         where,
@@ -67,10 +71,19 @@ export class ProvidersService {
   }
 
   async upsertProfile(userId: string, dto: UpdateProviderDto) {
+    // Explicitly allowlist safe fields — never allow verificationStatus, verified,
+    // ratingAvg, ratingCount, completedJobs, suspendedAt, suspensionReason to be
+    // set directly by the provider.
+    const safeUpdate: Partial<Pick<UpdateProviderDto, 'yearsExperience' | 'crNumber' | 'ibanNumber' | 'bankName'>> = {};
+    if (dto.yearsExperience !== undefined) safeUpdate.yearsExperience = dto.yearsExperience;
+    if (dto.crNumber !== undefined) safeUpdate.crNumber = dto.crNumber;
+    if (dto.ibanNumber !== undefined) safeUpdate.ibanNumber = dto.ibanNumber;
+    if (dto.bankName !== undefined) safeUpdate.bankName = dto.bankName;
+
     return this.prisma.providerProfile.upsert({
       where: { userId },
-      update: dto,
-      create: { userId, ...dto },
+      update: safeUpdate,
+      create: { userId, ...safeUpdate },
       include: { skills: true, availability: true },
     });
   }

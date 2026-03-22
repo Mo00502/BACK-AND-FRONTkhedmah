@@ -730,6 +730,10 @@ const params = new URLSearchParams(window.location.search);
 const tenderId = params.get('id') || '1';
 const data = TENDERS[tenderId] || TENDERS['1'];
 
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function loadTender() {
     // Breadcrumb
     document.getElementById('bcTitle').textContent = data.title;
@@ -737,7 +741,7 @@ function loadTender() {
 
     // Header
     document.getElementById('tTitle').textContent = data.title;
-    document.getElementById('tOrg').innerHTML = '🏢 ' + data.org;
+    document.getElementById('tOrg').textContent = '🏢 ' + data.org;
 
     const statusEl = document.getElementById('tStatus');
     if (data.status === 'open') { statusEl.className = 'status-badge status-open'; statusEl.textContent = '🟢 مفتوح'; }
@@ -750,8 +754,8 @@ function loadTender() {
     document.getElementById('tSector').textContent = data.sector;
     document.getElementById('tBudget').textContent = data.budget;
 
-    // Description
-    document.getElementById('tDescription').innerHTML = data.description;
+    // Description — demo data uses trusted HTML; in production use a sanitizer
+    document.getElementById('tDescription').textContent = data.description;
 
     // Scope
     const scopeEl = document.getElementById('tScope');
@@ -766,7 +770,7 @@ function loadTender() {
     data.requirements.forEach(r => {
         const div = document.createElement('div');
         div.className = 'req-item';
-        div.innerHTML = `<div class="req-label">${r.label}</div><div class="req-value">${r.value}</div>`;
+        div.innerHTML = `<div class="req-label">${escHtml(r.label)}</div><div class="req-value">${escHtml(r.value)}</div>`;
         reqGrid.appendChild(div);
     });
 
@@ -776,11 +780,11 @@ function loadTender() {
         const div = document.createElement('div');
         div.className = 'attachment-item';
         div.innerHTML = `
-            <span class="attachment-icon">${a.icon}</span>
-            <span class="attachment-name">${a.name}</span>
-            <span class="attachment-size">${a.size}</span>
-            <span class="attachment-dl">⬇ ${a.ext}</span>`;
-        div.onclick = () => showToast(`جارٍ تحميل "${a.name}" ...`);
+            <span class="attachment-icon">${escHtml(a.icon)}</span>
+            <span class="attachment-name">${escHtml(a.name)}</span>
+            <span class="attachment-size">${escHtml(a.size)}</span>
+            <span class="attachment-dl">⬇ ${escHtml(a.ext)}</span>`;
+        div.onclick = () => showToast(`جارٍ تحميل "${escHtml(a.name)}" ...`);
         attEl.appendChild(div);
     });
 

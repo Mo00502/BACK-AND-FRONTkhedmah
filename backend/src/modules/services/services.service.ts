@@ -65,8 +65,10 @@ export class ServicesService {
     const where: any = {
       serviceId,
       provider: {
+        verificationStatus: 'APPROVED',
         user: {
           status: 'ACTIVE',
+          suspended: false,
           deletedAt: null,
           ...(dto.city ? { profile: { city: dto.city } } : {}),
         },

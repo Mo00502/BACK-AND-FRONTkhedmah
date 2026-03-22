@@ -89,6 +89,7 @@ export class ConsultationsController {
 
   @Patch(':id/complete')
   @Roles(UserRole.PROVIDER)
+  @ThrottleDefault()
   @ApiOperation({ summary: 'Provider: mark session as completed' })
   complete(
     @Param('id') id: string,

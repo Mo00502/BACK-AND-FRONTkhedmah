@@ -426,7 +426,10 @@
     </style>
 </head>
 <body>
-<script>(function(){if(!localStorage.getItem('khedmah_demo')){window.location.href='login.html';}})();</script>
+<script>(function(){
+  if(!localStorage.getItem('khedmah_demo')){window.location.href='login.html';return;}
+  try{var u=JSON.parse(localStorage.getItem('khedmah_user')||'{}');if(u.role==='provider')window.location.href='provider-dashboard.html';}catch(e){}
+})();</script>
 <script src="js/api.js"></script>
 <script>
     (function() {

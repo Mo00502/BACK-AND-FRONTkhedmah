@@ -66,11 +66,11 @@ export class AdminService {
 
     const revenue = await this.prisma.$queryRaw<any[]>`
       SELECT
-        DATE_TRUNC('month', held_at) as month,
+        DATE_TRUNC('month', released_at) as month,
         SUM(platform_fee) as fee
       FROM escrow
-      WHERE status = 'RELEASED' AND held_at >= ${sixMonthsAgo}
-      GROUP BY DATE_TRUNC('month', held_at)
+      WHERE status = 'RELEASED' AND released_at >= ${sixMonthsAgo}
+      GROUP BY DATE_TRUNC('month', released_at)
       ORDER BY month ASC
     `;
 
@@ -154,29 +154,37 @@ export class AdminService {
   async suspendProvider(providerId: string, reason: string) {
     const profile = await this.prisma.providerProfile.findUnique({
       where: { id: providerId },
-      include: { user: true },
+      select: { id: true, userId: true, verificationStatus: true },
     });
     if (!profile) throw new NotFoundException('Provider not found');
     if (profile.verificationStatus !== 'APPROVED') {
       throw new BadRequestException('Only approved providers can be suspended');
     }
 
-    return this.prisma.providerProfile.update({
-      where: { id: providerId },
-      data: {
-        verificationStatus: 'SUSPENDED',
-        verified: false,
-        suspendedAt: new Date(),
-        suspensionReason: reason,
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.providerProfile.update({
+        where: { id: providerId },
+        data: {
+          verificationStatus: 'SUSPENDED',
+          verified: false,
+          suspendedAt: new Date(),
+          suspensionReason: reason,
+        },
+      }),
+      this.prisma.user.update({
+        where: { id: profile.userId },
+        data: { suspended: true, suspendedReason: reason, status: UserStatus.SUSPENDED },
+      }),
+    ]);
+
+    return { message: 'Provider suspended successfully' };
   }
 
   // ── User moderation ──────────────────────────────────────────────────────
   async suspendUser(targetUserId: string, reason: string, adminId?: string) {
     const updated = await this.prisma.user.update({
       where: { id: targetUserId },
-      data: { suspended: true, suspendedReason: reason },
+      data: { suspended: true, suspendedReason: reason, status: UserStatus.SUSPENDED },
     });
     this.events.emit('admin.user_suspended', {
       targetUserId,
@@ -396,12 +404,10 @@ export class AdminService {
 
   // ── Commission oversight ─────────────────────────────────────────────────
   async getOverdueCommissions() {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return this.prisma.tenderCommission.findMany({
-      where: { status: 'INVOICE_ISSUED', invoiceIssuedAt: { lt: thirtyDaysAgo } },
+      where: { status: 'OVERDUE' },
       include: { tender: true, company: { include: { owner: { include: { profile: true } } } } },
-      orderBy: { invoiceIssuedAt: 'asc' },
+      orderBy: { overdueAt: 'asc' },
     });
   }
 

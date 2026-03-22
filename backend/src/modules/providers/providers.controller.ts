@@ -50,14 +50,6 @@ export class ProvidersController {
     return this.providers.findAll(dto);
   }
 
-  @Public()
-  @ThrottleRelaxed()
-  @Get(':userId')
-  @ApiOperation({ summary: 'Get provider public profile' })
-  findOne(@Param('userId') userId: string) {
-    return this.providers.findByUserId(userId);
-  }
-
   @ApiBearerAuth()
   @Patch('me/profile')
   @Roles(UserRole.PROVIDER)
@@ -136,5 +128,13 @@ export class ProvidersController {
   })
   submitDocuments(@CurrentUser('id') userId: string, @Body() dto: SubmitDocsDto) {
     return this.providers.submitDocuments(userId, dto.docKeys);
+  }
+
+  @Public()
+  @ThrottleRelaxed()
+  @Get(':userId')
+  @ApiOperation({ summary: 'Get provider public profile' })
+  findOne(@Param('userId') userId: string) {
+    return this.providers.findByUserId(userId);
   }
 }

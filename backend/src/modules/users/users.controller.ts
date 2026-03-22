@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -63,8 +64,12 @@ export class UsersController {
 
   @Get(':id')
   @ThrottleDefault()
-  @ApiOperation({ summary: 'Get user by ID' })
-  findOne(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Get user by ID (self or admin only)' })
+  findOne(@Param('id') id: string, @CurrentUser() currentUser: any) {
+    const isAdmin = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPER_ADMIN;
+    if (currentUser.id !== id && !isAdmin) {
+      throw new ForbiddenException('Access denied');
+    }
     return this.users.findById(id);
   }
 

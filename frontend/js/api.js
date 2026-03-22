@@ -253,16 +253,16 @@
   };
 
   const providers = {
-    getProfile:  (id)        => http.get(`/providers/${id}`),
-    myProfile:   ()          => http.get('/providers/me'),
-    myEarnings:  ()          => http.get('/providers/me/earnings'),
-    updateBank:  (data)      => http.patch('/providers/me/bank', data),
-    submitDocs:  (data)      => http.post('/providers/me/documents', data),
-    services:    ()          => http.get('/providers/me/services'),
-    addService:  (data)      => http.post('/providers/me/services', data),
-    removeService: (id)      => http.delete(`/providers/me/services/${id}`),
-    schedule:    ()          => http.get('/providers/me/schedule'),
-    saveSchedule: (data)     => http.post('/providers/me/schedule', data),
+    getProfile:   (id)       => http.get(`/providers/${id}`),
+    myProfile:    ()         => http.get('/providers/me/profile'),
+    myEarnings:   ()         => http.get('/providers/me/earnings'),
+    updateBank:   (data)     => http.patch('/providers/me/profile', data),
+    submitDocs:   (data)     => http.post('/providers/me/documents', data),
+    services:     ()         => http.get('/providers/me/skills'),
+    addService:   (data)     => http.post('/providers/me/skills', data),
+    removeService: (id)      => http.delete(`/providers/me/skills/${id}`),
+    schedule:     ()         => http.get('/providers/me/availability'),
+    saveSchedule: (data)     => http.patch('/providers/me/availability', data),
   };
 
   const services = {
@@ -277,7 +277,7 @@
 
   const reviews = {
     create: (requestId, data) => http.post(`/reviews/requests/${requestId}`, data),
-    list:   (userId, p = {})  => http.get(`/reviews/user/${userId}?` + new URLSearchParams(p)),
+    list:   (providerId, p = {})  => http.get(`/reviews/providers/${providerId}?` + new URLSearchParams(p)),
   };
 
   const notifications = {
@@ -302,7 +302,7 @@
     dashboard:           ()       => http.get('/admin/dashboard'),
     stats:               ()       => http.get('/admin/dashboard'),          // alias
     monthlyStats:        ()       => http.get('/admin/stats/monthly'),
-    users:               (p = {}) => http.get('/admin/users?' + new URLSearchParams(p)),
+    users:               (p = {}) => http.get('/users?' + new URLSearchParams(p)),
     suspendUser:         (id, data) => http.post(`/admin/users/${id}/suspend`, data),
     unsuspendUser:       (id)     => http.post(`/admin/users/${id}/reinstate`),
     pendingProviders:    ()       => http.get('/admin/verifications/pending'),
@@ -313,7 +313,7 @@
     withdrawals:         (p = {}) => http.get('/wallet/admin/withdrawals?' + new URLSearchParams(p)),
     approveWithdrawal:   (id, data) => http.patch(`/wallet/admin/withdrawals/${id}/approve`, data),
     rejectWithdrawal:    (id, data) => http.patch(`/wallet/admin/withdrawals/${id}/reject`, data),
-    health:              ()       => http.get('/health'),
+    health:              ()       => http.get('/admin/health'),
     weeklyReport:        ()       => http.get('/admin/reports/weekly'),
     overdueCommissions:  ()       => http.get('/admin/commissions/overdue'),
     consultations:       (p = {}) => http.get('/admin/consultations?' + new URLSearchParams(p)),
@@ -326,7 +326,6 @@
     create:   (data)        => http.post('/tenders', data),
     bid:      (id, data)    => http.post(`/tenders/${id}/bids`, data),
     award:    (id, bidId)   => http.post(`/tenders/${id}/award/${bidId}`),
-    milestones: (id)        => http.get(`/tenders/${id}/milestones`),
   };
 
   const invoices = {
@@ -338,8 +337,8 @@
     list:   (p = {})   => http.get('/equipment?' + new URLSearchParams(p)),
     get:    (id)       => http.get(`/equipment/${id}`),
     rent:   (id, data) => http.post(`/equipment/${id}/rentals`, data),
-    myRentals: ()      => http.get('/equipment/my-rentals'),
-    myListings: ()     => http.get('/equipment/my-listings'),
+    myRentals: ()      => http.get('/equipment/rentals/mine'),
+    myListings: ()     => http.get('/equipment/mine'),
   };
 
   const consultations = {

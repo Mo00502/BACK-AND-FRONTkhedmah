@@ -37,6 +37,8 @@ const mockPrisma = {
   },
   supplierOffer: {
     create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),
   },
@@ -217,6 +219,10 @@ describe('TendersService', () => {
       mockPrisma.projectRequirement.findUnique.mockResolvedValue({
         id: 'req-1',
         tender: { company: { ownerId: 'user-1' } },
+      });
+      mockPrisma.supplierOffer.findUnique.mockResolvedValue({
+        id: 'offer-1',
+        requirementId: 'req-1',
       });
       mockPrisma.$transaction.mockResolvedValue([]);
       const result = await service.selectOffer('offer-1', 'req-1', 'user-1');

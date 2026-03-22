@@ -144,11 +144,11 @@ export class PaymentsService {
     }
   }
 
-  async handleWebhook(payload: any, signature: string) {
+  async handleWebhook(payload: any, signature: string, rawBody: Buffer) {
     const secret = this.config.getOrThrow('MOYASAR_WEBHOOK_SECRET');
     const expected = crypto
       .createHmac('sha256', secret)
-      .update(JSON.stringify(payload))
+      .update(rawBody)
       .digest('hex');
     if (signature !== expected) throw new ForbiddenException('Invalid webhook signature');
 
