@@ -181,13 +181,13 @@ export class ProvidersService {
     // ── 2. Weekly trend (last 8 ISO weeks) ────────────────────────────────
     const weeklyRows: Array<{ week: string; gross: string }> = await this.prisma.$queryRaw`
       SELECT
-        TO_CHAR(DATE_TRUNC('week', e.updated_at), 'IYYY-"W"IW') AS week,
-        SUM(e.amount)::numeric                                    AS gross
+        TO_CHAR(DATE_TRUNC('week', e.released_at), 'IYYY-"W"IW') AS week,
+        SUM(e.amount)::numeric                                     AS gross
       FROM escrow e
       JOIN service_requests r ON r.id = e.request_id
       WHERE r.provider_id = ${userId}
         AND e.status = 'RELEASED'
-        AND e.updated_at >= NOW() - INTERVAL '8 weeks'
+        AND e.released_at >= NOW() - INTERVAL '8 weeks'
       GROUP BY week
       ORDER BY week ASC
     `;
@@ -201,13 +201,13 @@ export class ProvidersService {
     // ── 3. Monthly trend (last 6 months) ──────────────────────────────────
     const monthlyRows: Array<{ month: string; gross: string }> = await this.prisma.$queryRaw`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', e.updated_at), 'YYYY-MM') AS month,
-        SUM(e.amount)::numeric                                  AS gross
+        TO_CHAR(DATE_TRUNC('month', e.released_at), 'YYYY-MM') AS month,
+        SUM(e.amount)::numeric                                   AS gross
       FROM escrow e
       JOIN service_requests r ON r.id = e.request_id
       WHERE r.provider_id = ${userId}
         AND e.status = 'RELEASED'
-        AND e.updated_at >= NOW() - INTERVAL '6 months'
+        AND e.released_at >= NOW() - INTERVAL '6 months'
       GROUP BY month
       ORDER BY month ASC
     `;

@@ -41,6 +41,9 @@ const mockPrisma = {
     update: jest.fn(),
     updateMany: jest.fn(),
   },
+  providerProfile: {
+    findFirst: jest.fn(),
+  },
 };
 
 const mockEvents = { emit: jest.fn() };
@@ -123,6 +126,7 @@ describe('ConsultationsService', () => {
 
   describe('accept', () => {
     it('sets status to ACCEPTED and emits consultation.accepted', async () => {
+      mockPrisma.providerProfile.findFirst.mockResolvedValue({ id: 'pp-1', userId: 'provider-1', verificationStatus: 'APPROVED', suspendedAt: null });
       mockPrisma.consultation.findUnique.mockResolvedValue(makeConsult());
       mockPrisma.consultation.update.mockResolvedValue(
         makeConsult({ status: ConsultationStatus.ACCEPTED, providerId: 'provider-1' }),
@@ -137,7 +141,13 @@ describe('ConsultationsService', () => {
       );
     });
 
+    it('throws ForbiddenException if provider not approved', async () => {
+      mockPrisma.providerProfile.findFirst.mockResolvedValue(null);
+      await expect(service.accept('provider-1', 'consult-1')).rejects.toThrow(ForbiddenException);
+    });
+
     it('throws BadRequestException if already ACCEPTED', async () => {
+      mockPrisma.providerProfile.findFirst.mockResolvedValue({ id: 'pp-1', userId: 'provider-1', verificationStatus: 'APPROVED', suspendedAt: null });
       mockPrisma.consultation.findUnique.mockResolvedValue(
         makeConsult({ status: ConsultationStatus.ACCEPTED, providerId: 'provider-1' }),
       );
@@ -145,6 +155,7 @@ describe('ConsultationsService', () => {
     });
 
     it('throws NotFoundException for unknown consultation', async () => {
+      mockPrisma.providerProfile.findFirst.mockResolvedValue({ id: 'pp-1', userId: 'provider-1', verificationStatus: 'APPROVED', suspendedAt: null });
       mockPrisma.consultation.findUnique.mockResolvedValue(null);
       await expect(service.accept('provider-1', 'missing')).rejects.toThrow(NotFoundException);
     });

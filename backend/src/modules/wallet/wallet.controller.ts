@@ -83,6 +83,7 @@ export class WalletController {
   }
 
   @Get('withdrawals')
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'List my withdrawal requests' })
   getWithdrawals(

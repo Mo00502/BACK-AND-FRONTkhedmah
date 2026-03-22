@@ -138,33 +138,26 @@ export class SchedulerService {
   @Cron('0 3 * * *')
   async recalcProviderRatings() {
     const start = Date.now();
-    const providers = await this.prisma.providerProfile.findMany({
-      select: { id: true, userId: true },
+
+    const grouped = await this.prisma.review.groupBy({
+      by: ['rateeId'],
+      _avg: { score: true },
+      _count: { score: true },
+      having: { score: { _count: { gt: 0 } } },
     });
 
     let updated = 0;
-    for (const p of providers) {
-      const agg = await this.prisma.review.aggregate({
-        where: { rateeId: p.userId },
-        _avg: { score: true },
-        _count: { score: true },
+    for (const g of grouped) {
+      const avg = parseFloat((g._avg.score ?? 0).toFixed(2));
+      const cnt = g._count.score;
+      const res = await this.prisma.providerProfile.updateMany({
+        where: { userId: g.rateeId },
+        data: { ratingAvg: avg, ratingCount: cnt },
       });
-
-      if (agg._count.score > 0) {
-        await this.prisma.providerProfile.update({
-          where: { id: p.id },
-          data: { ratingAvg: parseFloat((agg._avg.score ?? 0).toFixed(2)), ratingCount: agg._count.score },
-        });
-        updated++;
-      }
+      if (res.count > 0) updated++;
     }
 
-    await this.logJob(
-      'recalc_provider_ratings',
-      'SUCCESS',
-      `Updated ${updated} providers`,
-      Date.now() - start,
-    );
+    await this.logJob('recalc_provider_ratings', 'SUCCESS', `Updated ${updated} providers`, Date.now() - start);
   }
 
   // ── NEW: Auto-reconcile completed orders with materials ─────────────────────

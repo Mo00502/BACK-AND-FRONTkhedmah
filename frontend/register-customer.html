@@ -326,7 +326,7 @@
             } catch (err) {
                 btn.disabled = false;
                 btn.innerHTML = '<span>🚀</span><span>إنشاء الحساب</span>';
-                const errEl = document.getElementById('globalErr');
+                const errEl = document.getElementById('errorAlert');
                 if (errEl) {
                     errEl.textContent = '❌ ' + API.errorMsg(err);
                     errEl.style.display = 'block';

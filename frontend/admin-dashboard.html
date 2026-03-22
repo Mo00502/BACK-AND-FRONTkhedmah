@@ -339,8 +339,8 @@
                                 <div class="verify-meta">⚡ كهرباء • الرياض • منذ 3 أيام</div>
                             </div>
                             <div class="verify-actions">
-                                <button class="btn-xs btn-review" onclick="startReview(this,'محمد الزهراني','v1')">مراجعة</button>
-                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'محمد الزهراني','v1')">قبول ✓</button>
+                                <button class="btn-xs btn-review" data-action="review" data-id="v1" data-name="محمد الزهراني" onclick="startReview(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">مراجعة</button>
+                                <button class="btn-xs btn-approve" data-action="approve" data-id="v1" data-name="محمد الزهراني" onclick="approveProvider(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">قبول ✓</button>
                             </div>
                         </div>
                         <div class="verify-item" data-id="v3">
@@ -350,8 +350,8 @@
                                 <div class="verify-meta">🎨 دهانات • جدة • منذ 7 أيام</div>
                             </div>
                             <div class="verify-actions">
-                                <button class="btn-xs btn-review" onclick="startReview(this,'نايف القحطاني','v3')">مراجعة</button>
-                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'نايف القحطاني','v3')">قبول ✓</button>
+                                <button class="btn-xs btn-review" data-action="review" data-id="v3" data-name="نايف القحطاني" onclick="startReview(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">مراجعة</button>
+                                <button class="btn-xs btn-approve" data-action="approve" data-id="v3" data-name="نايف القحطاني" onclick="approveProvider(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">قبول ✓</button>
                             </div>
                         </div>
                         <div class="verify-item" data-id="v4">
@@ -361,8 +361,8 @@
                                 <div class="verify-meta">❄️ تكييف • الدمام • منذ 10 أيام</div>
                             </div>
                             <div class="verify-actions">
-                                <button class="btn-xs btn-review" onclick="startReview(this,'رائد المطيري','v4')">مراجعة</button>
-                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'رائد المطيري','v4')">قبول ✓</button>
+                                <button class="btn-xs btn-review" data-action="review" data-id="v4" data-name="رائد المطيري" onclick="startReview(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">مراجعة</button>
+                                <button class="btn-xs btn-approve" data-action="approve" data-id="v4" data-name="رائد المطيري" onclick="approveProvider(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">قبول ✓</button>
                             </div>
                         </div>
                     </div>
@@ -382,8 +382,8 @@
                                 <div class="verify-meta">🔧 سباكة • الرياض • منذ 5 أيام</div>
                             </div>
                             <div class="verify-actions">
-                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'عبدالله الحربي','v2')">قبول ✓</button>
-                                <button class="btn-xs btn-reject" onclick="openRejectModal('v2','عبدالله الحربي')">رفض ✕</button>
+                                <button class="btn-xs btn-approve" data-action="approve" data-id="v2" data-name="عبدالله الحربي" onclick="approveProvider(this,escAttr(this.dataset.name),escAttr(this.dataset.id))">قبول ✓</button>
+                                <button class="btn-xs btn-reject" data-action="reject" data-id="v2" data-name="عبدالله الحربي" onclick="openRejectModal(escAttr(this.dataset.id),escAttr(this.dataset.name))">رفض ✕</button>
                             </div>
                         </div>
                     </div>
@@ -711,6 +711,9 @@
     </div>
 
     <script>
+        // ── XSS attribute escaping helper ──
+        const escAttr = s => String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+
         // ── Clock ──
         function updateClock() {
             const now = new Date();

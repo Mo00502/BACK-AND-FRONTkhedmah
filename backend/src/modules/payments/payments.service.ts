@@ -379,7 +379,7 @@ export class PaymentsService {
     };
   }
 
-  async initiateRefund(adminId: string, paymentId: string, reason: string, partialAmount?: number) {
+  async initiateRefund(adminId: string, paymentId: string, reason: string, partialAmount?: number, skipStatusUpdate?: boolean) {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: { escrow: true, request: true },
@@ -421,10 +421,14 @@ export class PaymentsService {
             }),
           ]
         : []),
-      this.prisma.serviceRequest.update({
-        where: { id: payment.requestId },
-        data: { status: 'CANCELLED' },
-      }),
+      ...(skipStatusUpdate
+        ? []
+        : [
+            this.prisma.serviceRequest.update({
+              where: { id: payment.requestId },
+              data: { status: 'CANCELLED' },
+            }),
+          ]),
     ]);
 
     this.events.emit('payment.refunded', { paymentId, adminId, reason });

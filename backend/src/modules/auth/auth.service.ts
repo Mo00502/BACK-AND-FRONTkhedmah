@@ -299,6 +299,7 @@ export class AuthService {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: stored.userId } });
 
     if (user.deletedAt) throw new UnauthorizedException('Account not found');
+    if (user.status === 'BANNED') throw new ForbiddenException('This account has been banned');
     if (user.status === 'SUSPENDED' || user.suspended) throw new ForbiddenException('This account is suspended');
 
     return this.generateTokenPair(user);

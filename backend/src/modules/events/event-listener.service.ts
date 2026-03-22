@@ -166,6 +166,7 @@ export class EventListenerService {
         payload.paymentId,
         `حل نزاع (تقسيم) — استرداد نصف المبلغ | نزاع: ${payload.disputeId}`,
         payload.refundAmount,
+        true, // skipStatusUpdate: request is COMPLETED from SPLIT resolution, not CANCELLED
       );
       this.logger.log(`Split refund initiated for dispute ${payload.disputeId}, amount ${payload.refundAmount} SAR`);
     } catch (err) {
@@ -374,12 +375,18 @@ export class EventListenerService {
         `رسوم استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
         payload.consultationId,
       );
-      await this.wallet.credit(
-        payload.providerId,
-        payload.amount,
-        `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
-        payload.consultationId,
-      );
+      try {
+        await this.wallet.credit(
+          payload.providerId,
+          payload.amount,
+          `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
+          payload.consultationId,
+        );
+      } catch (creditErr) {
+        this.logger.error(`CRITICAL: consultation charge debit succeeded but credit FAILED for consultation ${payload.consultationId}. Manual intervention required. Error: ${creditErr}`);
+        // Re-throw so the error is visible
+        throw creditErr;
+      }
       this.logger.log(
         `Consultation charged: customer ${payload.customerId} -${payload.amount} SAR, provider ${payload.providerId} +${payload.amount} SAR`,
       );

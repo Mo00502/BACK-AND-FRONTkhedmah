@@ -98,7 +98,8 @@
       // Refresh failed — clear session and send to login
       const role = Store.getUser()?.role;   // read role BEFORE clearing
       Store.clearAll();
-      window.location.href = role === 'ADMIN' ? 'admin-login.html' : 'login.html';
+      window.location.href = (role === 'admin' || role === 'ADMIN' || role === 'super_admin' || role === 'SUPER_ADMIN')
+        ? 'admin-login.html' : 'login.html';
       throw new ApiError(401, 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.');
     }
 

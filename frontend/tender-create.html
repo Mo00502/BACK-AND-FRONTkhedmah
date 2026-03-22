@@ -165,8 +165,14 @@
     <!-- Auth Guard -->
     <script>
         (function() {
-            const user = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
             if (!localStorage.getItem('khedmah_demo')) { location.href = 'login.html'; return; }
+            try {
+                var u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                if (u.role && u.role !== 'customer' && u.role !== 'CUSTOMER') {
+                    window.location.href = 'provider-dashboard.html';
+                    return;
+                }
+            } catch(e) { window.location.href = 'login.html'; }
         })();
     </script>
 

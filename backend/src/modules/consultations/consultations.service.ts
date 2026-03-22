@@ -101,6 +101,11 @@ export class ConsultationsService {
 
   // ── Provider: accept consultation request ────────────────────────────────
   async accept(providerId: string, consultationId: string) {
+    const providerProfile = await this.prisma.providerProfile.findFirst({
+      where: { userId: providerId, verificationStatus: 'APPROVED' as any, suspendedAt: null },
+    });
+    if (!providerProfile) throw new ForbiddenException('Provider is not approved to accept consultations');
+
     const c = await this._getAndAssertProvider(consultationId, providerId, [
       ConsultationStatus.PENDING,
     ]);
