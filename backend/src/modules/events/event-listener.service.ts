@@ -165,6 +165,7 @@ export class EventListenerService {
         payload.adminId,
         payload.paymentId,
         `حل نزاع (تقسيم) — استرداد نصف المبلغ | نزاع: ${payload.disputeId}`,
+        payload.refundAmount,
       );
       this.logger.log(`Split refund initiated for dispute ${payload.disputeId}, amount ${payload.refundAmount} SAR`);
     } catch (err) {

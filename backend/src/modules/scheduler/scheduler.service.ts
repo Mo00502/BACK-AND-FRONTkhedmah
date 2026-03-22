@@ -292,7 +292,7 @@ export class SchedulerService {
         status: QuoteStatus.PENDING,
         expiresAt: { lt: new Date() },
       },
-      data: { status: QuoteStatus.REJECTED },
+      data: { status: QuoteStatus.EXPIRED },
     });
     await this.logJob(
       'expire_stale_quotes',

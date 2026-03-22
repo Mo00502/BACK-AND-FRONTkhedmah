@@ -144,10 +144,16 @@ export class ProvidersService {
       }),
     ]);
 
+    const PLATFORM_FEE_RATE = 0.15;
+    const grossAvailable = Number(available._sum.amount ?? 0);
+    const grossPending = Number(pending._sum.amount ?? 0);
+    const gross = Number(total._sum.amount ?? 0);
     return {
-      available: Number(available._sum.amount ?? 0),
-      pending: Number(pending._sum.amount ?? 0),
-      total: Number(total._sum.amount ?? 0),
+      available: parseFloat((grossAvailable * (1 - PLATFORM_FEE_RATE)).toFixed(2)),
+      pending: parseFloat((grossPending * (1 - PLATFORM_FEE_RATE)).toFixed(2)),
+      gross,
+      commission: parseFloat((gross * PLATFORM_FEE_RATE).toFixed(2)),
+      net: parseFloat((gross * (1 - PLATFORM_FEE_RATE)).toFixed(2)),
     };
   }
 
@@ -323,6 +329,27 @@ export class ProvidersService {
     return {
       message: 'Documents submitted successfully. Our team will review within 2-3 business days.',
     };
+  }
+
+  async getMyProfile(userId: string) {
+    return this.prisma.providerProfile.findUnique({
+      where: { userId },
+      include: { skills: { include: { service: true } }, availability: true },
+    });
+  }
+
+  async getMySkills(userId: string) {
+    return this.prisma.providerSkill.findMany({
+      where: { provider: { userId } },
+      include: { service: true },
+    });
+  }
+
+  async getMyAvailability(userId: string) {
+    return this.prisma.providerAvailability.findMany({
+      where: { provider: { userId } },
+      orderBy: { dayOfWeek: 'asc' },
+    });
   }
 
   async getVerificationStatus(userId: string) {

@@ -18,6 +18,8 @@ import {
   IsOptional,
   IsBoolean,
   IsDateString,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { MaterialsPaymentService } from './materials-payment.service';
@@ -174,7 +176,15 @@ export class MaterialsPaymentController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'Admin: list all materials payment records' })
-  adminList(@Query('status') status?: MaterialsPaymentStatus) {
-    return this.mp.adminList(status);
+  adminList(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: MaterialsPaymentStatus,
+  ) {
+    return this.mp.adminList(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+      status,
+    );
   }
 }

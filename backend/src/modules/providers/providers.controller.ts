@@ -87,6 +87,33 @@ export class ProvidersController {
   }
 
   @ApiBearerAuth()
+  @Get('me/profile')
+  @Roles(UserRole.PROVIDER)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Get my provider profile' })
+  getMyProfile(@CurrentUser('id') userId: string) {
+    return this.providers.getMyProfile(userId);
+  }
+
+  @ApiBearerAuth()
+  @Get('me/skills')
+  @Roles(UserRole.PROVIDER)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Get my skills/services' })
+  getMySkills(@CurrentUser('id') userId: string) {
+    return this.providers.getMySkills(userId);
+  }
+
+  @ApiBearerAuth()
+  @Get('me/availability')
+  @Roles(UserRole.PROVIDER)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Get my availability schedule' })
+  getMyAvailability(@CurrentUser('id') userId: string) {
+    return this.providers.getMyAvailability(userId);
+  }
+
+  @ApiBearerAuth()
   @Get('me/earnings')
   @Roles(UserRole.PROVIDER)
   @ThrottleRelaxed()

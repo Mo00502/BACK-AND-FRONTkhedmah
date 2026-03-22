@@ -377,7 +377,7 @@ export class PaymentsService {
     };
   }
 
-  async initiateRefund(adminId: string, paymentId: string, reason: string) {
+  async initiateRefund(adminId: string, paymentId: string, reason: string, partialAmount?: number) {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: { escrow: true, request: true },
@@ -390,7 +390,7 @@ export class PaymentsService {
     try {
       await axios.post(
         `${this.moyasarBase}/payments/${payment.moyasarRef}/refund`,
-        { amount: Math.round(Number(payment.amount) * 100) },
+        { amount: partialAmount ? Math.round(partialAmount * 100) : Math.round(Number(payment.amount) * 100) },
         { auth: { username: this.config.getOrThrow('MOYASAR_API_KEY'), password: '' } },
       );
     } catch {

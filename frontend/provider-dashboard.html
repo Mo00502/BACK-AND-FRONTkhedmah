@@ -485,6 +485,9 @@
 
     <script src="js/api.js"></script>
     <script>
+        function escHtml(s) {
+            return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
         /* ── Dashboard Data Loader ───────────────────────────────────────────── */
         (async function initDashboard() {
             if (!API.isLoggedIn()) return;
@@ -562,12 +565,15 @@
             list.innerHTML = items.map(r => {
                 const icon = icons[(r.serviceCategory || '').toLowerCase()] || '🔧';
                 const dateStr = r.scheduledAt ? new Date(r.scheduledAt).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
-                return `<div class="request-card" data-req-id="${r.id}" data-service="${r.serviceTitle || r.title || 'خدمة'}">
+                const svcTitle = escHtml(r.serviceTitle || r.title || 'طلب خدمة');
+                const city = escHtml(r.city || r.location || '');
+                const reqId = escHtml(r.id);
+                return `<div class="request-card" data-req-id="${reqId}" data-service="${svcTitle}">
                     <div class="req-icon">${icon}</div>
                     <div class="req-info">
-                        <div class="req-name">${r.serviceTitle || r.title || 'طلب خدمة'}</div>
+                        <div class="req-name">${svcTitle}</div>
                         <div class="req-meta">
-                            <span>📍 ${r.city || r.location || ''}</span>
+                            <span>📍 ${city}</span>
                             ${dateStr ? `<span>📅 ${dateStr}</span>` : ''}
                         </div>
                     </div>
@@ -589,19 +595,24 @@
                 panel.innerHTML = `<div class="empty-state" style="border:none;padding:1.5rem 0;"><div class="emoji">🎯</div><p>لا توجد طلبات جارية حالياً</p></div>`;
                 return;
             }
-            panel.innerHTML = items.map(r => `
-                <div class="request-card" data-req-id="${r.id}" data-service="${r.serviceTitle || 'خدمة'}" style="box-shadow:none;padding:1rem 0;border-bottom:1px solid #f1f5f9;border-radius:0">
+            panel.innerHTML = items.map(r => {
+                const svcTitle = escHtml(r.serviceTitle || r.title || 'طلب خدمة');
+                const reqId = escHtml(r.id);
+                const custName = escHtml(r.customer?.profile?.nameAr || 'عميل');
+                return `
+                <div class="request-card" data-req-id="${reqId}" data-service="${svcTitle}" style="box-shadow:none;padding:1rem 0;border-bottom:1px solid #f1f5f9;border-radius:0">
                     <div class="req-icon">🔧</div>
                     <div class="req-info">
-                        <div class="req-name">${r.serviceTitle || r.title || 'طلب خدمة'}</div>
-                        <div class="req-meta"><span>${r.customer?.profile?.nameAr || 'عميل'}</span></div>
+                        <div class="req-name">${svcTitle}</div>
+                        <div class="req-meta"><span>${custName}</span></div>
                     </div>
                     <span class="badge badge-progress">جارٍ</span>
                     <div class="req-actions">
-                        <a href="chat.html?type=service&requestId=${r.id}" class="btn-sm btn-outline">💬</a>
+                        <a href="chat.html?type=service&requestId=${reqId}" class="btn-sm btn-outline">💬</a>
                         <button class="btn-sm btn-success" onclick="completeWork(this)">اكتمل ✓</button>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
 
         function dismissRequest(btn) {
@@ -622,7 +633,7 @@
             if (isNaN(price) || price <= 0) { API.toast('❌ سعر غير صالح'); return; }
             btn.disabled = true;
             try {
-                await API.requests.submitQuote(reqId, { price, notes: '' });
+                await API.requests.submitQuote(reqId, { amount: price, message: undefined });
                 card.querySelector('.badge').className = 'badge badge-progress';
                 card.querySelector('.badge').textContent = 'تم إرسال العرض';
                 btn.textContent = '✅ تم الإرسال';

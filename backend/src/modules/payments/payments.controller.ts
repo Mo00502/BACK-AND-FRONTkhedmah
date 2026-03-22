@@ -14,6 +14,7 @@ import { PaymentMethod } from '@prisma/client';
 import {
   ThrottleStrict,
   ThrottleDefault,
+  ThrottleRelaxed,
   SkipThrottle,
 } from '../../common/decorators/throttle.decorator';
 
@@ -80,6 +81,7 @@ export class PaymentsController {
   @Get(':paymentId/status')
   @Roles(UserRole.CUSTOMER)
   @ApiBearerAuth()
+  @ThrottleRelaxed()
   @ApiOperation({ summary: 'Get payment status by ID' })
   getStatus(@Param('paymentId') paymentId: string, @CurrentUser('id') customerId: string) {
     return this.payments.getPaymentStatus(customerId, paymentId);
@@ -88,6 +90,7 @@ export class PaymentsController {
   @Get('requests/:requestId/escrow')
   @Roles(UserRole.CUSTOMER, UserRole.PROVIDER)
   @ApiBearerAuth()
+  @ThrottleRelaxed()
   @ApiOperation({ summary: 'Get escrow status for a request' })
   getEscrow(@Param('requestId') requestId: string, @CurrentUser('id') userId: string) {
     return this.payments.getEscrowStatus(requestId, userId);

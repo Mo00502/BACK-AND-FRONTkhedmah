@@ -195,10 +195,22 @@ export class AdminService {
   }
 
   async reinstateUser(userId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { suspended: false, suspendedReason: null, status: UserStatus.ACTIVE },
-    });
+    const [user] = await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { suspended: false, suspendedReason: null, status: UserStatus.ACTIVE },
+      }),
+      this.prisma.providerProfile.updateMany({
+        where: { userId, verificationStatus: 'SUSPENDED' as any },
+        data: {
+          verificationStatus: 'APPROVED' as any,
+          verified: true,
+          suspendedAt: null,
+          suspensionReason: null,
+        },
+      }),
+    ]);
+    return user;
   }
 
   async deleteUser(userId: string) {
@@ -330,12 +342,13 @@ export class AdminService {
         });
       } else if (resolution === 'SPLIT') {
         const halfAmount = Number(escrow.amount) / 2;
-        const platformFee = Number(escrow.platformFee ?? 0) / 2;
+        const totalPlatformFee = Number(escrow.platformFee ?? (Number(escrow.amount) * 0.15));
+        const platformFeeHalf = totalPlatformFee / 2;
         // Credit provider with their half minus platform fee
         this.events.emit('dispute.split_release', {
           requestId: dispute.requestId,
           providerId: dispute.request?.providerId,
-          providerAmount: halfAmount - platformFee,
+          providerAmount: halfAmount - platformFeeHalf,
           escrowId: escrow.id,
         });
         // Refund customer their half via Moyasar

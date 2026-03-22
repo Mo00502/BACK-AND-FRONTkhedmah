@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { IsString, IsEnum } from 'class-validator';
+import { IsString, IsEnum, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { ReportsService } from '../reports/reports.service';
@@ -32,6 +32,7 @@ class SuspendDto {
 class RejectProviderDto {
   @ApiProperty({ example: 'الوثائق المقدمة غير واضحة أو منتهية الصلاحية' })
   @IsString()
+  @MinLength(10)
   reason: string;
 }
 

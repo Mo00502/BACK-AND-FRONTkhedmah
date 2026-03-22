@@ -826,7 +826,7 @@
         function closeModal() { document.getElementById('rejectModal').style.display = 'none'; rejectTarget = null; }
         async function confirmReject() {
             const reason = document.getElementById('rejectReason').value.trim();
-            if (!reason) { document.getElementById('rejectReason').style.borderColor = 'var(--error)'; return; }
+            if (!reason || reason.length < 10) { document.getElementById('rejectReason').style.borderColor = 'var(--error)'; alert('يرجى إدخال سبب الرفض (10 أحرف على الأقل)'); return; }
             const target = rejectTarget;
             closeModal();
             const item = document.querySelector(`[data-id="${target?.id}"]`);

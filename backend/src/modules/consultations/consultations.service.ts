@@ -29,6 +29,7 @@ export class ConsultationsService {
         mode: dto.mode,
         durationMinutes: dto.durationMinutes,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        pricePerHour: dto.pricePerHour,
       },
       include: {
         service: { select: { nameAr: true, nameEn: true, icon: true } },

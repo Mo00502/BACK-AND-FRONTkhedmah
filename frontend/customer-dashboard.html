@@ -598,6 +598,9 @@
 
     <script src="js/api.js"></script>
     <script>
+    function escHtml(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
     /* ── Dashboard Data Loader ─────────────────────────────────────────────── */
     (async function initDashboard() {
         if (!API.isLoggedIn()) return;
@@ -648,7 +651,9 @@
             if (reqList && activeReqs.length > 0) {
                 reqList.innerHTML = activeReqs.map(r => {
                     const st  = STATUS_LABEL[r.status] || STATUS_LABEL.PENDING;
-                    const svc = r.service?.nameAr || 'خدمة';
+                    const svc = escHtml(r.service?.nameAr || 'خدمة');
+                    const city = escHtml(r.city || '');
+                    const reqId = escHtml(r.id);
                     return `
                     <div class="request-card">
                         <div class="request-service-icon">${svcIcon(r.service?.category)}</div>
@@ -656,14 +661,14 @@
                             <div class="request-name">${svc}</div>
                             <div class="request-meta">
                                 <span>${r.providerId ? 'مزود محدد' : 'في انتظار المزود'}</span>
-                                <span>📍 ${r.city || ''}</span>
+                                <span>📍 ${city}</span>
                                 <span>📅 ${new Date(r.createdAt).toLocaleDateString('ar-SA')}</span>
                             </div>
                         </div>
                         <span class="badge ${st.cls}">${st.text}</span>
                         <div class="request-actions">
-                            <a href="order-tracking.html?requestId=${r.id}" class="btn-sm btn-primary">📍 تتبع</a>
-                            <a href="chat.html?type=service&requestId=${r.id}" class="btn-sm btn-outline">💬 محادثة</a>
+                            <a href="order-tracking.html?requestId=${reqId}" class="btn-sm btn-primary">📍 تتبع</a>
+                            <a href="chat.html?type=service&requestId=${reqId}" class="btn-sm btn-outline">💬 محادثة</a>
                         </div>
                     </div>`;
                 }).join('');
@@ -677,20 +682,26 @@
                     const detail = await API.requests.get(req.id).catch(() => null);
                     if (!detail?.quotes?.length) continue;
                     detail.quotes.filter(q => q.status === 'PENDING').forEach(q => {
-                        const pName = q.provider?.profile?.nameAr || q.provider?.username || 'مزود';
+                        const pName = escHtml(q.provider?.profile?.nameAr || q.provider?.username || 'مزود');
                         const init  = pName.charAt(0);
+                        const svcName = escHtml(req.service?.nameAr || 'خدمة');
+                        const amount = escHtml(String(q.amount));
+                        const reqId = escHtml(req.id);
+                        const quoteId = escHtml(q.id);
+                        const ratingAvg = escHtml(String(q.provider?.providerProfile?.ratingAvg || '—'));
+                        const ratingCount = escHtml(String(q.provider?.providerProfile?.ratingCount || 0));
                         quotesList.insertAdjacentHTML('beforeend', `
-                        <div class="quote-card" data-quote="${q.id}" data-req="${req.id}">
+                        <div class="quote-card" data-quote="${quoteId}" data-req="${reqId}">
                             <div class="quote-avatar">${init}</div>
                             <div class="quote-info">
                                 <div class="quote-provider">${pName}</div>
-                                <div class="quote-service">${req.service?.nameAr || 'خدمة'}</div>
-                                <div class="quote-rating">⭐ ${q.provider?.providerProfile?.ratingAvg || '—'} (${q.provider?.providerProfile?.ratingCount || 0} تقييم)</div>
+                                <div class="quote-service">${svcName}</div>
+                                <div class="quote-rating">⭐ ${ratingAvg} (${ratingCount} تقييم)</div>
                             </div>
-                            <div><div class="quote-price">${q.amount} ر.س <small>+ ضريبة</small></div></div>
+                            <div><div class="quote-price">${amount} ر.س <small>+ ضريبة</small></div></div>
                             <div class="request-actions">
-                                <button class="btn-sm btn-primary" onclick="acceptQuote('${req.id}','${q.id}','${req.service?.nameAr||''}')">قبول</button>
-                                <button class="btn-sm btn-ghost" onclick="rejectQuote('${req.id}','${q.id}',this)">رفض</button>
+                                <button class="btn-sm btn-primary" onclick="acceptQuote('${reqId}','${quoteId}','${svcName}')">قبول</button>
+                                <button class="btn-sm btn-ghost" onclick="rejectQuote('${reqId}','${quoteId}',this)">رفض</button>
                             </div>
                         </div>`);
                     });

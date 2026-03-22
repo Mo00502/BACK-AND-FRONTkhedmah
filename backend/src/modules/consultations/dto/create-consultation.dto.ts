@@ -2,6 +2,7 @@ import {
   IsString,
   IsOptional,
   IsInt,
+  IsNumber,
   IsDateString,
   IsEnum,
   MaxLength,
@@ -43,4 +44,10 @@ export class CreateConsultationDto {
   @IsOptional()
   @IsDateString()
   scheduledAt?: string;
+
+  @ApiPropertyOptional({ example: 150, description: 'Provider hourly rate in SAR' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  pricePerHour?: number;
 }

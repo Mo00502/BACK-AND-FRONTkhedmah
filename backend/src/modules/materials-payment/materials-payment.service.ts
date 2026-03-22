@@ -441,22 +441,29 @@ export class MaterialsPaymentService {
   }
 
   // ── Admin list view ───────────────────────────────────────────────────────
-  async adminList(status?: MaterialsPaymentStatus) {
-    return this.prisma.materialsPayment.findMany({
-      where: status ? { status } : {},
-      include: {
-        request: {
-          select: {
-            id: true,
-            customer: { select: { id: true, profile: { select: { nameAr: true, nameEn: true } } } },
-            provider: { select: { id: true, profile: { select: { nameAr: true, nameEn: true } } } },
-            service: { select: { nameAr: true } },
+  async adminList(page = 1, limit = 20, status?: MaterialsPaymentStatus) {
+    const skip = (page - 1) * limit;
+    const where = status ? { status } : {};
+    const [items, total] = await Promise.all([
+      this.prisma.materialsPayment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          request: {
+            select: {
+              id: true,
+              status: true,
+              customerId: true,
+              providerId: true,
+            },
           },
         },
-        _count: { select: { usageLogs: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.materialsPayment.count({ where }),
+    ]);
+    return { items, total, page, limit };
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

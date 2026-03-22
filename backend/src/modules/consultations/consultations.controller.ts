@@ -48,6 +48,7 @@ export class ConsultationsController {
 
   @Patch(':id/cancel')
   @Roles(UserRole.CUSTOMER)
+  @ThrottleDefault()
   @ApiOperation({ summary: 'Customer: cancel a pending or accepted consultation' })
   cancel(@Param('id') id: string, @CurrentUser('id') customerId: string) {
     return this.consultations.cancel(customerId, id);
@@ -55,6 +56,7 @@ export class ConsultationsController {
 
   @Post(':id/rate')
   @Roles(UserRole.CUSTOMER)
+  @ThrottleDefault()
   @ApiOperation({ summary: 'Customer: rate a completed consultation (1–5 stars)' })
   rate(
     @Param('id') id: string,
@@ -68,6 +70,7 @@ export class ConsultationsController {
 
   @Patch(':id/accept')
   @Roles(UserRole.PROVIDER)
+  @ThrottleDefault()
   @ApiOperation({ summary: 'Provider: accept a consultation request' })
   accept(@Param('id') id: string, @CurrentUser('id') providerId: string) {
     return this.consultations.accept(providerId, id);
@@ -75,6 +78,7 @@ export class ConsultationsController {
 
   @Patch(':id/reject')
   @Roles(UserRole.PROVIDER)
+  @ThrottleDefault()
   @ApiOperation({ summary: 'Provider: reject a consultation request' })
   reject(@Param('id') id: string, @CurrentUser('id') providerId: string) {
     return this.consultations.reject(providerId, id);
@@ -82,6 +86,7 @@ export class ConsultationsController {
 
   @Patch(':id/start')
   @Roles(UserRole.PROVIDER)
+  @ThrottleDefault()
   @ApiOperation({ summary: 'Provider: mark session as started' })
   startSession(@Param('id') id: string, @CurrentUser('id') providerId: string) {
     return this.consultations.startSession(providerId, id);
