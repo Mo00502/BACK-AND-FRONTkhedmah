@@ -123,6 +123,7 @@ export class AdminService {
     });
 
     this.events.emit('provider.approved', { userId: profile.userId, email: profile.user.email });
+    this.events.emit('audit.log', { action: 'provider_approved', adminId: 'system', targetId: providerId });
     return updated;
   }
 
@@ -148,6 +149,7 @@ export class AdminService {
       email: profile.user.email,
       reason,
     });
+    this.events.emit('audit.log', { action: 'provider_rejected', adminId: 'system', targetId: providerId, details: reason });
     return updated;
   }
 
@@ -191,6 +193,7 @@ export class AdminService {
       adminId: adminId ?? 'system',
       reason,
     });
+    this.events.emit('audit.log', { action: 'user_suspended', adminId: adminId ?? 'system', targetId: targetUserId, details: reason });
     return updated;
   }
 
@@ -369,6 +372,7 @@ export class AdminService {
       reporterId: dispute.reporterId,
       againstId: dispute.againstId,
     });
+    this.events.emit('audit.log', { action: 'dispute_resolved', adminId, targetId: disputeId, details: resolution });
 
     return { message: `Dispute resolved: ${resolution}` };
   }

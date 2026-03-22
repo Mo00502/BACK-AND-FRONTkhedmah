@@ -319,6 +319,15 @@
     overdueCommissions:  ()       => http.get('/admin/commissions/overdue'),
     consultations:       (p = {}) => http.get('/admin/consultations?' + new URLSearchParams(p)),
     cancelConsultation:  (id, data) => http.patch(`/admin/consultations/${id}/cancel`, data),
+    support: {
+      list:          (p = {})     => http.get('/support/admin/tickets?' + new URLSearchParams(p)),
+      get:           (id)         => http.get(`/support/admin/tickets/${id}`),
+      reply:         (id, data)   => http.post(`/support/admin/tickets/${id}/messages`, data),
+      assign:        (id, data)   => http.patch(`/support/admin/tickets/${id}/assign`, data),
+      updateStatus:  (id, status) => http.patch(`/support/admin/tickets/${id}/status`, { status }),
+      close:         (id)         => http.patch(`/support/admin/tickets/${id}/status`, { status: 'CLOSED' }),
+      sla:           ()           => http.get('/support/admin/sla'),
+    },
   };
 
   const tenders = {
@@ -367,7 +376,8 @@
     get:    (id)          => http.get(`/support/tickets/${id}`),
     create: (data)        => http.post('/support/tickets', data),
     reply:  (id, data)    => http.post(`/support/tickets/${id}/messages`, data),
-    close:  (id)          => http.patch(`/support/admin/tickets/${id}/status`, { status: 'CLOSED' }),
+    // Note: closing a ticket is an admin-only action (PATCH /support/admin/tickets/:id/status).
+    // Use admin.support.updateStatus() from the admin namespace instead.
   };
 
   const maps = {

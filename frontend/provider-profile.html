@@ -1037,7 +1037,7 @@
         schedEl.innerHTML = Object.entries(data.schedule).map(([key, val]) => {
             const timeStr = val === 'closed'
                 ? '<span class="sched-closed">مغلق</span>'
-                : `<span class="sched-time">${val.replace('-', ' — ')}</span>`;
+                : `<span class="sched-time">${escHtml(val).replace('-', ' — ')}</span>`;
             return `<div class="sched-row"><span class="sched-day">${days[key]}</span>${timeStr}</div>`;
         }).join('');
 

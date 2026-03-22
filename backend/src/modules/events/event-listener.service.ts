@@ -368,6 +368,10 @@ export class EventListenerService {
     providerId: string;
     amount: number;
   }) {
+    const CONSULTATION_FEE_RATE = 0.15;
+    const platformFee = parseFloat((payload.amount * CONSULTATION_FEE_RATE).toFixed(2));
+    const providerNet = parseFloat((payload.amount - platformFee).toFixed(2));
+
     try {
       await this.wallet.debit(
         payload.customerId,
@@ -378,7 +382,7 @@ export class EventListenerService {
       try {
         await this.wallet.credit(
           payload.providerId,
-          payload.amount,
+          providerNet,
           `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
           payload.consultationId,
         );
@@ -388,7 +392,7 @@ export class EventListenerService {
         throw creditErr;
       }
       this.logger.log(
-        `Consultation charged: customer ${payload.customerId} -${payload.amount} SAR, provider ${payload.providerId} +${payload.amount} SAR`,
+        `Consultation charged: customer ${payload.customerId} -${payload.amount} SAR, provider ${payload.providerId} +${providerNet} SAR (platform fee: ${platformFee} SAR)`,
       );
     } catch (err) {
       this.logger.error(`onConsultationChargeRequired failed for consultation ${payload.consultationId}: ${err}`);

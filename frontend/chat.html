@@ -878,8 +878,8 @@ function initFromURL() {
     if (type === 'support') {
         // Patch context text with requestId if available
         if (reqId && CONVS['support-1']) {
-            CONVS['support-1'].ctxText = 'نزاع / بلاغ — طلب #' + reqId;
-            CONVS['support-1'].ctxLink = 'service-confirmation.html?requestId=' + reqId;
+            CONVS['support-1'].ctxText = 'نزاع / بلاغ — طلب #' + escHtml(reqId);
+            CONVS['support-1'].ctxLink = 'service-confirmation.html?requestId=' + encodeURIComponent(reqId);
             CONVS['support-1'].ctxLinkLabel = 'تفاصيل الطلب ←';
             // Prepend a system-style message if pending issue stored
             try {
@@ -911,7 +911,7 @@ function initFromURL() {
 
         // ── New request arriving from quote-request → payment-escrow ──
         const paid          = p.get('paid') === '1';
-        const service       = p.get('service') ? decodeURIComponent(p.get('service')) : 'خدمة';
+        const service       = escHtml(p.get('service') ? decodeURIComponent(p.get('service')) : 'خدمة');
         const serviceAmount = p.get('serviceAmount') || '0';
         const materialsEst  = p.get('materialsEst')  || '0';
         const now           = new Date();

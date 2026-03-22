@@ -56,7 +56,7 @@ export class TendersService {
    *
    * This method NEVER returns competitor bid information.
    */
-  async get(id: string, callerId: string) {
+  async get(id: string, callerId: string | undefined) {
     const tender = await this.prisma.tender.findUnique({
       where: { id },
       include: {
@@ -76,10 +76,10 @@ export class TendersService {
     });
     if (!tender) throw new NotFoundException('Tender not found');
 
-    const isOwner = tender.company.ownerId === callerId;
+    const isOwner = callerId ? tender.company.ownerId === callerId : false;
 
     // Fetch caller's own bid (bidders only; owner uses listBids())
-    const myBid = isOwner
+    const myBid = isOwner || !callerId
       ? undefined
       : ((await this.prisma.tenderBid.findFirst({
           where: { tenderId: id, submittedBy: callerId },
@@ -377,6 +377,8 @@ export class TendersService {
     if (!tender) throw new NotFoundException('Tender not found');
     return this.prisma.projectRequirement.findMany({
       where: { tenderId },
+      take: 100,
+      orderBy: { createdAt: 'asc' },
       include: { _count: { select: { offers: true } } },
     });
   }

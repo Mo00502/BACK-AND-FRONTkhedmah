@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import {
   ThrottleDefault,
   ThrottleRelaxed,
@@ -41,6 +42,7 @@ export class TendersController {
   // ── Tenders ──────────────────────────────────────────────────────────────
 
   @Get()
+  @Public()
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'List open tenders (no bid counts exposed)' })
   list(
@@ -73,12 +75,13 @@ export class TendersController {
   }
 
   @Get(':id')
+  @Public()
   @ThrottleRelaxed()
   @ApiOperation({
     summary: 'Get tender detail — caller sees only their own bid, never competitors',
   })
   get(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.tenders.get(id, user.id);
+    return this.tenders.get(id, user?.id);
   }
 
   /**

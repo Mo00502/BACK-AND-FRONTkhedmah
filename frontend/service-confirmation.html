@@ -592,6 +592,10 @@
             }
         })();
 
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
         // ── Read URL params globally (used by all handlers below) ──
         const _confParams = new URLSearchParams(location.search);
         const _pageRequestId  = _confParams.get('requestId')     || 'REQ-demo-001';
@@ -661,11 +665,12 @@
                 const actionButtons = document.querySelector('.action-buttons');
                 const successLinks = document.createElement('div');
                 successLinks.style.cssText = 'display:grid; gap:0.75rem; margin-top:1rem;';
+                const _safeRequestId = encodeURIComponent(_pageRequestId);
                 successLinks.innerHTML = `
-                    <a href="customer-invoice.html?requestId=${_pageRequestId}" style="display:block; padding:1rem; background:rgba(2,128,144,0.08); border:2px solid #028090; border-radius:12px; text-align:center; color:#028090; font-weight:700; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:1rem;">
+                    <a href="customer-invoice.html?requestId=${_safeRequestId}" style="display:block; padding:1rem; background:rgba(2,128,144,0.08); border:2px solid #028090; border-radius:12px; text-align:center; color:#028090; font-weight:700; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:1rem;">
                         🧾 عرض الفاتورة
                     </a>
-                    <a href="rate-service.html?requestId=${_pageRequestId}" style="display:block; padding:1rem; background:rgba(245,158,11,0.08); border:2px solid #F59E0B; border-radius:12px; text-align:center; color:#d97706; font-weight:700; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:1rem;">
+                    <a href="rate-service.html?requestId=${_safeRequestId}" style="display:block; padding:1rem; background:rgba(245,158,11,0.08); border:2px solid #F59E0B; border-radius:12px; text-align:center; color:#d97706; font-weight:700; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:1rem;">
                         ⭐ تقييم الخدمة
                     </a>
                     <a href="customer-dashboard.html" style="display:block; padding:1rem; background:rgba(15,23,42,0.05); border:2px solid #64748B; border-radius:12px; text-align:center; color:#475569; font-weight:700; text-decoration:none; font-family:'Tajawal',sans-serif; font-size:1rem;">
@@ -691,7 +696,7 @@
             }
             // Persist issue summary for the support/dispute page
             localStorage.setItem('khedmah_pending_issue', JSON.stringify({ requestId: _pageRequestId, issues }));
-            window.location.href = 'chat.html?type=support&requestId=' + _pageRequestId;
+            window.location.href = 'chat.html?type=support&requestId=' + encodeURIComponent(_pageRequestId);
         });
     </script>
 </body>
