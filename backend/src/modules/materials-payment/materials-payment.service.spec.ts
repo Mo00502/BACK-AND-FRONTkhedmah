@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MaterialsPaymentService } from './materials-payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -81,6 +82,10 @@ describe('MaterialsPaymentService', () => {
         MaterialsPaymentService,
         { provide: PrismaService, useValue: prisma },
         { provide: EventEmitter2, useValue: emitter },
+        {
+          provide: ConfigService,
+          useValue: { getOrThrow: jest.fn().mockReturnValue('test-moyasar-key') },
+        },
       ],
     }).compile();
 

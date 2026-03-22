@@ -260,6 +260,8 @@ export class PaymentsService {
     this.events.emit('payment.confirmed', {
       paymentId: payment.id,
       requestId: payment.requestId,
+      customerId: payment.request.customerId,
+      amount: serviceAmt + materialsAmt,
       serviceAmount: serviceAmt,
       materialsAmount: materialsAmt,
       hasMaterials: materialsAmt > 0,

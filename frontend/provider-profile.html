@@ -1088,11 +1088,11 @@
 
         // Rating summary
         document.getElementById('ratingSummary').innerHTML = `
-            <div class="rating-big">${data.rating}</div>
+            <div class="rating-big">${escHtml(data.rating)}</div>
             <div style="font-size:1.5rem">⭐</div>
             <div style="font-size:0.82rem;color:var(--gray)">
-                ${data.reviewCount} تقييم<br>
-                <span style="font-size:0.75rem">معدل الإنجاز: ${data.completionRate}%</span>
+                ${escHtml(data.reviewCount)} تقييم<br>
+                <span style="font-size:0.75rem">معدل الإنجاز: ${escHtml(data.completionRate)}%</span>
             </div>`;
 
         // CTA bar

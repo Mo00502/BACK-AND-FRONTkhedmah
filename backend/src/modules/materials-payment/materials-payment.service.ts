@@ -5,6 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MaterialsPaymentStatus } from '@prisma/client';
@@ -18,6 +19,7 @@ export class MaterialsPaymentService {
   constructor(
     private prisma: PrismaService,
     private events: EventEmitter2,
+    private config: ConfigService,
   ) {}
 
   // ── Called by PaymentsService on webhook success ──────────────────────────
@@ -264,7 +266,7 @@ export class MaterialsPaymentService {
       },
     });
 
-    const moyasarKey = process.env.MOYASAR_SECRET_KEY;
+    const moyasarKey = this.config.getOrThrow<string>('MOYASAR_API_KEY');
     const moyasarBase = 'https://api.moyasar.com/v1';
 
     try {

@@ -677,6 +677,10 @@
 <div class="toast" id="toast"></div>
 
 <script>
+    function escHtml(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     let selectedPriceType = 'hour';
     let deleteTargetId = null;
     let editingId = null;
@@ -823,14 +827,14 @@
                         </label>
                     </div>
                 </div>
-                <div class="service-name">${name}</div>
-                <div class="service-category">${category}</div>
+                <div class="service-name">${escHtml(name)}</div>
+                <div class="service-category">${escHtml(category)}</div>
                 <div class="service-price">
-                    <span class="price-amount">${priceAmountText}</span>
-                    <span class="price-unit">${priceUnitText}</span>
+                    <span class="price-amount">${escHtml(priceAmountText)}</span>
+                    <span class="price-unit">${escHtml(priceUnitText)}</span>
                 </div>
-                <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${durationText}</div>
-                <div class="service-desc-text">${desc}</div>
+                <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${escHtml(durationText)}</div>
+                <div class="service-desc-text">${escHtml(desc)}</div>
                 <div class="card-actions">
                     <button class="btn-edit" onclick="openEditModal(${newId})">✏️ تعديل</button>
                     <button class="btn-delete" onclick="openDeleteConfirm(${newId})">🗑️ حذف</button>
