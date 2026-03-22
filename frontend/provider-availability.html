@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة التوفر - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        input, select, textarea { font-size: 16px; }
+
+        /* Nav */
+        nav {
+            background: white; padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .provider-badge {
+            background: rgba(2,128,144,0.1); color: var(--primary);
+            padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+        }
+
+        /* Main */
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 5%; }
+
+        /* Page Header */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;
+        }
+        .page-header h1 { font-size: 1.8rem; font-weight: 800; }
+        .page-header p { color: var(--gray); margin-top: 0.25rem; font-size: 0.95rem; }
+
+        /* Status Badge */
+        .status-badge {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .status-badge.available { background: rgba(16,185,129,0.1); color: var(--success); }
+        .status-badge.unavailable { background: rgba(239,68,68,0.1); color: var(--error); }
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .available .status-dot { background: var(--success); }
+        .unavailable .status-dot { background: var(--error); animation: none; }
+        @keyframes pulse {
+            0%,100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        /* Quick Set */
+        .quick-set {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .quick-set h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--dark); }
+        .quick-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .quick-btn {
+            padding: 0.6rem 1.2rem;
+            background: var(--light);
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--dark);
+            transition: all 0.2s;
+        }
+        .quick-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(2,128,144,0.05); }
+
+        /* Schedule Grid */
+        .schedule-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+        .schedule-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 130px repeat(7, 1fr);
+            gap: 6px;
+            min-width: 650px;
+        }
+        .grid-header {
+            padding: 0.6rem 0.4rem;
+            text-align: center;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--gray);
+        }
+        .time-label {
+            display: flex; align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
+            padding-right: 0.25rem;
+        }
+        .slot-btn {
+            padding: 0.55rem 0.25rem;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--gray);
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .slot-btn.available {
+            background: rgba(2,128,144,0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .slot-btn:hover { transform: scale(1.05); }
+
+        /* Vacation Mode */
+        .vacation-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .vacation-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+        }
+        .vacation-header h3 { font-size: 1rem; font-weight: 700; }
+
+        /* Toggle Switch */
+        .toggle { position: relative; width: 52px; height: 28px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: #e2e8f0;
+            border-radius: 28px; cursor: pointer; transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            width: 22px; height: 22px; border-radius: 50%; background: white;
+            top: 3px; right: 3px; transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle input:checked + .toggle-slider { background: var(--warning); }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(-24px); }
+
+        .vacation-body { display: none; animation: fadeIn 0.3s ease; }
+        .vacation-body.show { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+
+        .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+        .date-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--gray); }
+        .date-group input[type="date"] {
+            width: 100%; padding: 0.7rem 0.9rem;
+            border: 2px solid #e2e8f0; border-radius: 10px;
+            font-family: 'Tajawal', sans-serif; font-size: 16px;
+            color: var(--dark); background: white; transition: border-color 0.2s;
+        }
+        .date-group input[type="date"]:focus { outline: none; border-color: var(--warning); }
+        .vacation-note {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 10px;
+            font-size: 0.87rem;
+            color: var(--gray);
+        }
+
+        /* Save Bar */
+        .save-bar {
+            display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem;
+        }
+        .btn-save {
+            padding: 0.9rem 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 12px;
+            font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(2,128,144,0.3); }
+        .btn-reset {
+            padding: 0.9rem 1.5rem;
+            background: white; color: var(--gray);
+            border: 2px solid #e2e8f0; border-radius: 12px;
+            font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-reset:hover { border-color: var(--gray); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--dark); color: white;
+            padding: 0.9rem 1.8rem; border-radius: 12px;
+            font-weight: 600; opacity: 0; transition: all 0.3s;
+            z-index: 999; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .section-card, html.dark .stats-card, html.dark .service-card, html.dark .bank-card, html.dark .schedule-card, html.dark .avail-card, html.dark .request-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="number"], html.dark input[type="date"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; }
+        html.dark .table th, html.dark table th { background: #0f172a; color: #94a3b8; }
+        html.dark .table td, html.dark table td { border-color: #334155; }
+        html.dark .modal, html.dark .modal-content, html.dark .modal-box { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .modal-overlay, html.dark .overlay { background: rgba(0,0,0,0.6); }
+        html.dark .day-label, html.dark .time-label, html.dark .slot-label { color: #94a3b8; }
+        html.dark .slot-btn { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .slot-btn.available { background: rgba(2,195,154,0.15); color: #02C39A; border-color: #02C39A; }
+        html.dark .badge, html.dark .tag, html.dark .chip, html.dark .status-badge { background: #0f172a; }
+        html.dark .empty-state { background: #1e293b; color: #94a3b8; }
+        html.dark .bank-logo, html.dark .card-preview { background: #0f172a; }
+        html.dark .stars span, html.dark .star { color: #94a3b8; }
+        html.dark .stars span.selected, html.dark .star.active { color: #f59e0b; }
+
+        /* Availability-specific dark overrides */
+        html.dark .quick-set { background: #1e293b !important; }
+        html.dark .quick-set h3 { color: #e2e8f0; }
+        html.dark .quick-btn { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+        html.dark .quick-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(2,128,144,0.08); }
+        html.dark .vacation-card { background: #1e293b !important; }
+        html.dark .time-label { color: #e2e8f0 !important; }
+        html.dark .grid-header { color: #94a3b8; }
+        html.dark .btn-reset { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .btn-reset:hover { border-color: #94a3b8; }
+        html.dark .date-group input[type="date"] { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .vacation-note { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.2); color: #94a3b8; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'provider') window.location.href = 'customer-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="INDEX.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="provider-dashboard.html">لوحة التحكم</a>
+            <a href="provider-manage-services.html">خدماتي</a>
+            <a href="provider-availability.html" class="active">التوفر</a>
+            <a href="provider-bank-settings.html">الحساب البنكي</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <span class="provider-badge">مزود خدمة</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1>إدارة التوفر</h1>
+            <p>حدد أوقات عملك الأسبوعية وفترات إجازاتك</p>
+        </div>
+        <div class="status-badge available" id="statusBadge">
+            <div class="status-dot"></div>
+            <span id="statusText">متاح الآن</span>
+        </div>
+    </div>
+
+    <!-- Quick Set -->
+    <div class="quick-set">
+        <h3>⚡ إعداد سريع لساعات العمل</h3>
+        <div class="quick-btns">
+            <button class="quick-btn" onclick="applyPreset('full')">🌐 دوام كامل (7 أيام)</button>
+            <button class="quick-btn" onclick="applyPreset('weekdays')">📅 أيام العمل (الأحد–الخميس)</button>
+            <button class="quick-btn" onclick="applyPreset('morning')">🌅 صباحي فقط</button>
+            <button class="quick-btn" onclick="applyPreset('evening')">🌆 مسائي فقط</button>
+            <button class="quick-btn" onclick="applyPreset('clear')">🚫 مسح الكل</button>
+        </div>
+    </div>
+
+    <!-- Schedule Grid -->
+    <div class="schedule-card">
+        <h3>📅 الجدول الأسبوعي</h3>
+        <div class="schedule-grid" id="scheduleGrid">
+            <!-- Headers -->
+            <div class="grid-header"></div>
+            <div class="grid-header">الأحد</div>
+            <div class="grid-header">الاثنين</div>
+            <div class="grid-header">الثلاثاء</div>
+            <div class="grid-header">الأربعاء</div>
+            <div class="grid-header">الخميس</div>
+            <div class="grid-header">الجمعة</div>
+            <div class="grid-header">السبت</div>
+
+            <!-- Morning Row -->
+            <div class="time-label">🌅 صباحي<br><small style="font-weight:400; color:var(--gray);">8ص – 12م</small></div>
+            <!-- 7 day slots -->
+            <button class="slot-btn available" data-slot="sun-morning" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="mon-morning" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="tue-morning" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="wed-morning" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="thu-morning" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn" data-slot="fri-morning" onclick="toggleSlot(this)">غير متاح</button>
+            <button class="slot-btn" data-slot="sat-morning" onclick="toggleSlot(this)">غير متاح</button>
+
+            <!-- Afternoon Row -->
+            <div class="time-label">☀️ ظهري<br><small style="font-weight:400; color:var(--gray);">12م – 5م</small></div>
+            <button class="slot-btn available" data-slot="sun-afternoon" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="mon-afternoon" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="tue-afternoon" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="wed-afternoon" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="thu-afternoon" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn" data-slot="fri-afternoon" onclick="toggleSlot(this)">غير متاح</button>
+            <button class="slot-btn" data-slot="sat-afternoon" onclick="toggleSlot(this)">غير متاح</button>
+
+            <!-- Evening Row -->
+            <div class="time-label">🌆 مسائي<br><small style="font-weight:400; color:var(--gray);">5م – 10م</small></div>
+            <button class="slot-btn available" data-slot="sun-evening" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn available" data-slot="mon-evening" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn" data-slot="tue-evening" onclick="toggleSlot(this)">غير متاح</button>
+            <button class="slot-btn" data-slot="wed-evening" onclick="toggleSlot(this)">غير متاح</button>
+            <button class="slot-btn available" data-slot="thu-evening" onclick="toggleSlot(this)">متاح</button>
+            <button class="slot-btn" data-slot="fri-evening" onclick="toggleSlot(this)">غير متاح</button>
+            <button class="slot-btn" data-slot="sat-evening" onclick="toggleSlot(this)">غير متاح</button>
+        </div>
+    </div>
+
+    <!-- Vacation Mode -->
+    <div class="vacation-card">
+        <div class="vacation-header">
+            <div>
+                <h3>🏖️ وضع الإجازة</h3>
+                <p style="font-size:0.85rem; color:var(--gray); margin-top:2px;">تفعيل هذا الوضع سيوقف استقبال الطلبات مؤقتاً</p>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="vacationToggle" onchange="toggleVacation(this)">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="vacation-body" id="vacationBody">
+            <div class="date-row">
+                <div class="date-group">
+                    <label>من تاريخ</label>
+                    <input type="date" id="vacFrom">
+                </div>
+                <div class="date-group">
+                    <label>إلى تاريخ</label>
+                    <input type="date" id="vacTo">
+                </div>
+            </div>
+            <div class="vacation-note">
+                ⚠️ خلال فترة الإجازة لن تظهر في نتائج البحث ولن تتلقى طلبات جديدة. الطلبات الحالية لن تتأثر.
+            </div>
+        </div>
+    </div>
+
+    <!-- Save -->
+    <div class="save-bar">
+        <button class="btn-reset" onclick="resetSchedule()">إعادة تعيين</button>
+        <button class="btn-save" onclick="saveSchedule()">💾 حفظ الجدول</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function toggleSlot(btn) {
+        const isAvailable = btn.classList.toggle('available');
+        btn.textContent = isAvailable ? 'متاح' : 'غير متاح';
+        updateCurrentStatus();
+    }
+
+    function updateCurrentStatus() {
+        const now = new Date();
+        const hour = now.getHours();
+        const dayNames = ['sun','mon','tue','wed','thu','fri','sat'];
+        const day = dayNames[now.getDay()];
+        let period = 'morning';
+        if (hour >= 12 && hour < 17) period = 'afternoon';
+        else if (hour >= 17) period = 'evening';
+
+        const currentSlot = document.querySelector(`[data-slot="${day}-${period}"]`);
+        const badge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+
+        if (currentSlot && currentSlot.classList.contains('available')) {
+            badge.className = 'status-badge available';
+            statusText.textContent = 'متاح الآن';
+        } else {
+            badge.className = 'status-badge unavailable';
+            statusText.textContent = 'غير متاح الآن';
+        }
+    }
+
+    function applyPreset(preset) {
+        const slots = document.querySelectorAll('.slot-btn');
+        const days = ['sun','mon','tue','wed','thu','fri','sat'];
+        const workdays = ['sun','mon','tue','wed','thu'];
+
+        slots.forEach(slot => {
+            const [day, period] = slot.dataset.slot.split('-');
+            let available = false;
+
+            if (preset === 'full') {
+                available = true;
+            } else if (preset === 'weekdays') {
+                available = workdays.includes(day);
+            } else if (preset === 'morning') {
+                available = period === 'morning' && workdays.includes(day);
+            } else if (preset === 'evening') {
+                available = period === 'evening' && workdays.includes(day);
+            } else if (preset === 'clear') {
+                available = false;
+            }
+
+            if (available) {
+                slot.classList.add('available');
+                slot.textContent = 'متاح';
+            } else {
+                slot.classList.remove('available');
+                slot.textContent = 'غير متاح';
+            }
+        });
+
+        updateCurrentStatus();
+        const labels = { full: 'دوام كامل', weekdays: 'أيام العمل', morning: 'صباحي فقط', evening: 'مسائي فقط', clear: 'مسح الكل' };
+        showToast(`✓ تم تطبيق إعداد: ${labels[preset]}`);
+    }
+
+    function toggleVacation(checkbox) {
+        const body = document.getElementById('vacationBody');
+        if (checkbox.checked) {
+            body.classList.add('show');
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+            document.getElementById('vacFrom').value = today;
+            document.getElementById('vacTo').value = nextWeek;
+        } else {
+            body.classList.remove('show');
+        }
+    }
+
+    async function saveSchedule() {
+        const slots = document.querySelectorAll('.slot-btn[data-slot]');
+        const schedule = {};
+        slots.forEach(slot => {
+            schedule[slot.dataset.slot] = slot.classList.contains('available');
+        });
+        const vacation = document.getElementById('vacationToggle').checked;
+        const vacFrom = document.getElementById('vacFrom').value;
+        const vacTo = document.getElementById('vacTo').value;
+        localStorage.setItem('khedmah_availability', JSON.stringify({ schedule, vacation, vacFrom, vacTo }));
+        try {
+            await API.providers.saveSchedule({ schedule, vacation, vacFrom, vacTo });
+        } catch(e) { /* silent — local save already done */ }
+        showToast('✓ تم حفظ جدول التوفر بنجاح');
+    }
+
+    function loadSchedule() {
+        const saved = localStorage.getItem('khedmah_availability');
+        if (!saved) return;
+        try {
+            const data = JSON.parse(saved);
+            if (data.schedule) {
+                document.querySelectorAll('.slot-btn[data-slot]').forEach(slot => {
+                    const available = data.schedule[slot.dataset.slot];
+                    if (available) {
+                        slot.classList.add('available');
+                        slot.textContent = 'متاح';
+                    } else {
+                        slot.classList.remove('available');
+                        slot.textContent = 'غير متاح';
+                    }
+                });
+            }
+            if (data.vacation) {
+                const toggle = document.getElementById('vacationToggle');
+                toggle.checked = true;
+                toggleVacation(toggle);
+                if (data.vacFrom) document.getElementById('vacFrom').value = data.vacFrom;
+                if (data.vacTo) document.getElementById('vacTo').value = data.vacTo;
+            }
+        } catch(e) {}
+    }
+
+    function resetSchedule() {
+        if (confirm('هل تريد إعادة تعيين الجدول للإعداد الافتراضي؟')) {
+            applyPreset('weekdays');
+        }
+    }
+
+    // Initialize status and load saved schedule
+    loadSchedule();
+    updateCurrentStatus();
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+</script>
+</body>
+</html>

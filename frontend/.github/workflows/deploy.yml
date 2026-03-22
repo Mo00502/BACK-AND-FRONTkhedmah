@@ -1,0 +1,67 @@
+name: Deploy Frontend — GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow one concurrent deploy; cancel in-progress on new push
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages:    write
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Validate HTML (warn only, never block deploy) ────────────────────
+      - name: Check for broken internal links
+        run: |
+          echo "Checking all .html files reference existing targets..."
+          failed=0
+          for f in *.html; do
+            # Extract href values pointing to local .html files
+            grep -oP 'href="[^"#?]*\.html' "$f" 2>/dev/null \
+              | grep -oP '[^"]+\.html$' \
+              | while read -r target; do
+                  [[ -f "$target" ]] || echo "  WARN: $f → $target (not found)"
+                done
+          done || true
+
+      # ── Rewrite API base URL for production ─────────────────────────────
+      # If KHEDMAH_API_URL secret is set, inject it into api.js
+      - name: Inject production API URL
+        if: ${{ secrets.KHEDMAH_API_URL != '' }}
+        run: |
+          sed -i "s|window.KHEDMAH_API_URL\s*=\s*['\"][^'\"]*['\"]|window.KHEDMAH_API_URL = '${{ secrets.KHEDMAH_API_URL }}'|g" js/api.js || true
+          echo "API URL set to: ${{ secrets.KHEDMAH_API_URL }}"
+
+      # ── Build static site artifact ───────────────────────────────────────
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      # ── Deploy ───────────────────────────────────────────────────────────
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Print deployed URL
+        run: echo "✅ Frontend deployed → ${{ steps.deploy.outputs.page_url }}"

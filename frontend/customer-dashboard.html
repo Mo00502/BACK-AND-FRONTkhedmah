@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم العميل - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        input, select, textarea { font-size: 16px; }
+
+        /* Nav */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .nav-badge {
+            background: var(--error); color: white; font-size: 0.7rem;
+            font-weight: 700; padding: 1px 6px; border-radius: 10px;
+            vertical-align: super; margin-right: 2px;
+        }
+        .avatar-btn {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; cursor: pointer; text-decoration: none;
+        }
+
+        /* Container */
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 5%; }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            border-radius: 20px;
+            padding: 2rem 2.5rem;
+            color: white;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .welcome-text h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .welcome-text p { opacity: 0.85; font-size: 0.95rem; }
+        .welcome-action {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .welcome-action:hover { background: rgba(255,255,255,0.3); }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .stat-icon.teal { background: rgba(2,128,144,0.1); }
+        .stat-icon.green { background: rgba(16,185,129,0.1); }
+        .stat-icon.amber { background: rgba(245,158,11,0.1); }
+        .stat-icon.blue { background: rgba(59,130,246,0.1); }
+        .stat-info { flex: 1; }
+        .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--dark); line-height: 1; }
+        .stat-label { font-size: 0.8rem; color: var(--gray); margin-top: 0.25rem; }
+
+        /* Section */
+        .section { margin-bottom: 2rem; }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem;
+        }
+        .section-title { font-size: 1.15rem; font-weight: 700; color: var(--dark); }
+        .section-link { color: var(--primary); font-size: 0.85rem; text-decoration: none; font-weight: 600; }
+        .section-link:hover { text-decoration: underline; }
+
+        /* Request Cards */
+        .requests-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .request-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: box-shadow 0.2s;
+        }
+        .request-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .request-service-icon {
+            width: 52px; height: 52px;
+            background: rgba(2,128,144,0.08);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .request-info { flex: 1; min-width: 0; }
+        .request-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .request-meta { color: var(--gray); font-size: 0.8rem; }
+        .request-meta span { margin-left: 0.75rem; }
+        .request-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .btn-sm {
+            padding: 0.4rem 0.9rem;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #026f7e; }
+        .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn-outline:hover { background: rgba(2,128,144,0.06); }
+        .btn-ghost { background: var(--light); color: var(--gray); }
+        .btn-ghost:hover { background: #e2e8f0; }
+
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-progress { background: rgba(245,158,11,0.15); color: #b45309; }
+        .badge-completed { background: rgba(16,185,129,0.15); color: #065f46; }
+        .badge-pending { background: rgba(59,130,246,0.15); color: #1d4ed8; }
+        .badge-quoted { background: rgba(139,92,246,0.15); color: #5b21b6; }
+        .badge-cancelled { background: rgba(239,68,68,0.15); color: #991b1b; }
+
+        /* Quote Cards */
+        .quotes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .quote-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .quote-avatar {
+            width: 46px; height: 46px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .quote-info { flex: 1; }
+        .quote-provider { font-weight: 700; font-size: 0.95rem; }
+        .quote-service { color: var(--gray); font-size: 0.82rem; margin-bottom: 0.25rem; }
+        .quote-rating { color: #f59e0b; font-size: 0.82rem; }
+        .quote-price { font-size: 1.2rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
+        .quote-price small { font-size: 0.75rem; font-weight: 500; color: var(--gray); display: block; text-align: center; }
+
+        /* Completed Section */
+        .completed-table {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: var(--light);
+            padding: 0.85rem 1.25rem;
+            text-align: right;
+            font-size: 0.82rem;
+            color: var(--gray);
+            font-weight: 600;
+        }
+        td {
+            padding: 0.9rem 1.25rem;
+            font-size: 0.88rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .empty-state .emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* Quick action buttons */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .quick-btn {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .quick-btn:hover { border-color: var(--primary); box-shadow: 0 4px 20px rgba(2,128,144,0.15); }
+        .quick-btn .qb-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .quick-btn .qb-label { font-size: 0.85rem; font-weight: 600; }
+
+        @media (max-width: 768px) {
+            .welcome-banner { flex-direction: column; text-align: center; }
+            .request-card { flex-wrap: wrap; }
+            .request-actions { width: 100%; }
+            .btn-sm { flex: 1; justify-content: center; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 0.6rem 0.75rem; }
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav { background: #1e293b !important; border-color: #334155; }
+        html.dark .stat-card, html.dark .request-card, html.dark .quote-card, html.dark .quick-btn, html.dark .completed-table, html.dark .empty-state { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a:hover, html.dark .nav-links a.active { color: #02C39A; }
+        html.dark .stat-value, html.dark .section-title, html.dark .request-name, html.dark .quick-btn { color: #e2e8f0; }
+        html.dark .stat-label, html.dark .request-meta, html.dark .quote-service, html.dark .section-link { color: #94a3b8; }
+        html.dark table { color: #e2e8f0; }
+        html.dark th { background: #0f172a; color: #94a3b8; }
+        html.dark td { border-color: #334155; }
+        html.dark tr:hover td { background: #0f172a; }
+        html.dark .btn-ghost { background: #334155; color: #94a3b8; }
+        html.dark .btn-ghost:hover { background: #475569; }
+        html.dark .btn-outline { color: #02C39A; border-color: #02C39A; }
+        html.dark .quick-btn:hover { border-color: #02C39A; }
+        html.dark .empty-state { color: #94a3b8; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <script>
+        // Auth guard — must be logged in AND have customer role
+        (function() {
+            const demo = localStorage.getItem('khedmah_demo');
+            if (!demo) { window.location.href = 'login.html'; return; }
+            try {
+                const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                if (u.role && u.role !== 'customer') {
+                    window.location.href = u.role === 'provider' ? 'provider-dashboard.html' : 'login.html';
+                }
+            } catch(e) {}
+        })();
+    </script>
+
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div class="nav-links">
+                <a href="customer-dashboard.html" class="active">لوحة التحكم</a>
+                <a href="payment-escrow.html">المدفوعات</a>
+                <a href="customer-notifications.html">الإشعارات <span class="nav-badge">3</span></a>
+                <a href="ai-assistant.html">🤖 المساعد الذكي</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="customer-dashboard.html" class="avatar-btn">م</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <div class="welcome-text">
+                <h2>مرحباً، محمد 👋</h2>
+                <p>لديك طلب جارٍ حالياً وعرضان ينتظران مراجعتك</p>
+            </div>
+            <a href="search-services.html" class="welcome-action">+ طلب خدمة جديدة</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon teal">🔄</div>
+                <div class="stat-info">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">طلب جارٍ</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon amber">💬</div>
+                <div class="stat-info">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">عروض تنتظر</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-info">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">خدمة مكتملة</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">💰</div>
+                <div class="stat-info">
+                    <div class="stat-value">1,840</div>
+                    <div class="stat-label">إجمالي الإنفاق (ر.س)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Requests -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">الطلبات النشطة</div>
+            </div>
+            <div class="requests-list">
+                <div class="request-card">
+                    <div class="request-service-icon">🔧</div>
+                    <div class="request-info">
+                        <div class="request-name">صيانة تكييف مركزي</div>
+                        <div class="request-meta">
+                            <span>المزود: خالد العمري</span>
+                            <span>📍 الرياض — حي النزهة</span>
+                            <span>📅 اليوم، 3:00 م</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-progress">جارٍ</span>
+                    <div class="request-actions">
+                        <a href="order-tracking.html?requestId=REQ-001001" class="btn-sm btn-primary">📍 تتبع</a>
+                        <a href="chat.html?type=service&requestId=REQ-001001&providerId=khalid-001" class="btn-sm btn-outline">💬 محادثة</a>
+                        <a href="service-confirmation.html?requestId=REQ-001001" class="btn-sm btn-ghost">تأكيد</a>
+                    </div>
+                </div>
+
+                <div class="request-card">
+                    <div class="request-service-icon">🚿</div>
+                    <div class="request-info">
+                        <div class="request-name">إصلاح تسريب مياه</div>
+                        <div class="request-meta">
+                            <span>في انتظار المزود</span>
+                            <span>📍 الرياض — حي الورود</span>
+                            <span>📅 غداً، 10:00 ص</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-pending">مقبول</span>
+                    <div class="request-actions">
+                        <a href="order-tracking.html?requestId=REQ-001002" class="btn-sm btn-primary">📍 تتبع</a>
+                        <a href="chat.html?type=service&requestId=REQ-001002&providerId=salem-001" class="btn-sm btn-outline">💬 محادثة</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Quotes -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">عروض الأسعار <span style="background:rgba(139,92,246,0.12);color:#5b21b6;padding:2px 8px;border-radius:10px;font-size:0.8rem;margin-right:6px;">2 جديد</span></div>
+            </div>
+            <div class="quotes-list" id="quotesList">
+                <div class="quote-card">
+                    <div class="quote-avatar">س</div>
+                    <div class="quote-info">
+                        <div class="quote-provider">سالم القحطاني</div>
+                        <div class="quote-service">كهرباء — استبدال لوحة كهربائية</div>
+                        <div class="quote-rating">⭐⭐⭐⭐⭐ (47 تقييم)</div>
+                    </div>
+                    <div>
+                        <div class="quote-price">380 ر.س <small>+ ضريبة</small></div>
+                    </div>
+                    <div class="request-actions">
+                        <a href="payment-escrow.html?requestId=REQ-Q001&service=%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A1&hasMaterials=false&materialsEst=0" class="btn-sm btn-primary">قبول</a>
+                        <button class="btn-sm btn-ghost" onclick="dismissQuote(this)">رفض</button>
+                    </div>
+                </div>
+
+                <div class="quote-card">
+                    <div class="quote-avatar">ف</div>
+                    <div class="quote-info">
+                        <div class="quote-provider">فهد الدوسري</div>
+                        <div class="quote-service">كهرباء — استبدال لوحة كهربائية</div>
+                        <div class="quote-rating">⭐⭐⭐⭐ (29 تقييم)</div>
+                    </div>
+                    <div>
+                        <div class="quote-price">320 ر.س <small>+ ضريبة</small></div>
+                    </div>
+                    <div class="request-actions">
+                        <a href="payment-escrow.html?requestId=REQ-Q002&service=%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A1&hasMaterials=false&materialsEst=0" class="btn-sm btn-primary">قبول</a>
+                        <button class="btn-sm btn-ghost" onclick="dismissQuote(this)">رفض</button>
+                    </div>
+                </div>
+                <div id="quotesEmpty" class="empty-state" style="display:none;">
+                    <div class="emoji">📬</div>
+                    <p>لا توجد عروض أسعار معلقة حالياً</p>
+                    <a href="search-services.html" style="display:inline-block;margin-top:0.75rem;color:var(--primary);font-weight:600;text-decoration:none;font-size:0.88rem;">+ طلب خدمة جديدة</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">روابط سريعة</div>
+            </div>
+            <div class="quick-actions">
+                <a href="customer-notifications.html" class="quick-btn">
+                    <div class="qb-icon">🔔</div>
+                    <div class="qb-label">الإشعارات</div>
+                </a>
+                <a href="payment-escrow.html" class="quick-btn">
+                    <div class="qb-icon">💳</div>
+                    <div class="qb-label">المدفوعات</div>
+                </a>
+                <a href="customer-invoice.html" class="quick-btn">
+                    <div class="qb-icon">🧾</div>
+                    <div class="qb-label">الفواتير</div>
+                </a>
+                <a href="chat.html" class="quick-btn">
+                    <div class="qb-icon">💬</div>
+                    <div class="qb-label">المحادثات</div>
+                </a>
+                <a href="referral-program.html" class="quick-btn">
+                    <div class="qb-icon">🎁</div>
+                    <div class="qb-label">برنامج الإحالة</div>
+                </a>
+                <a href="milestone-payments.html" class="quick-btn">
+                    <div class="qb-icon">📊</div>
+                    <div class="qb-label">دفعات المراحل</div>
+                </a>
+                <a href="tenders.html" class="quick-btn">
+                    <div class="qb-icon">📋</div>
+                    <div class="qb-label">المناقصات</div>
+                </a>
+                <a href="consultations.html" class="quick-btn">
+                    <div class="qb-icon">💼</div>
+                    <div class="qb-label">الاستشارات</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Completed Orders -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">الطلبات المكتملة</div>
+            </div>
+            <div class="completed-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الخدمة</th>
+                            <th>المزود</th>
+                            <th>التاريخ</th>
+                            <th>المبلغ</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🎨 دهانات داخلية</td>
+                            <td>خالد العمري</td>
+                            <td>5 مارس 2026</td>
+                            <td>650 ر.س</td>
+                            <td><span class="badge badge-completed">مكتمل</span></td>
+                            <td>
+                                <a href="customer-invoice.html" class="btn-sm btn-outline" style="margin-left:4px">🧾 فاتورة</a>
+                                <a href="rate-service.html" class="btn-sm btn-ghost">⭐ تقييم</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>🔌 تمديد كهربائي</td>
+                            <td>سالم القحطاني</td>
+                            <td>20 فبراير 2026</td>
+                            <td>280 ر.س</td>
+                            <td><span class="badge badge-completed">مكتمل</span></td>
+                            <td>
+                                <a href="customer-invoice.html" class="btn-sm btn-outline" style="margin-left:4px">🧾 فاتورة</a>
+                                <a href="rate-service.html" class="btn-sm btn-ghost" style="opacity:0.5;cursor:default">✅ قيّمت</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>🔧 صيانة مضخة مياه</td>
+                            <td>فهد الدوسري</td>
+                            <td>8 فبراير 2026</td>
+                            <td>340 ر.س</td>
+                            <td><span class="badge badge-completed">مكتمل</span></td>
+                            <td>
+                                <a href="customer-invoice.html" class="btn-sm btn-outline" style="margin-left:4px">🧾 فاتورة</a>
+                                <a href="rate-service.html" class="btn-sm btn-ghost" style="opacity:0.5;cursor:default">✅ قيّمت</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>🚪 تركيب أبواب</td>
+                            <td>خالد العمري</td>
+                            <td>25 يناير 2026</td>
+                            <td>570 ر.س</td>
+                            <td><span class="badge badge-completed">مكتمل</span></td>
+                            <td>
+                                <a href="customer-invoice.html" class="btn-sm btn-outline" style="margin-left:4px">🧾 فاتورة</a>
+                                <a href="rate-service.html" class="btn-sm btn-ghost" style="opacity:0.5;cursor:default">✅ قيّمت</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AI Assistant FAB -->
+    <a href="ai-assistant.html" class="ai-fab" title="مساعد خدمة الذكي">
+      🤖
+      <span class="ai-fab-label">مساعد ذكي</span>
+    </a>
+    <style>
+      .ai-fab {
+        position: fixed;
+        bottom: 80px;
+        left: 20px;
+        background: linear-gradient(135deg, #028090, #02C39A);
+        color: white;
+        border-radius: 50px;
+        padding: 0.75rem 1.1rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(2,128,144,0.4);
+        z-index: 999;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .ai-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(2,128,144,0.5); }
+      .ai-fab-label { font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 700; }
+      html.dark .ai-fab { box-shadow: 0 4px 15px rgba(2,195,154,0.3); }
+    </style>
+
+    <script src="js/api.js"></script>
+    <script>
+    /* ── Dashboard Data Loader ─────────────────────────────────────────────── */
+    (async function initDashboard() {
+        if (!API.isLoggedIn()) return;
+
+        const STATUS_LABEL = {
+            PENDING:      { text: 'قيد الانتظار', cls: 'badge-pending' },
+            QUOTED:       { text: 'عروض جديدة',   cls: 'badge-quote'   },
+            ACCEPTED:     { text: 'مقبول',         cls: 'badge-pending' },
+            IN_PROGRESS:  { text: 'جارٍ',          cls: 'badge-progress'},
+            COMPLETED:    { text: 'مكتمل',         cls: 'badge-success' },
+            CANCELLED:    { text: 'ملغى',          cls: 'badge-cancel'  },
+        };
+        const SVC_ICON = { cleaning:'🧹', electrical:'⚡', plumbing:'🔧', hvac:'❄️', moving:'🚛', carpentry:'🪚', painting:'🎨', default:'🔧' };
+        const svcIcon = (s) => SVC_ICON[(s||'').toLowerCase()] || SVC_ICON.default;
+
+        try {
+            // Load user + all requests in parallel
+            const [user, { data: reqs }] = await Promise.all([
+                API.auth.me().catch(() => API.currentUser()),
+                API.get('/requests?limit=50').catch(() => ({ data: [] })),
+            ]);
+
+            // Update welcome banner
+            const name = user?.profile?.nameAr || user?.username || 'بك';
+            const h2   = document.querySelector('.welcome-text h2');
+            if (h2) h2.textContent = 'مرحباً، ' + name + ' 👋';
+            const avatar = document.querySelector('.avatar-btn');
+            if (avatar) avatar.textContent = name.charAt(0);
+
+            if (!Array.isArray(reqs) || reqs.length === 0) return;
+
+            // Compute stats
+            const active    = reqs.filter(r => ['PENDING','QUOTED','ACCEPTED','IN_PROGRESS'].includes(r.status)).length;
+            const pending   = reqs.filter(r => r.status === 'QUOTED').length;
+            const completed = reqs.filter(r => r.status === 'COMPLETED').length;
+
+            const statVals = document.querySelectorAll('.stat-value');
+            if (statVals[0]) statVals[0].textContent = active;
+            if (statVals[1]) statVals[1].textContent = pending;
+            if (statVals[2]) statVals[2].textContent = completed;
+
+            const activeReqs  = reqs.filter(r => ['PENDING','ACCEPTED','IN_PROGRESS'].includes(r.status));
+            const quotedReqs  = reqs.filter(r => r.status === 'QUOTED');
+            const recentDone  = reqs.filter(r => r.status === 'COMPLETED').slice(0, 3);
+
+            // Render active requests
+            const reqList = document.querySelector('.requests-list');
+            if (reqList && activeReqs.length > 0) {
+                reqList.innerHTML = activeReqs.map(r => {
+                    const st  = STATUS_LABEL[r.status] || STATUS_LABEL.PENDING;
+                    const svc = r.service?.nameAr || 'خدمة';
+                    return `
+                    <div class="request-card">
+                        <div class="request-service-icon">${svcIcon(r.service?.category)}</div>
+                        <div class="request-info">
+                            <div class="request-name">${svc}</div>
+                            <div class="request-meta">
+                                <span>${r.providerId ? 'مزود محدد' : 'في انتظار المزود'}</span>
+                                <span>📍 ${r.city || ''}</span>
+                                <span>📅 ${new Date(r.createdAt).toLocaleDateString('ar-SA')}</span>
+                            </div>
+                        </div>
+                        <span class="badge ${st.cls}">${st.text}</span>
+                        <div class="request-actions">
+                            <a href="order-tracking.html?requestId=${r.id}" class="btn-sm btn-primary">📍 تتبع</a>
+                            <a href="chat.html?type=service&requestId=${r.id}" class="btn-sm btn-outline">💬 محادثة</a>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // Render pending quotes
+            const quotesList = document.getElementById('quotesList');
+            if (quotesList && quotedReqs.length > 0) {
+                quotesList.innerHTML = '';
+                for (const req of quotedReqs) {
+                    const detail = await API.requests.get(req.id).catch(() => null);
+                    if (!detail?.quotes?.length) continue;
+                    detail.quotes.filter(q => q.status === 'PENDING').forEach(q => {
+                        const pName = q.provider?.profile?.nameAr || q.provider?.username || 'مزود';
+                        const init  = pName.charAt(0);
+                        quotesList.insertAdjacentHTML('beforeend', `
+                        <div class="quote-card" data-quote="${q.id}" data-req="${req.id}">
+                            <div class="quote-avatar">${init}</div>
+                            <div class="quote-info">
+                                <div class="quote-provider">${pName}</div>
+                                <div class="quote-service">${req.service?.nameAr || 'خدمة'}</div>
+                                <div class="quote-rating">⭐ ${q.provider?.providerProfile?.ratingAvg || '—'} (${q.provider?.providerProfile?.ratingCount || 0} تقييم)</div>
+                            </div>
+                            <div><div class="quote-price">${q.amount} ر.س <small>+ ضريبة</small></div></div>
+                            <div class="request-actions">
+                                <button class="btn-sm btn-primary" onclick="acceptQuote('${req.id}','${q.id}','${req.service?.nameAr||''}')">قبول</button>
+                                <button class="btn-sm btn-ghost" onclick="rejectQuote('${req.id}','${q.id}',this)">رفض</button>
+                            </div>
+                        </div>`);
+                    });
+                }
+                if (!quotesList.innerHTML.trim()) {
+                    quotesList.innerHTML = '<p id="quotesEmpty" style="color:#94a3b8;text-align:center;padding:1rem">لا توجد عروض في انتظارك</p>';
+                }
+            }
+        } catch (err) {
+            console.warn('Dashboard load error:', err);
+        }
+    })();
+
+    async function acceptQuote(reqId, quoteId, serviceName) {
+        try {
+            await API.requests.acceptQuote(reqId, quoteId);
+            const params = new URLSearchParams({ requestId: reqId, service: serviceName, hasMaterials: 'false', materialsEst: '0' });
+            window.location.href = 'payment-escrow.html?' + params;
+        } catch(err) { API.toast('❌ ' + API.errorMsg(err)); }
+    }
+
+    async function rejectQuote(reqId, quoteId, btn) {
+        try {
+            await API.patch(`/requests/${reqId}/quotes/${quoteId}/reject`);
+            btn.closest('.quote-card')?.remove();
+        } catch(err) { API.toast('❌ ' + API.errorMsg(err)); }
+    }
+
+    function dismissQuote(btn) {
+            const card = btn.closest('.quote-card');
+            card.style.display = 'none';
+            const list = document.getElementById('quotesList');
+            const visible = list.querySelectorAll('.quote-card:not([style*="display: none"]):not([style*="display:none"])').length;
+            document.getElementById('quotesEmpty').style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        // Logout on avatar click
+        document.querySelector('.avatar-btn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (confirm('تسجيل الخروج؟')) {
+                await API.auth.logout().catch(() => {});
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

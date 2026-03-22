@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khedmah — Project Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ─────────────────────────────────────────
+       Design tokens
+    ───────────────────────────────────────── */
+    :root {
+      --teal-900: #014f5a;
+      --teal-700: #028090;
+      --teal-500: #00A896;
+      --teal-400: #02C39A;
+      --teal-100: #e6f8f5;
+      --teal-50:  #f0fbf9;
+
+      --green:    #10b981;
+      --green-bg: #ecfdf5;
+      --red:      #ef4444;
+      --red-bg:   #fef2f2;
+      --amber:    #f59e0b;
+      --amber-bg: #fffbeb;
+      --purple:   #8b5cf6;
+      --purple-bg:#f5f3ff;
+      --blue:     #3b82f6;
+      --blue-bg:  #eff6ff;
+
+      --gray-900: #111827;
+      --gray-700: #374151;
+      --gray-500: #6b7280;
+      --gray-300: #d1d5db;
+      --gray-100: #f3f4f6;
+      --gray-50:  #f9fafb;
+
+      --white:    #ffffff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.05);
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    /* ─────────────────────────────────────────
+       Reset & base
+    ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─────────────────────────────────────────
+       Header
+    ───────────────────────────────────────── */
+    .site-header {
+      background: linear-gradient(135deg, var(--teal-900) 0%, var(--teal-700) 50%, var(--teal-500) 100%);
+      color: #fff;
+      padding: 3rem 2rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .site-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .header-inner { max-width: 1140px; margin: 0 auto; position: relative; }
+    .header-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .header-brand { display: flex; align-items: center; gap: 1rem; }
+    .brand-logo {
+      width: 52px; height: 52px;
+      background: rgba(255,255,255,.18);
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+    }
+    .brand-name { font-size: 1.5rem; font-weight: 900; letter-spacing: -.5px; }
+    .brand-sub { font-size: .85rem; opacity: .75; margin-top: .1rem; }
+    .header-meta { text-align: left; font-size: .8rem; opacity: .65; }
+    .header-meta span { display: block; }
+
+    .header-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    .kpi {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1rem;
+      text-align: center;
+      backdrop-filter: blur(4px);
+    }
+    .kpi .kpi-val { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+    .kpi .kpi-lbl { font-size: .78rem; opacity: .8; margin-top: .3rem; }
+    .kpi.green .kpi-val  { color: #6ee7b7; }
+    .kpi.red   .kpi-val  { color: #fca5a5; }
+    .kpi.amber .kpi-val  { color: #fcd34d; }
+    .kpi.purple .kpi-val { color: #c4b5fd; }
+
+    /* ─────────────────────────────────────────
+       Layout
+    ───────────────────────────────────────── */
+    .main { max-width: 1140px; margin: 2.5rem auto; padding: 0 1.25rem 4rem; }
+    .section { margin-bottom: 2.5rem; }
+    .section-head {
+      display: flex; align-items: center; gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-head .icon {
+      width: 36px; height: 36px;
+      background: var(--teal-100);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .section-head h2 { font-size: 1.1rem; font-weight: 700; color: var(--gray-900); }
+    .section-head .sub { font-size: .82rem; color: var(--gray-500); margin-top: .1rem; }
+
+    /* Card wrapper */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-100);
+    }
+
+    /* ─────────────────────────────────────────
+       Progress bar
+    ───────────────────────────────────────── */
+    .progress-card { padding: 1.5rem 1.75rem; }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
+    .progress-header .title { font-weight: 700; font-size: .95rem; }
+    .progress-header .pct   { font-weight: 900; font-size: 1.2rem; color: var(--teal-700); }
+    .progress-track { height: 12px; background: var(--gray-100); border-radius: 99px; overflow: hidden; }
+    .progress-fill  {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--teal-700), var(--teal-400));
+      border-radius: 99px;
+      transition: width 1s cubic-bezier(.4,0,.2,1);
+    }
+    .progress-legend {
+      display: flex; gap: 1.5rem; margin-top: .65rem; font-size: .78rem; color: var(--gray-500);
+    }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-left: .35rem; }
+
+    /* ─────────────────────────────────────────
+       Files on disk grid
+    ───────────────────────────────────────── */
+    .disk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: .75rem;
+      padding: 1.25rem;
+    }
+    .disk-item {
+      border-radius: var(--radius-md);
+      padding: .85rem 1rem;
+      border: 1.5px solid var(--gray-100);
+      display: flex; align-items: center; gap: .75rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .disk-item:hover { border-color: var(--teal-400); box-shadow: var(--shadow-sm); }
+    .disk-item .di-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .di-html  { background: var(--teal-100); }
+    .di-md    { background: var(--blue-bg); }
+    .di-pptx  { background: #fef2f2; }
+    .di-other { background: var(--gray-100); }
+    .disk-item .di-name { font-size: .82rem; font-weight: 700; color: var(--gray-700); font-family: 'Inter', monospace; word-break: break-all; }
+    .disk-item .di-type { font-size: .72rem; color: var(--gray-500); margin-top: .1rem; }
+    .disk-item .di-badge {
+      margin-right: auto; flex-shrink: 0;
+      font-size: .65rem; font-weight: 700; padding: .2rem .5rem;
+      border-radius: 99px;
+    }
+    .bi-planned { background: var(--green-bg); color: var(--green); }
+    .bi-bonus   { background: var(--amber-bg); color: var(--amber); }
+    .bi-doc     { background: var(--blue-bg); color: var(--blue); }
+    .bi-tool    { background: var(--purple-bg); color: var(--purple); }
+
+    /* ─────────────────────────────────────────
+       Status table
+    ───────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead tr { border-bottom: 2px solid var(--gray-100); }
+    thead th {
+      padding: .9rem 1.1rem;
+      text-align: right;
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--gray-500);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--gray-100); transition: background .15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--gray-50); }
+    tbody td { padding: .85rem 1.1rem; vertical-align: middle; }
+    .td-num { color: var(--gray-500); font-size: .78rem; font-weight: 500; width: 36px; }
+    .td-file { font-family: 'Inter', monospace; font-size: .8rem; font-weight: 600; color: var(--gray-700); }
+    .td-file.missing { color: var(--gray-300); text-decoration: line-through; }
+    .td-page { font-weight: 600; font-size: .88rem; }
+    .td-page .en { display: block; font-size: .75rem; font-weight: 400; color: var(--gray-500); margin-top: .1rem; }
+
+    /* Category pills */
+    .cat {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .25rem .7rem; border-radius: 99px;
+      font-size: .72rem; font-weight: 700; white-space: nowrap;
+    }
+    .cat-onboard  { background: #eff6ff; color: #1d4ed8; }
+    .cat-customer { background: var(--teal-50); color: var(--teal-700); }
+    .cat-payment  { background: #fff7ed; color: #c2410c; }
+    .cat-provider { background: var(--purple-bg); color: #6d28d9; }
+    .cat-extras   { background: #fdf4ff; color: #7e22ce; }
+    .cat-admin    { background: var(--gray-100); color: var(--gray-700); }
+    .cat-hub      { background: var(--green-bg); color: #065f46; }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .3rem .85rem; border-radius: 99px;
+      font-size: .75rem; font-weight: 700; white-space: nowrap;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .b-done    { background: var(--green-bg); color: var(--green); border: 1.5px solid #a7f3d0; }
+    .b-done::before    { background: var(--green); }
+    .b-missing { background: var(--red-bg);   color: var(--red);   border: 1.5px solid #fecaca; }
+    .b-missing::before { background: var(--red); }
+    .b-bonus   { background: var(--amber-bg); color: var(--amber); border: 1.5px solid #fde68a; }
+    .b-bonus::before   { background: var(--amber); }
+
+    /* Row tinting */
+    tr.row-done   { }
+    tr.row-bonus  { background: #fffdf5; }
+    tr.row-missing{ }
+
+    /* ─────────────────────────────────────────
+       Phase / Gantt bars
+    ───────────────────────────────────────── */
+    .phases { display: flex; flex-direction: column; gap: .85rem; padding: 1.25rem; }
+    .phase-item { display: grid; grid-template-columns: 190px 1fr 64px; align-items: center; gap: 1rem; }
+    .phase-meta .ph-name    { font-weight: 700; font-size: .9rem; }
+    .phase-meta .ph-sub     { font-size: .75rem; color: var(--gray-500); margin-top: .1rem; }
+    .phase-bar-wrap         { position: relative; }
+    .phase-track {
+      height: 28px; background: var(--gray-100); border-radius: 99px; overflow: hidden;
+      position: relative;
+    }
+    .phase-fill {
+      height: 100%; border-radius: 99px;
+      display: flex; align-items: center;
+      padding-right: .85rem;
+      font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.9);
+      white-space: nowrap; overflow: hidden;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+      width: 0;
+    }
+    .ph-teal   { background: linear-gradient(90deg, var(--teal-700), var(--teal-400)); }
+    .ph-purple { background: linear-gradient(90deg, #6d28d9, #a78bfa); }
+    .ph-orange { background: linear-gradient(90deg, #c2410c, #fb923c); }
+    .phase-pct { font-weight: 900; font-size: 1.05rem; text-align: center; }
+    .phase-tasks { grid-column: 2 / 4; font-size: .78rem; color: var(--gray-500); margin-top: -.4rem; padding-right: 0; }
+    .task-tag {
+      display: inline-block; padding: .15rem .5rem; border-radius: 4px;
+      font-size: .7rem; font-weight: 600; margin: .15rem .15rem 0 0;
+    }
+    .tt-done    { background: var(--green-bg); color: var(--green); }
+    .tt-pending { background: var(--gray-100); color: var(--gray-500); }
+
+    /* ─────────────────────────────────────────
+       Missing files list
+    ───────────────────────────────────────── */
+    .gap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: .85rem;
+      padding: 1.25rem;
+    }
+    .gap-item {
+      border-radius: var(--radius-md);
+      border: 1.5px solid #fecaca;
+      background: var(--red-bg);
+      padding: .9rem 1rem;
+      display: flex; align-items: flex-start; gap: .75rem;
+    }
+    .gap-check {
+      width: 22px; height: 22px; border: 2px solid #fca5a5;
+      border-radius: 5px; flex-shrink: 0; margin-top: .15rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gap-body .gap-file { font-family: 'Inter', monospace; font-size: .8rem; font-weight: 700; color: var(--red); }
+    .gap-body .gap-ar   { font-size: .82rem; font-weight: 600; color: var(--gray-700); margin-top: .2rem; }
+    .gap-body .gap-en   { font-size: .74rem; color: var(--gray-500); }
+    .gap-cat { font-size: .68rem; font-weight: 700; margin-top: .35rem; padding: .15rem .5rem; border-radius: 4px; display: inline-block; }
+
+    /* ─────────────────────────────────────────
+       Alerts / notice boxes
+    ───────────────────────────────────────── */
+    .notice {
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      font-size: .875rem;
+      display: flex; align-items: flex-start; gap: .75rem;
+      margin: .85rem 0;
+    }
+    .notice .ni { font-size: 1.2rem; flex-shrink: 0; margin-top: .05rem; }
+    .notice .nb { }
+    .notice .nb strong { display: block; margin-bottom: .2rem; font-size: .9rem; }
+    .n-amber  { background: var(--amber-bg); border: 1.5px solid #fde68a; color: #92400e; }
+    .n-red    { background: var(--red-bg);   border: 1.5px solid #fecaca; color: #991b1b; }
+    .n-blue   { background: var(--blue-bg);  border: 1.5px solid #bfdbfe; color: #1e40af; }
+    .n-purple { background: var(--purple-bg);border: 1.5px solid #ddd6fe; color: #5b21b6; }
+
+    /* ─────────────────────────────────────────
+       Divider
+    ───────────────────────────────────────── */
+    .divider { height: 1px; background: var(--gray-100); margin: .25rem 0; }
+
+    /* ─────────────────────────────────────────
+       Footer
+    ───────────────────────────────────────── */
+    footer {
+      text-align: center;
+      color: var(--gray-500);
+      font-size: .78rem;
+      padding: 2rem 0;
+      border-top: 1px solid var(--gray-100);
+    }
+
+    /* ─────────────────────────────────────────
+       Responsive
+    ───────────────────────────────────────── */
+    @media (max-width: 720px) {
+      .site-header { padding: 2rem 1.25rem 1.75rem; }
+      .brand-name  { font-size: 1.2rem; }
+      .header-kpis { grid-template-columns: repeat(2, 1fr); }
+      .phase-item  { grid-template-columns: 1fr 2fr 48px; }
+      .phase-meta .ph-name { font-size: .82rem; }
+      thead th:nth-child(2) { display: none; }
+      tbody td:nth-child(2) { display: none; }
+    }
+    @media (max-width: 480px) {
+      .header-kpis { grid-template-columns: repeat(2, 1fr); }
+      .phase-item  { grid-template-columns: 1fr 48px; }
+      .phase-bar-wrap { grid-column: 1 / 2; }
+    }
+
+    /* ── Dark Mode ── */
+    html.dark body { background: #0f172a !important; color: #e2e8f0; }
+    html.dark nav, html.dark .navbar, html.dark header, html.dark .topbar, html.dark .admin-nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+    html.dark .card, html.dark .stats-card, html.dark .data-card, html.dark .section-card, html.dark .tracking-card, html.dark .step-card, html.dark .referral-card, html.dark .gantt-card, html.dark .provider-card, html.dark .filter-panel { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+    html.dark .sidebar-link, html.dark .nav-link, html.dark .admin-link { color: #94a3b8; }
+    html.dark .sidebar-link:hover, html.dark .sidebar-link.active, html.dark .nav-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+    html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="password"], html.dark input[type="search"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+    html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+    html.dark .form-label, html.dark label { color: #cbd5e1; }
+    html.dark .divider, html.dark hr { border-color: #334155; }
+    html.dark .table, html.dark table { color: #e2e8f0; border-color: #334155; }
+    html.dark .table th, html.dark table th, html.dark thead th { background: #0f172a !important; color: #94a3b8; border-color: #334155; }
+    html.dark .table td, html.dark table td, html.dark tbody td { border-color: #334155; }
+    html.dark .table tbody tr:hover, html.dark tbody tr:hover { background: rgba(255,255,255,0.03); }
+    html.dark .badge, html.dark .tag, html.dark .status-badge { border: 1px solid #334155; }
+    html.dark .modal, html.dark .modal-content { background: #1e293b !important; color: #e2e8f0; }
+    html.dark .map-placeholder, html.dark #liveMap { filter: invert(0.85) hue-rotate(180deg); }
+    html.dark .stepper-line { background: #334155; }
+    html.dark .gantt-row { background: #1e293b; border-color: #334155; }
+    html.dark .gantt-header { background: #0f172a; color: #94a3b8; border-color: #334155; }
+    html.dark .gantt-bar { opacity: 0.9; }
+    html.dark .filter-option label { color: #cbd5e1; }
+    html.dark .filter-option input[type="checkbox"] { accent-color: #02C39A; }
+    html.dark .tag { background: #0f172a; color: #94a3b8; }
+    html.dark .card { background: #1e293b !important; border-color: #334155; }
+    html.dark .section-head h2 { color: #e2e8f0; }
+    html.dark .section-head .sub { color: #94a3b8; }
+    html.dark .section-head .icon { background: rgba(2,128,144,0.2); }
+    html.dark .progress-track { background: #334155; }
+    html.dark .phase-track { background: #334155; }
+    html.dark .disk-item { border-color: #334155; }
+    html.dark .disk-item:hover { border-color: #02C39A; }
+    html.dark .di-other { background: #334155; }
+    html.dark .disk-item .di-name { color: #e2e8f0; }
+    html.dark .disk-item .di-type { color: #94a3b8; }
+    html.dark .td-file { color: #e2e8f0; }
+    html.dark .td-page { color: #e2e8f0; }
+    html.dark .td-page .en { color: #94a3b8; }
+    html.dark .td-num { color: #64748b; }
+    html.dark thead tr { border-color: #334155; }
+    html.dark tbody tr { border-color: #334155; }
+    html.dark tbody tr:hover { background: rgba(255,255,255,0.03); }
+    html.dark .divider { background: #334155; }
+    html.dark .phase-meta .ph-name { color: #e2e8f0; }
+    html.dark .phase-meta .ph-sub { color: #94a3b8; }
+    html.dark .tt-pending { background: #334155; color: #94a3b8; }
+    html.dark footer { border-color: #334155; color: #64748b; }
+    html.dark .notice.n-blue { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: #93c5fd; }
+    html.dark .gap-body .gap-ar { color: #e2e8f0; }
+    html.dark .gap-body .gap-en { color: #94a3b8; }
+    html.dark .progress-legend { color: #94a3b8; }
+    .theme-toggle { width: 36px; height: 36px; border: 1.5px solid rgba(255,255,255,0.5); border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; color: white; }
+    html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+  </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        try {
+            const adm = JSON.parse(localStorage.getItem('khedmah_admin') || '{}');
+            if (!adm.loggedIn) window.location.href = 'admin-login.html';
+        } catch(e) { window.location.href = 'admin-login.html'; }
+    })();
+</script>
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="header-brand">
+        <div class="brand-logo">&#127968;</div>
+        <div>
+          <div class="brand-name">منصة خدمة — Khedmah</div>
+          <div class="brand-sub">Saudi Home-Services Marketplace</div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span>Project Dashboard</span>
+        <span>آخر تحديث: مارس 2026</span>
+        <span style="margin-top:.3rem;opacity:.5;">v1.0 — Gap Analysis</span>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" style="margin-top:.5rem;">🌙</button>
+      </div>
+    </div>
+
+    <div class="header-kpis">
+      <div class="kpi">
+        <div class="kpi-val">27</div>
+        <div class="kpi-lbl">Total Pages<br/>إجمالي الصفحات</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-val">27</div>
+        <div class="kpi-lbl">Complete<br/>مكتملة</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-val">0</div>
+        <div class="kpi-lbl">Missing<br/>ناقصة</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-val">100%</div>
+        <div class="kpi-lbl">Completion<br/>نسبة الإنجاز</div>
+      </div>
+      <div class="kpi purple">
+        <div class="kpi-val">27</div>
+        <div class="kpi-lbl">Files on Disk<br/>ملفات في المجلد</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ═══════════════════════════════════════
+       SECTION 1 — Overall progress
+  ════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="icon">&#128200;</div>
+      <div>
+        <h2>نسبة الإنجاز الكلية — Overall Progress</h2>
+        <div class="sub">HTML pages completed vs planned</div>
+      </div>
+    </div>
+    <div class="card progress-card">
+      <div class="progress-header">
+        <span class="title">إنجاز الصفحات — Page Completion</span>
+        <span class="pct">27 / 27 &nbsp;—&nbsp; 100%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="pbar" style="width:100%"></div>
+      </div>
+      <div class="progress-legend">
+        <span><span class="legend-dot" style="background:var(--green)"></span>Complete (27 pages)</span>
+        <span><span class="legend-dot" style="background:var(--red)"></span>Missing (0 pages)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 2 — Files on disk
+  ════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="icon">&#128193;</div>
+      <div>
+        <h2>الملفات الموجودة على الجهاز — Files on Disk</h2>
+        <div class="sub">All files found in /Downloads/files/ — 11 items total</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="disk-grid">
+
+        <div class="disk-item">
+          <div class="di-icon di-html">&#128196;</div>
+          <div>
+            <div class="di-name">INDEX.html</div>
+            <div class="di-type">Navigation Hub</div>
+          </div>
+          <span class="di-badge bi-planned">مخطط</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html">&#128196;</div>
+          <div>
+            <div class="di-name">payment-escrow.html</div>
+            <div class="di-type">Payment &amp; Escrow</div>
+          </div>
+          <span class="di-badge bi-planned">مخطط</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html">&#128196;</div>
+          <div>
+            <div class="di-name">service-confirmation.html</div>
+            <div class="di-type">Service Confirmation</div>
+          </div>
+          <span class="di-badge bi-planned">مخطط</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html">&#128196;</div>
+          <div>
+            <div class="di-name">provider-bank-settings.html</div>
+            <div class="di-type">Bank Settings</div>
+          </div>
+          <span class="di-badge bi-planned">مخطط</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html">&#128196;</div>
+          <div>
+            <div class="di-name">provider-rate-customer.html</div>
+            <div class="di-type">Rate Customer</div>
+          </div>
+          <span class="di-badge bi-planned">مخطط</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html">&#128196;</div>
+          <div>
+            <div class="di-name">referral-program.html</div>
+            <div class="di-type">Referral Program</div>
+          </div>
+          <span class="di-badge bi-planned">مخطط</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html" style="background:var(--amber-bg)">&#128196;</div>
+          <div>
+            <div class="di-name">admin-login.html</div>
+            <div class="di-type">Admin Login — غير مدرج</div>
+          </div>
+          <span class="di-badge bi-bonus">Bonus</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-html" style="background:var(--purple-bg)">&#128196;</div>
+          <div>
+            <div class="di-name">gantt-chart.html</div>
+            <div class="di-type">This Dashboard</div>
+          </div>
+          <span class="di-badge bi-tool">أداة</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-md">&#128209;</div>
+          <div>
+            <div class="di-name">PROJECT_SUMMARY.md</div>
+            <div class="di-type">Documentation</div>
+          </div>
+          <span class="di-badge bi-doc">Doc</span>
+        </div>
+
+        <div class="disk-item">
+          <div class="di-icon di-pptx">&#128202;</div>
+          <div>
+            <div class="di-name">Khedmah_Presentation-2.pptx</div>
+            <div class="di-type">PowerPoint — غير مدرج في INDEX</div>
+          </div>
+          <span class="di-badge bi-bonus">Bonus</span>
+        </div>
+
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 3 — Page status table
+  ════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="icon">&#128203;</div>
+      <div>
+        <h2>حالة كل صفحة — Full Page Status</h2>
+        <div class="sub">27 pages total · sorted by development flow · all complete ✅</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px">#</th>
+              <th>اسم الملف</th>
+              <th>الصفحة</th>
+              <th>التصنيف</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- ── Onboarding ── -->
+            <tr class="row-done">
+              <td class="td-num">1</td>
+              <td><span class="td-file">home.html</span></td>
+              <td class="td-page">الصفحة الرئيسية<span class="en">Landing Page · Hero, services, how it works</span></td>
+              <td><span class="cat cat-onboard">Onboarding</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">2</td>
+              <td><span class="td-file">register-customer.html · register-provider.html</span></td>
+              <td class="td-page">التسجيل<span class="en">Register Customer + Provider · split forms</span></td>
+              <td><span class="cat cat-onboard">Onboarding</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">3</td>
+              <td><span class="td-file">forgot-password.html · reset-password.html</span></td>
+              <td class="td-page">استعادة كلمة المرور<span class="en">Forgot & Reset Password · email-based (no OTP)</span></td>
+              <td><span class="cat cat-onboard">Onboarding</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">4</td>
+              <td><span class="td-file">login.html</span></td>
+              <td class="td-page">تسجيل الدخول<span class="en">Login · email or username, role-based redirect</span></td>
+              <td><span class="cat cat-onboard">Onboarding</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+
+            <!-- ── Customer Journey ── -->
+            <tr class="row-done">
+              <td class="td-num">5</td>
+              <td><span class="td-file">search-services.html</span></td>
+              <td class="td-page">البحث عن خدمات<span class="en">Search · filters sidebar, sort, provider cards</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">6</td>
+              <td><span class="td-file">provider-profile.html</span></td>
+              <td class="td-page">ملف مزود الخدمة<span class="en">Provider Profile · 4 tabs, gallery, ratings, schedule</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">7</td>
+              <td><span class="td-file">quote-request.html</span></td>
+              <td class="td-page">طلب عرض سعر<span class="en">Quote Request · 3-step wizard, 12 categories</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">8</td>
+              <td><span class="td-file">customer-dashboard.html</span></td>
+              <td class="td-page">لوحة تحكم العميل<span class="en">Customer Dashboard · stats, active requests, quotes</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">8b</td>
+              <td><span class="td-file">customer-notifications.html</span></td>
+              <td class="td-page">الإشعارات<span class="en">Notifications · 3 tabs, mark-read, badge counter</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">8c</td>
+              <td><span class="td-file">customer-invoice.html</span></td>
+              <td class="td-page">فاتورة الخدمة<span class="en">Invoice · VAT 15%, print-ready</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">9</td>
+              <td><span class="td-file">service-confirmation.html</span></td>
+              <td class="td-page">تأكيد إتمام الخدمة<span class="en">Service Confirmation · 3-question check, 48h window</span></td>
+              <td><span class="cat cat-customer">Customer</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+
+            <!-- ── Payment & Comms ── -->
+            <tr class="row-done">
+              <td class="td-num">10</td>
+              <td><span class="td-file">payment-escrow.html</span></td>
+              <td class="td-page">الدفع الآمن<span class="en">Payment · Mada, STC Pay, Apple Pay + Escrow</span></td>
+              <td><span class="cat cat-payment">Payment</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">11</td>
+              <td><span class="td-file">chat.html</span></td>
+              <td class="td-page">المحادثة<span class="en">Chat · contacts sidebar, unread badges, simulated replies</span></td>
+              <td><span class="cat cat-payment">Payment</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">11b</td>
+              <td><span class="td-file">order-tracking.html</span></td>
+              <td class="td-page">تتبع الطلب<span class="en">Order Tracking · 4-step progress, ETA countdown</span></td>
+              <td><span class="cat cat-payment">Payment</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">12</td>
+              <td><span class="td-file">rate-service.html</span></td>
+              <td class="td-page">تقييم الخدمة<span class="en">Rate Service · 5-star + sub-ratings + tags + photos</span></td>
+              <td><span class="cat cat-payment">Payment</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+
+            <!-- ── Provider ── -->
+            <tr class="row-done">
+              <td class="td-num">13</td>
+              <td><span class="td-file">provider-dashboard.html</span></td>
+              <td class="td-page">لوحة تحكم المزود<span class="en">Provider Dashboard · stats, requests, wallet</span></td>
+              <td><span class="cat cat-provider">Provider</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">13b</td>
+              <td><span class="td-file">provider-manage-services.html</span></td>
+              <td class="td-page">إدارة الخدمات<span class="en">Manage Services · add/edit/toggle, pricing modal</span></td>
+              <td><span class="cat cat-provider">Provider</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">13c</td>
+              <td><span class="td-file">provider-availability.html</span></td>
+              <td class="td-page">جدول التوفر<span class="en">Availability · weekly grid, vacation mode, presets</span></td>
+              <td><span class="cat cat-provider">Provider</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">14</td>
+              <td><span class="td-file">provider-bank-settings.html</span></td>
+              <td class="td-page">إعدادات البنك<span class="en">Bank Settings · IBAN, all Saudi &amp; digital banks</span></td>
+              <td><span class="cat cat-provider">Provider</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">14b</td>
+              <td><span class="td-file">provider-rate-customer.html</span></td>
+              <td class="td-page">تقييم العميل<span class="en">Rate Customer · dual-rating system</span></td>
+              <td><span class="cat cat-provider">Provider</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+
+            <!-- ── Extras ── -->
+            <tr class="row-done">
+              <td class="td-num">15</td>
+              <td><span class="td-file">referral-program.html</span></td>
+              <td class="td-page">برنامج الإحالة<span class="en">Referral · 50 SAR each, WhatsApp, Twitter, Telegram</span></td>
+              <td><span class="cat cat-extras">Extras</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <!-- ── Admin ── -->
+            <tr class="row-done">
+              <td class="td-num">16</td>
+              <td><span class="td-file">admin-login.html</span></td>
+              <td class="td-page">تسجيل دخول الإدارة<span class="en">Admin Login · sessionStorage auth</span></td>
+              <td><span class="cat cat-admin">Admin</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+            <tr class="row-done">
+              <td class="td-num">17</td>
+              <td><span class="td-file">admin-dashboard.html</span></td>
+              <td class="td-page">لوحة تحكم الإدارة<span class="en">Admin Dashboard · KPIs, verifications, disputes, system health</span></td>
+              <td><span class="cat cat-admin">Admin</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+
+            <!-- ── Hub ── -->
+            <tr class="row-done">
+              <td class="td-num">&#8734;</td>
+              <td><span class="td-file">INDEX.html</span></td>
+              <td class="td-page">فهرس المشروع<span class="en">Project Navigation Hub · links to all pages</span></td>
+              <td><span class="cat cat-hub">Hub</span></td>
+              <td><span class="badge b-done">Done</span></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 4 — Phase Gantt
+  ════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="icon">&#128336;</div>
+      <div>
+        <h2>مراحل التطوير — Development Phase Timeline</h2>
+        <div class="sub">3-phase roadmap from PROJECT_SUMMARY.md</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="phases">
+
+        <!-- Phase 1 -->
+        <div class="phase-item">
+          <div class="phase-meta">
+            <div class="ph-name">المرحلة 1 — Phase 1</div>
+            <div class="ph-sub">الشهر الأول &nbsp;|&nbsp; Month 1</div>
+          </div>
+          <div class="phase-bar-wrap">
+            <div class="phase-track">
+              <div class="phase-fill ph-teal" style="width:37.5%">37.5%</div>
+            </div>
+          </div>
+          <div class="phase-pct" style="color:var(--teal-700)">37.5%</div>
+          <div class="phase-tasks">
+            <span class="task-tag tt-done">6 HTML pages done</span>
+            <span class="task-tag tt-pending">10 HTML pages pending</span>
+            <span class="task-tag tt-pending">Backend / API</span>
+            <span class="task-tag tt-pending">Database</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Phase 2 -->
+        <div class="phase-item">
+          <div class="phase-meta">
+            <div class="ph-name">المرحلة 2 — Phase 2</div>
+            <div class="ph-sub">الشهر 2–3 &nbsp;|&nbsp; Months 2–3</div>
+          </div>
+          <div class="phase-bar-wrap">
+            <div class="phase-track">
+              <div class="phase-fill ph-purple" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="phase-pct" style="color:var(--purple)">0%</div>
+          <div class="phase-tasks">
+            <span class="task-tag tt-pending">iOS App</span>
+            <span class="task-tag tt-pending">Android App</span>
+            <span class="task-tag tt-pending">Push Notifications</span>
+            <span class="task-tag tt-pending">GPS Tracking</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Phase 3 -->
+        <div class="phase-item">
+          <div class="phase-meta">
+            <div class="ph-name">المرحلة 3 — Phase 3</div>
+            <div class="ph-sub">الشهر 4–6 &nbsp;|&nbsp; Months 4–6</div>
+          </div>
+          <div class="phase-bar-wrap">
+            <div class="phase-track">
+              <div class="phase-fill ph-orange" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="phase-pct" style="color:#c2410c">0%</div>
+          <div class="phase-tasks">
+            <span class="task-tag tt-pending">AI Recommendations</span>
+            <span class="task-tag tt-pending">Analytics Dashboard</span>
+            <span class="task-tag tt-pending">Subscription Plans</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 5 — Gap analysis / missing
+  ════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="icon">&#9989;</div>
+      <div>
+        <h2>ملخص الإنجاز — Completion Summary</h2>
+        <div class="sub">All 27 pages complete — no gaps remaining</div>
+      </div>
+    </div>
+
+    <div class="notice n-blue" style="margin-bottom:.75rem">
+      <span class="ni">&#127881;</span>
+      <div class="nb">
+        <strong>اكتملت جميع الصفحات — All Pages Complete (27/27)</strong>
+        تم إنشاء جميع صفحات HTML المخططة + الإضافية. لا توجد صفحات مفقودة.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="gap-grid">
+
+        <div class="gap-item" style="border-color:#bbf7d0;background:#f0fdf4">
+          <div class="gap-check" style="background:var(--green);border-color:var(--green)">&#10003;</div>
+          <div class="gap-body">
+            <div class="gap-file" style="color:var(--green)">الواجهة الأمامية — 27 صفحة HTML</div>
+            <div class="gap-en">home · login · register-customer · register-provider · forgot-password · reset-password · search-services · provider-profile · quote-request · payment-escrow · customer-dashboard · customer-notifications · customer-invoice · service-confirmation · chat · order-tracking · rate-service · provider-dashboard · provider-manage-services · provider-availability · provider-bank-settings · provider-rate-customer · referral-program · admin-login · admin-dashboard · gantt-chart · INDEX</div>
+            <span class="gap-cat cat-customer">Frontend ✅</span>
+          </div>
+        </div>
+
+        <div class="gap-item" style="border-color:#bbf7d0;background:#f0fdf4">
+          <div class="gap-check" style="background:var(--green);border-color:var(--green)">&#10003;</div>
+          <div class="gap-body">
+            <div class="gap-file" style="color:var(--green)">الواجهة الخلفية — NestJS + Prisma + PostgreSQL</div>
+            <div class="gap-en">33 modules: auth · users · providers · requests · payments · materials-payment · wallet · invoices · tenders · equipment · disputes · reviews · notifications · chat · tracking · schedule · scheduler · search · files · health · admin · analytics · audit · events · &amp; more</div>
+            <span class="gap-cat cat-provider">Backend ✅</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  Khedmah Platform &nbsp;&mdash;&nbsp; Project Dashboard &nbsp;&mdash;&nbsp; Generated March 2026
+</footer>
+
+<script>
+  function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  }
+  (function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = '☀️';
+    }
+  })();
+
+  /* Animate progress bar and phase fills on load */
+  document.addEventListener('DOMContentLoaded', () => {
+    const fills = document.querySelectorAll('.phase-fill, .progress-fill');
+    requestAnimationFrame(() => {
+      fills.forEach(el => {
+        const target = el.style.width;
+        el.style.width = '0';
+        requestAnimationFrame(() => {
+          setTimeout(() => { el.style.width = target; }, 80);
+        });
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

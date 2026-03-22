@@ -1,0 +1,37 @@
+# Dependencies — reinstalled inside Docker
+node_modules/
+
+# Build output — rebuilt inside Docker
+dist/
+
+# Test files — never in production image
+**/*.spec.ts
+**/*.e2e-spec.ts
+test/
+coverage/
+
+# Local environment — secrets must come from runtime env
+.env
+.env.*
+!.env.example
+
+# Git history — not needed in image
+.git/
+.gitignore
+.github/
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml
+docker/
+
+# Editor / OS artifacts
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# CI artifacts
+*.tgz
+*.tar.gz

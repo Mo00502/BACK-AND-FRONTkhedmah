@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل دخول الإدارة - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --error: #EF4444;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--dark), #0f172a);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.6s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 3rem 2rem;
+            text-align: center;
+            color: white;
+        }
+        
+        .admin-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            margin: 0 auto 1.5rem;
+            border: 4px solid rgba(255,255,255,0.3);
+        }
+        
+        .login-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-badge {
+            background: var(--error);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        
+        .login-body {
+            padding: 2.5rem;
+        }
+        
+        .security-notice {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--error);
+            border-radius: 15px;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .security-notice-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .security-notice-text {
+            color: var(--error);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.2rem 1rem 3.5rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(2, 128, 144, 0.1);
+        }
+        
+        .password-toggle {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--dark);
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        
+        .password-toggle:hover {
+            opacity: 1;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(2, 128, 144, 0.3);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--error);
+            color: var(--error);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: none;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .login-footer {
+            text-align: center;
+            color: #64748B;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        
+        .attempts-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid #F59E0B;
+            color: #F59E0B;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: none;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .attempts-warning.show {
+            display: block;
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark .login-container { background: #1e293b !important; }
+        html.dark .form-group input { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-group input::placeholder { color: #64748b; }
+        html.dark .form-group label { color: #cbd5e1; }
+        html.dark .login-footer { color: #94a3b8; }
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="admin-icon">👑</div>
+            <h1>لوحة التحكم الإدارية</h1>
+            <span class="admin-badge">🔒 ADMIN ACCESS</span>
+        </div>
+
+        <div class="login-body">
+            <div class="security-notice">
+                <div class="security-notice-icon">⚠️</div>
+                <div class="security-notice-text">
+                    منطقة محمية - دخول المديرين فقط
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                ❌ اسم المستخدم أو كلمة المرور غير صحيحة
+            </div>
+
+            <div class="attempts-warning" id="attemptsWarning">
+                ⚠️ تبقى لديك <span id="attemptsLeft">3</span> محاولات
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">اسم المستخدم</label>
+                    <div class="input-container">
+                        <span class="input-icon">👤</span>
+                        <input
+                            type="text"
+                            id="username"
+                            placeholder="admin@khedmah.sa"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <div class="input-container">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            placeholder="أدخل كلمة المرور"
+                            required
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span>🔓</span>
+                    <span>تسجيل الدخول</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>🔐 جميع محاولات الدخول مسجلة ومراقبة</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let loginAttempts = 0;
+        const maxAttempts = 3;
+        
+        // بيانات الدخول (في التطبيق الحقيقي، هذه تكون في قاعدة البيانات)
+        const ADMIN_USERNAME = 'admin@khedmah.sa';
+        const ADMIN_PASSWORD = 'Demo@12345';
+        
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = event.currentTarget;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const attemptsWarning = document.getElementById('attemptsWarning');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (loginAttempts >= maxAttempts) return;
+
+            loginBtn.innerHTML = '<span>⏳</span><span>جاري التحقق...</span>';
+            loginBtn.disabled = true;
+
+            try {
+                const user = await API.auth.login(username, password);
+                const role = (user.role || '').toLowerCase();
+                if (role !== 'admin' && role !== 'super_admin' && role !== 'support') {
+                    // Not an admin — clear tokens and show error
+                    await API.auth.logout().catch(() => {});
+                    throw new Error('ليس لديك صلاحية الوصول للوحة الإدارة');
+                }
+                loginBtn.innerHTML = '<span>✅</span><span>جاري تسجيل الدخول...</span>';
+                setTimeout(() => { window.location.href = 'admin-dashboard.html'; }, 800);
+            } catch(err) {
+                loginBtn.innerHTML = '<span>🔓</span><span>تسجيل الدخول</span>';
+                loginAttempts++;
+                errorMessage.textContent = '❌ ' + API.errorMsg(err);
+                errorMessage.classList.add('show');
+                if (loginAttempts >= maxAttempts) {
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<span>🚫</span><span>تم حظر الدخول</span>';
+                    errorMessage.textContent = '🚫 تم حظرك بسبب تجاوز عدد المحاولات المسموحة';
+                } else {
+                    loginBtn.disabled = false;
+                    document.getElementById('attemptsLeft').textContent = maxAttempts - loginAttempts;
+                    attemptsWarning.classList.add('show');
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                }
+                setTimeout(() => { errorMessage.classList.remove('show'); }, 3000);
+            }
+        });
+        
+        // التحقق من حالة الدخول
+        try {
+            const adm = JSON.parse(localStorage.getItem('khedmah_admin') || '{}');
+            if (adm.loggedIn) window.location.href = 'admin-dashboard.html';
+        } catch(e) {}
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+    </script>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" style="position:fixed;bottom:1.5rem;left:1.5rem;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:999;">🌙</button>
+</body>
+</html>

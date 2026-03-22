@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+backend/dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Build output
+backend/dist/
+backend/build/
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+backend/coverage/
+
+# Prisma
+backend/prisma/migrations/.migration_lock
+
+# Frontend memory files (not for VCS)
+frontend/memory/

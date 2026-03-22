@@ -1,0 +1,419 @@
+/**
+ * Khedmah API Client — shared across all 36 pages
+ *
+ * Usage:  const data = await API.auth.login(email, password);
+ *
+ * Auto-handles:
+ *  - Authorization: Bearer <token> headers
+ *  - 401 → silent token refresh → retry once → redirect to login
+ *  - Response unwrapping  ({ success, data } → returns data directly)
+ *  - Structured error objects  { status, message, errors[] }
+ *
+ * Config (set before loading this script if needed):
+ *  window.KHEDMAH_API_URL = 'https://api.khedmah.sa/api/v1';  // defaults below
+ */
+
+(function () {
+  'use strict';
+
+  /* ─── Configuration ──────────────────────────────────────────────────────── */
+
+  const BASE = (window.KHEDMAH_API_URL || 'http://localhost:3000/api/v1').replace(/\/$/, '');
+
+  /* ─── Storage helpers ────────────────────────────────────────────────────── */
+
+  const Store = {
+    get:    (k)    => { try { return localStorage.getItem(k); } catch { return null; } },
+    set:    (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+    remove: (k)    => { try { localStorage.removeItem(k); } catch {} },
+
+    getAccessToken:  () => Store.get('khedmah_access_token'),
+    getRefreshToken: () => Store.get('khedmah_refresh_token'),
+    getTokenId:      () => Store.get('khedmah_token_id'),
+
+    saveTokens(accessToken, tokenId, refreshToken) {
+      Store.set('khedmah_access_token',  accessToken);
+      Store.set('khedmah_token_id',      tokenId);
+      Store.set('khedmah_refresh_token', refreshToken);
+    },
+
+    saveUser(user) {
+      // Normalise role to lowercase so existing auth-guard checks (role==='provider') keep working
+      const saved = { ...user, role: (user.role || '').toLowerCase() };
+      Store.set('khedmah_user',  JSON.stringify(saved));
+      // Keep the demo flag so existing auth-guard code keeps working
+      Store.set('khedmah_demo', '1');
+      const r = saved.role;
+      if (r === 'admin' || r === 'super_admin' || r === 'support') {
+        Store.set('khedmah_admin', JSON.stringify({ loggedIn: true, username: user.username }));
+      }
+    },
+
+    clearAll() {
+      ['khedmah_access_token', 'khedmah_refresh_token', 'khedmah_token_id',
+       'khedmah_demo', 'khedmah_user', 'khedmah_admin'].forEach(k => Store.remove(k));
+    },
+
+    getUser() {
+      try { return JSON.parse(Store.get('khedmah_user') || 'null'); } catch { return null; }
+    },
+  };
+
+  /* ─── Error class ────────────────────────────────────────────────────────── */
+
+  class ApiError extends Error {
+    constructor(status, message, errors) {
+      super(message);
+      this.status = status;
+      this.errors = errors || [];
+      this.name   = 'ApiError';
+    }
+  }
+
+  /* ─── Core fetch wrapper ─────────────────────────────────────────────────── */
+
+  let _refreshing = null; // singleton promise during token refresh
+
+  async function _fetch(method, path, body, opts = {}) {
+    const url = path.startsWith('http') ? path : `${BASE}${path}`;
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (!opts.skipAuth) {
+      const token = Store.getAccessToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body != null ? JSON.stringify(body) : undefined,
+    });
+
+    // 401 → try silent refresh once
+    if (res.status === 401 && !opts.skipAuth && !opts._retried) {
+      const refreshed = await _tryRefresh();
+      if (refreshed) {
+        return _fetch(method, path, body, { ...opts, _retried: true });
+      }
+      // Refresh failed — clear session and send to login
+      Store.clearAll();
+      const role = Store.getUser()?.role;
+      window.location.href = role === 'ADMIN' ? 'admin-login.html' : 'login.html';
+      throw new ApiError(401, 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.');
+    }
+
+    // Parse JSON (some endpoints return 204 with no body)
+    let json = null;
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      json = await res.json();
+    }
+
+    if (!res.ok) {
+      const msg    = json?.message || _httpMessage(res.status);
+      const errors = Array.isArray(json?.errors) ? json.errors : [];
+      throw new ApiError(res.status, msg, errors);
+    }
+
+    // Unwrap the ResponseInterceptor envelope: { success, data, meta, ... }
+    return json?.data !== undefined ? json.data : json;
+  }
+
+  async function _tryRefresh() {
+    if (_refreshing) return _refreshing;
+
+    const tokenId      = Store.getTokenId();
+    const refreshToken = Store.getRefreshToken();
+    if (!tokenId || !refreshToken) return false;
+
+    _refreshing = (async () => {
+      try {
+        const res = await fetch(`${BASE}/auth/token/refresh`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ tokenId, refreshToken }),
+        });
+        if (!res.ok) return false;
+        const json = await res.json();
+        const d    = json?.data || json;
+        Store.saveTokens(d.accessToken, d.tokenId, d.refreshToken);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        _refreshing = null;
+      }
+    })();
+
+    return _refreshing;
+  }
+
+  function _httpMessage(status) {
+    const map = {
+      400: 'بيانات غير صحيحة',
+      401: 'غير مصرح لك بالوصول',
+      403: 'ليس لديك صلاحية',
+      404: 'العنصر غير موجود',
+      409: 'يوجد تعارض في البيانات',
+      422: 'بيانات غير صالحة',
+      429: 'طلبات كثيرة، يرجى الانتظار',
+      500: 'خطأ في الخادم، يرجى المحاولة لاحقاً',
+    };
+    return map[status] || `خطأ ${status}`;
+  }
+
+  /* ─── HTTP shortcuts ─────────────────────────────────────────────────────── */
+
+  const http = {
+    get:    (path, opts)       => _fetch('GET',    path, null, opts),
+    post:   (path, body, opts) => _fetch('POST',   path, body, opts),
+    patch:  (path, body, opts) => _fetch('PATCH',  path, body, opts),
+    put:    (path, body, opts) => _fetch('PUT',    path, body, opts),
+    delete: (path, opts)       => _fetch('DELETE', path, null, opts),
+  };
+
+  /* ─── API namespaces ─────────────────────────────────────────────────────── */
+
+  const auth = {
+    async login(identifier, password) {
+      const d = await http.post('/auth/login', { identifier, password }, { skipAuth: true });
+      Store.saveTokens(d.accessToken, d.tokenId, d.refreshToken);
+      // Fetch full user profile and persist
+      const user = await auth.me();
+      Store.saveUser(user);
+      return user;
+    },
+
+    async registerCustomer(data) {
+      return http.post('/auth/register/customer', data, { skipAuth: true });
+    },
+
+    async registerProvider(data) {
+      return http.post('/auth/register/provider', data, { skipAuth: true });
+    },
+
+    async me() {
+      return http.get('/auth/me');
+    },
+
+    async logout() {
+      const tokenId = Store.getTokenId();
+      try {
+        await http.post('/auth/logout', tokenId ? { tokenId } : {});
+      } catch { /* ignore network errors on logout */ }
+      Store.clearAll();
+    },
+
+    async forgotPassword(email) {
+      return http.post('/auth/forgot-password', { email }, { skipAuth: true });
+    },
+
+    async resetPassword(token, newPassword) {
+      return http.post('/auth/reset-password', { token, newPassword }, { skipAuth: true });
+    },
+
+    async resendVerification(email) {
+      return http.post('/auth/verify-email/resend', { email }, { skipAuth: true });
+    },
+
+    async changePassword(currentPassword, newPassword) {
+      return http.patch('/auth/me/password', { currentPassword, newPassword });
+    },
+
+    isLoggedIn:  () => !!Store.getAccessToken(),
+    currentUser: () => Store.getUser(),
+    getRole:     () => Store.getUser()?.role || null,
+  };
+
+  const requests = {
+    create: (data)           => http.post('/requests', data),
+    list:   (params = {})    => http.get('/requests?' + new URLSearchParams(params)),
+    get:    (id)             => http.get(`/requests/${id}`),
+    cancel: (id)             => http.patch(`/requests/${id}/cancel`),
+
+    // Provider actions
+    submitQuote: (id, data)           => http.post(`/requests/${id}/quotes`, data),
+    acceptQuote: (id, quoteId)        => http.patch(`/requests/${id}/quotes/${quoteId}/accept`),
+    start:       (id)                 => http.patch(`/requests/${id}/start`),
+    complete:    (id)                 => http.patch(`/requests/${id}/complete`),
+  };
+
+  const payments = {
+    initiate:    (requestId, data) => http.post(`/payments/requests/${requestId}/pay`, data),
+    release:     (requestId)       => http.post(`/payments/requests/${requestId}/release`),
+    status:      (paymentId)       => http.get(`/payments/${paymentId}/status`),
+    escrow:      (requestId)       => http.get(`/payments/requests/${requestId}/escrow`),
+  };
+
+  const wallet = {
+    balance:        ()          => http.get('/wallet/balance'),
+    transactions:   (p = {})    => http.get('/wallet/transactions?' + new URLSearchParams(p)),
+    withdraw:       (data)      => http.post('/wallet/withdraw', data),
+    withdrawals:    (p = {})    => http.get('/wallet/withdrawals?' + new URLSearchParams(p)),
+  };
+
+  const providers = {
+    getProfile:  (id)        => http.get(`/providers/${id}`),
+    myProfile:   ()          => http.get('/providers/me'),
+    myEarnings:  ()          => http.get('/providers/me/earnings'),
+    updateBank:  (data)      => http.patch('/providers/me/bank', data),
+    submitDocs:  (data)      => http.post('/providers/me/documents', data),
+    services:    ()          => http.get('/providers/me/services'),
+    addService:  (data)      => http.post('/providers/me/services', data),
+    removeService: (id)      => http.delete(`/providers/me/services/${id}`),
+    schedule:    ()          => http.get('/providers/me/schedule'),
+    saveSchedule: (data)     => http.post('/providers/me/schedule', data),
+  };
+
+  const services = {
+    list: (params = {}) => http.get('/services?' + new URLSearchParams(params)),
+    get:  (id)          => http.get(`/services/${id}`),
+  };
+
+  const search = {
+    providers: (params = {}) => http.get('/search/providers?' + new URLSearchParams(params)),
+    services:  (q)           => http.get(`/search/services?q=${encodeURIComponent(q)}`),
+  };
+
+  const reviews = {
+    create: (requestId, data) => http.post(`/reviews/${requestId}`, data),
+    list:   (userId, p = {})  => http.get(`/reviews/user/${userId}?` + new URLSearchParams(p)),
+  };
+
+  const notifications = {
+    list:      (p = {})  => http.get('/notifications?' + new URLSearchParams(p)),
+    markRead:  (id)      => http.patch(`/notifications/${id}/read`),
+    markAllRead: ()      => http.patch('/notifications/read-all'),
+    registerToken: (data) => http.post('/notifications/device-tokens', data),
+  };
+
+  const chat = {
+    conversations: ()     => http.get('/chat/conversations'),
+    messages:      (id, p = {}) => http.get(`/chat/conversations/${id}/messages?` + new URLSearchParams(p)),
+    send:          (id, data)   => http.post(`/chat/conversations/${id}/messages`, data),
+    create:        (data)       => http.post('/chat/conversations', data),
+    markRead:      (id)         => http.patch(`/chat/conversations/${id}/read`),
+  };
+
+  const admin = {
+    stats:               ()       => http.get('/admin/stats'),
+    users:               (p = {}) => http.get('/admin/users?' + new URLSearchParams(p)),
+    suspendUser:         (id, data) => http.patch(`/admin/users/${id}/suspend`, data),
+    unsuspendUser:       (id)     => http.patch(`/admin/users/${id}/unsuspend`),
+    pendingProviders:    ()       => http.get('/admin/providers/pending'),
+    approveProvider:     (id)     => http.patch(`/admin/providers/${id}/approve`),
+    rejectProvider:      (id, data) => http.patch(`/admin/providers/${id}/reject`, data),
+    disputes:            (p = {}) => http.get('/admin/disputes?' + new URLSearchParams(p)),
+    resolveDispute:      (id, data) => http.patch(`/admin/disputes/${id}/resolve`, data),
+    withdrawals:         (p = {}) => http.get('/wallet/admin/withdrawals?' + new URLSearchParams(p)),
+    approveWithdrawal:   (id, data) => http.patch(`/wallet/admin/withdrawals/${id}/approve`, data),
+    rejectWithdrawal:    (id, data) => http.patch(`/wallet/admin/withdrawals/${id}/reject`, data),
+    health:              ()       => http.get('/health'),
+    auditLogs:           (p = {}) => http.get('/admin/audit?' + new URLSearchParams(p)),
+  };
+
+  const tenders = {
+    list:     (p = {})      => http.get('/tenders?' + new URLSearchParams(p)),
+    get:      (id)          => http.get(`/tenders/${id}`),
+    create:   (data)        => http.post('/tenders', data),
+    bid:      (id, data)    => http.post(`/tenders/${id}/bids`, data),
+    award:    (id, bidId)   => http.patch(`/tenders/${id}/bids/${bidId}/award`),
+    milestones: (id)        => http.get(`/tenders/${id}/milestones`),
+  };
+
+  const invoices = {
+    list:      (p = {}) => http.get('/invoices?' + new URLSearchParams(p)),
+    get:       (id)     => http.get(`/invoices/${id}`),
+  };
+
+  const equipment = {
+    list:   (p = {})   => http.get('/equipment?' + new URLSearchParams(p)),
+    get:    (id)       => http.get(`/equipment/${id}`),
+    rent:   (id, data) => http.post(`/equipment/${id}/rentals`, data),
+    myRentals: ()      => http.get('/equipment/my-rentals'),
+    myListings: ()     => http.get('/equipment/my-listings'),
+  };
+
+  const consultations = {
+    list:    (p = {})   => http.get('/consultations?' + new URLSearchParams(p)),
+    book:    (data)     => http.post('/consultations', data),
+    get:     (id)       => http.get(`/consultations/${id}`),
+    accept:  (id)       => http.patch(`/consultations/${id}/accept`),
+    complete: (id)      => http.patch(`/consultations/${id}/complete`),
+  };
+
+  const maps = {
+    geocode:      (address) => http.get(`/maps/geocode?address=${encodeURIComponent(address)}`),
+    distance:     (o, d)    => http.get(`/maps/distance?origin=${encodeURIComponent(o)}&destination=${encodeURIComponent(d)}`),
+    autocomplete: (q, tok)  => http.get(`/maps/autocomplete?q=${encodeURIComponent(q)}&sessionToken=${tok}`),
+  };
+
+  /* ─── Toast / UI helpers ─────────────────────────────────────────────────── */
+
+  /**
+   * Show a simple Bootstrap toast message.
+   * Assumes a <div id="api-toast"> exists — injects one if not.
+   */
+  function toast(message, type = 'danger') {
+    let container = document.getElementById('api-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'api-toast-container';
+      container.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:9999;min-width:320px;';
+      document.body.appendChild(container);
+    }
+    const id  = 'toast-' + Date.now();
+    const bg  = type === 'success' ? '#198754' : type === 'warning' ? '#fd7e14' : '#dc3545';
+    container.insertAdjacentHTML('beforeend', `
+      <div id="${id}" style="background:${bg};color:#fff;border-radius:8px;padding:.9rem 1.2rem;
+           margin-bottom:.5rem;box-shadow:0 4px 16px rgba(0,0,0,.25);font-size:.92rem;
+           animation:fadeIn .2s ease;direction:rtl">
+        ${message}
+      </div>`);
+    setTimeout(() => document.getElementById(id)?.remove(), 4000);
+  }
+
+  /** Extract a user-facing error message from an ApiError or unknown error. */
+  function errorMsg(err) {
+    if (err instanceof ApiError) {
+      if (err.errors?.length) return err.errors.join(' ، ');
+      return err.message;
+    }
+    return 'حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.';
+  }
+
+  /* ─── Export ─────────────────────────────────────────────────────────────── */
+
+  window.API = {
+    // HTTP primitives (advanced use)
+    get:    http.get,
+    post:   http.post,
+    patch:  http.patch,
+    put:    http.put,
+    delete: http.delete,
+
+    // Domain namespaces
+    auth, requests, payments, wallet, providers, services,
+    search, reviews, notifications, chat, admin, tenders,
+    invoices, equipment, consultations, maps,
+
+    // Auth helpers (frequently needed in guards)
+    isLoggedIn:  auth.isLoggedIn,
+    currentUser: auth.currentUser,
+    getRole:     auth.getRole,
+
+    // Storage
+    Store,
+
+    // UI helpers
+    toast,
+    errorMsg,
+    ApiError,
+  };
+
+  /* ─── CSS for toast fade-in ─────────────────────────────────────────────── */
+  const style = document.createElement('style');
+  style.textContent = '@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}';
+  document.head.appendChild(style);
+
+})();

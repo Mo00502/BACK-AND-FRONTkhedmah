@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>متابعة دفعات المشروع - خدمة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #028090;
+      --accent: #02C39A;
+      --dark: #1E293B;
+      --light: #F8FAFC;
+      --gray: #64748B;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: #f1f5f9;
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      background: white;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 5%;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+    .logo { font-weight: 900; font-size: 1.25rem; color: var(--primary); text-decoration: none; letter-spacing: -0.5px; }
+    .nav-back {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.85rem; color: var(--gray); text-decoration: none;
+      padding: 0.3rem 0.6rem; border-radius: 8px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-back:hover { background: #f1f5f9; color: var(--primary); }
+    .theme-toggle {
+      width: 36px; height: 36px;
+      border: 1.5px solid #e2e8f0; border-radius: 10px;
+      background: transparent; cursor: pointer;
+      font-size: 1rem; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .theme-toggle:hover { background: #f8fafc; }
+
+    /* ─── PROJECT HEADER ─── */
+    .project-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: white;
+      padding: 1.75rem 5% 2rem;
+    }
+    .project-header-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .project-header-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .contractor-avatar {
+      width: 52px; height: 52px; flex-shrink: 0;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.3rem; color: white;
+    }
+    .project-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      line-height: 1.4;
+      margin-bottom: 0.3rem;
+    }
+    .contractor-name {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 0.4rem;
+    }
+    .header-badges { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .badge-executing {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+    .badge-value {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+    }
+    .progress-section { margin-top: 0; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.8rem; color: rgba(255,255,255,0.85);
+      margin-bottom: 0.4rem;
+    }
+    .progress-bar-track {
+      background: rgba(255,255,255,0.25);
+      border-radius: 10px; height: 8px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: white;
+      height: 100%; border-radius: 10px;
+      transition: width 0.6s ease;
+    }
+
+    /* ─── SUMMARY STRIP ─── */
+    .summary-strip {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.5rem 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .summary-strip-inner {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.5rem 5%;
+      max-width: 780px;
+      margin: 0 auto;
+      min-width: max-content;
+    }
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.75rem 1.1rem;
+      min-width: 150px;
+      text-align: center;
+    }
+    .summary-card-label {
+      font-size: 0.72rem;
+      color: var(--gray);
+      margin-bottom: 0.25rem;
+    }
+    .summary-card-amount {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .summary-card-amount.teal { color: var(--primary); }
+    .summary-card-amount.green { color: var(--success); }
+    .summary-card-sub {
+      font-size: 0.72rem;
+      color: var(--gray);
+      margin-top: 0.1rem;
+    }
+
+    /* ─── PAGE BODY ─── */
+    .page-body {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.5rem 5% 7rem;
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .section-title i { color: var(--primary); }
+
+    /* ─── MILESTONE TIMELINE ─── */
+    .timeline {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 0;
+      position: relative;
+    }
+    .timeline-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 40px;
+      flex-shrink: 0;
+    }
+    .timeline-circle {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.85rem;
+      z-index: 1;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .timeline-line {
+      width: 2px;
+      flex: 1;
+      min-height: 16px;
+      background: repeating-linear-gradient(
+        to bottom,
+        #cbd5e1 0px,
+        #cbd5e1 5px,
+        transparent 5px,
+        transparent 10px
+      );
+    }
+    .timeline-item:last-child .timeline-line { display: none; }
+
+    .milestone-card {
+      flex: 1;
+      background: white;
+      border-radius: 14px;
+      border-right: 4px solid #e2e8f0;
+      margin-bottom: 14px;
+      margin-right: 10px;
+      padding: 1rem 1rem 1rem 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s;
+    }
+    .milestone-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.09); }
+
+    /* status border colors */
+    .milestone-card.status-released  { border-right-color: var(--success); }
+    .milestone-card.status-pending_approval { border-right-color: var(--warning); animation: pulseAmber 2s infinite; }
+    .milestone-card.status-held      { border-right-color: var(--primary); }
+    .milestone-card.status-pending   { border-right-color: #cbd5e1; }
+    .milestone-card.status-disputed  { border-right-color: var(--error); }
+
+    @keyframes pulseAmber {
+      0%, 100% { box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+      50% { box-shadow: 0 0 0 4px rgba(245,158,11,0.15), 0 1px 4px rgba(0,0,0,0.05); }
+    }
+
+    /* timeline circle colors */
+    .circle-released    { background: #d1fae5; color: var(--success); }
+    .circle-pending_approval { background: #fef3c7; color: #b45309; }
+    .circle-held        { background: #cffafe; color: var(--primary); }
+    .circle-pending     { background: #f1f5f9; color: #94a3b8; }
+    .circle-disputed    { background: #fee2e2; color: var(--error); }
+
+    .milestone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .milestone-label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1.3;
+    }
+    .milestone-amount {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+    .milestone-meta {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .meta-tag {
+      font-size: 0.72rem;
+      color: var(--gray);
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .meta-tag i { font-size: 0.65rem; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 0.2rem 0.65rem; border-radius: 20px;
+    }
+    .pill-released    { background: #d1fae5; color: #059669; }
+    .pill-pending_approval { background: #fef3c7; color: #b45309; }
+    .pill-held        { background: #cffafe; color: var(--primary); }
+    .pill-pending     { background: #f1f5f9; color: #64748b; }
+    .pill-disputed    { background: #fee2e2; color: var(--error); }
+
+    .milestone-note {
+      font-size: 0.78rem;
+      color: var(--gray);
+      margin-top: 0.35rem;
+    }
+
+    /* Evidence files */
+    .evidence-list {
+      display: flex; flex-direction: column; gap: 0.4rem;
+      margin-top: 0.6rem; margin-bottom: 0.6rem;
+    }
+    .evidence-file {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; color: var(--primary);
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      border-radius: 8px;
+      padding: 0.35rem 0.65rem;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .evidence-file:hover { background: #ccfbf1; }
+    .evidence-file i { font-size: 0.9rem; }
+
+    /* Milestone action buttons */
+    .milestone-actions {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-top: 0.75rem; flex-wrap: wrap;
+    }
+    .btn-approve {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      border: none; border-radius: 10px;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.85rem; font-weight: 700;
+      font-family: 'Tajawal', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 0.4rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-approve:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-approve:active { transform: translateY(0); }
+    .btn-dispute {
+      background: none; border: none;
+      color: var(--error); font-size: 0.78rem;
+      font-family: 'Tajawal', sans-serif;
+      cursor: pointer; padding: 0.3rem 0;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .btn-dispute:hover { opacity: 0.8; }
+    .btn-support {
+      background: #fee2e2; color: var(--error);
+      border: none; border-radius: 10px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem; font-weight: 700;
+      font-family: 'Tajawal', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 0.35rem;
+      transition: background 0.15s;
+    }
+    .btn-support:hover { background: #fecaca; }
+
+    /* ─── BREAKDOWN CARD ─── */
+    .breakdown-card {
+      background: white;
+      border-radius: 14px;
+      padding: 1.2rem 1.2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      margin-top: 1.5rem;
+    }
+    .breakdown-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .breakdown-title i { color: var(--primary); }
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .breakdown-row:last-of-type { border-bottom: none; }
+    .breakdown-row.total-row {
+      border-top: 2px solid #e2e8f0;
+      padding-top: 0.75rem;
+      margin-top: 0.25rem;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--dark);
+    }
+    .breakdown-label { color: var(--gray); }
+    .breakdown-amount { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; }
+    .breakdown-amount.teal { color: var(--primary); }
+    .breakdown-note {
+      margin-top: 0.9rem;
+      font-size: 0.78rem;
+      color: var(--gray);
+      background: #f0fdfa;
+      border-right: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 0.5rem 0.75rem;
+    }
+
+    /* ─── STICKY CHAT BAR ─── */
+    .sticky-chat {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      padding: 0.75rem 5%;
+      z-index: 150;
+    }
+    .sticky-chat-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .btn-chat {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      border: none; border-radius: 12px;
+      padding: 0.7rem 1.2rem;
+      font-size: 0.9rem; font-weight: 700;
+      font-family: 'Tajawal', sans-serif;
+      cursor: pointer; text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-chat:hover { opacity: 0.9; color: white; transform: translateY(-1px); }
+
+    /* ─── MODAL OVERLAY ─── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.55);
+      z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 18px;
+      padding: 1.75rem 1.5rem;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-title {
+      font-size: 1.1rem; font-weight: 800;
+      color: var(--dark); margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .modal-subtitle {
+      font-size: 0.85rem; color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+    .modal-amount {
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--primary); margin-bottom: 1rem;
+    }
+    .modal-warning {
+      background: #fef3c7;
+      border-right: 3px solid var(--warning);
+      border-radius: 0 8px 8px 0;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8rem; color: #92400e;
+      margin-bottom: 1.25rem;
+      display: flex; gap: 0.4rem; align-items: flex-start;
+    }
+    .modal-warning i { margin-top: 0.1rem; flex-shrink: 0; }
+    .modal-actions { display: flex; gap: 0.75rem; }
+    .btn-modal-confirm {
+      flex: 1;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white; border: none; border-radius: 10px;
+      padding: 0.65rem 0; font-size: 0.9rem; font-weight: 700;
+      font-family: 'Tajawal', sans-serif; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-modal-confirm:hover { opacity: 0.9; }
+    .btn-modal-cancel {
+      flex: 1;
+      background: #f1f5f9; color: var(--gray);
+      border: none; border-radius: 10px;
+      padding: 0.65rem 0; font-size: 0.9rem; font-weight: 700;
+      font-family: 'Tajawal', sans-serif; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-modal-cancel:hover { background: #e2e8f0; }
+
+    /* Dispute modal extras */
+    .form-select-ar {
+      width: 100%;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      color: var(--dark);
+      background: white;
+      margin-bottom: 0.85rem;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 0.75rem center;
+    }
+    .form-select-ar:focus { outline: none; border-color: var(--primary); }
+    .upload-note {
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 0.85rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--gray);
+      margin-bottom: 1rem;
+    }
+    .upload-note i { display: block; font-size: 1.4rem; color: #94a3b8; margin-bottom: 0.3rem; }
+
+    /* ─── TOAST ─── */
+    .toast-wrapper {
+      position: fixed;
+      bottom: 80px; left: 50%; transform: translateX(-50%);
+      z-index: 600;
+      pointer-events: none;
+    }
+    .toast-msg {
+      background: var(--dark);
+      color: white;
+      border-radius: 12px;
+      padding: 0.7rem 1.25rem;
+      font-size: 0.85rem; font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast-msg.show { opacity: 1; transform: translateY(0); }
+    .toast-msg.success { background: var(--success); }
+    .toast-msg.warning { background: var(--warning); color: white; }
+
+    /* ─── DARK MODE ─── */
+    html.dark body { background: #0f172a !important; color: #e2e8f0; }
+    html.dark nav { background: #1e293b !important; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+    html.dark .nav-back { color: #94a3b8; }
+    html.dark .theme-toggle { border-color: #334155; }
+    html.dark .theme-toggle:hover { background: #334155; }
+    html.dark .summary-strip { background: #1e293b !important; border-color: #334155; }
+    html.dark .summary-card { background: #0f172a !important; border-color: #334155 !important; }
+    html.dark .summary-card-amount { color: #e2e8f0; }
+    html.dark .milestone-card { background: #1e293b !important; border-color: #334155 !important; }
+    html.dark .milestone-label { color: #e2e8f0; }
+    html.dark .breakdown-card { background: #1e293b !important; }
+    html.dark .breakdown-row { border-color: #334155; }
+    html.dark .breakdown-row.total-row { border-color: #475569; }
+    html.dark .breakdown-label { color: #94a3b8; }
+    html.dark .breakdown-amount { color: #e2e8f0; }
+    html.dark .breakdown-note { background: #0f172a; }
+    html.dark .modal-box { background: #1e293b !important; }
+    html.dark .modal-title { color: #e2e8f0; }
+    html.dark .milestone-note { color: #94a3b8; }
+    html.dark .meta-tag { color: #94a3b8; }
+    html.dark .form-select-ar { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
+    html.dark .upload-note { background: #0f172a; border-color: #334155; color: #94a3b8; }
+    html.dark .btn-modal-cancel { background: #334155; color: #94a3b8; }
+    html.dark .btn-modal-cancel:hover { background: #475569; }
+    html.dark .sticky-chat { background: #1e293b; border-color: #334155; }
+    html.dark .timeline-line {
+      background: repeating-linear-gradient(
+        to bottom, #334155 0px, #334155 5px, transparent 5px, transparent 10px
+      );
+    }
+    html.dark .evidence-file { background: #0f172a; border-color: #0d9488; color: var(--accent); }
+    html.dark .evidence-file:hover { background: #134e4a; }
+    html.dark .section-title { color: #e2e8f0; }
+    html.dark .breakdown-title { color: #e2e8f0; }
+  </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+
+<!-- Auth Guard -->
+<script>
+  (function() {
+    if (!API.isLoggedIn()) { window.location.href = 'login.html'; return; }
+    if (API.auth.getRole() === 'provider') { window.location.href = 'provider-dashboard.html'; return; }
+  })();
+</script>
+
+<!-- Dark Mode Init -->
+<script>
+  (function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
+
+<!-- ═══════════════════════════════════════════════ ALPINE APP ═══ -->
+<div x-data="milestoneApp()" x-init="init()">
+
+  <!-- ─── NAV ─── -->
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-right">
+        <a href="tender-bids.html" class="nav-back">
+          <i class="fas fa-arrow-right"></i>
+          <span>العروض</span>
+        </a>
+        <a href="home.html" class="logo">خدمة</a>
+      </div>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تبديل الوضع">🌙</button>
+    </div>
+  </nav>
+
+  <!-- ─── PROJECT HEADER ─── -->
+  <div class="project-header">
+    <div class="project-header-inner">
+      <div class="project-header-top">
+        <div class="contractor-avatar">م</div>
+        <div style="flex:1">
+          <div class="project-title">إنشاء مبنى إداري متعدد الطوابق</div>
+          <div class="contractor-name"><i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>شركة المتميز للمقاولات</div>
+          <div class="header-badges">
+            <span class="badge-executing"><i class="fas fa-circle" style="font-size:0.5rem;color:#86efac"></i> قيد التنفيذ</span>
+            <span class="badge-value">SAR 2,450,000</span>
+          </div>
+        </div>
+      </div>
+      <div class="progress-section">
+        <div class="progress-label">
+          <span>التقدم الإجمالي</span>
+          <span x-text="overallPct + '%'" style="font-weight:700"></span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" :style="'width:' + overallPct + '%'"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SUMMARY STRIP ─── -->
+  <div class="summary-strip">
+    <div class="summary-strip-inner">
+      <div class="summary-card">
+        <div class="summary-card-label">إجمالي العقد</div>
+        <div class="summary-card-amount teal">2,450,000</div>
+        <div class="summary-card-sub">ريال سعودي</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">المُفرج عنه</div>
+        <div class="summary-card-amount green" x-text="fmt(releasedTotal)"></div>
+        <div class="summary-card-sub" x-text="releasedPct + '% من العقد'"></div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">المحجوز</div>
+        <div class="summary-card-amount" x-text="fmt(heldTotal)"></div>
+        <div class="summary-card-sub">ريال سعودي</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PAGE BODY ─── -->
+  <div class="page-body">
+
+    <div class="section-title">
+      <i class="fas fa-list-check"></i>
+      جدول الدفعات المرحلية
+    </div>
+
+    <!-- ─── TIMELINE ─── -->
+    <div class="timeline">
+      <template x-for="(ms, idx) in milestones" :key="ms.id">
+        <div class="timeline-item">
+          <!-- Left column: circle + line -->
+          <div class="timeline-left" style="padding-top:0.75rem">
+            <div class="timeline-circle" :class="'circle-' + ms.status">
+              <!-- released: checkmark -->
+              <template x-if="ms.status === 'released'">
+                <i class="fas fa-check"></i>
+              </template>
+              <!-- pending_approval: clock -->
+              <template x-if="ms.status === 'pending_approval'">
+                <i class="fas fa-clock"></i>
+              </template>
+              <!-- disputed: exclamation -->
+              <template x-if="ms.status === 'disputed'">
+                <i class="fas fa-exclamation"></i>
+              </template>
+              <!-- held / pending: number -->
+              <template x-if="ms.status === 'held' || ms.status === 'pending'">
+                <span x-text="ms.id"></span>
+              </template>
+            </div>
+            <div class="timeline-line"></div>
+          </div>
+
+          <!-- Card -->
+          <div class="milestone-card" :class="'status-' + ms.status">
+            <!-- Header row -->
+            <div class="milestone-header">
+              <div>
+                <div class="milestone-label" x-text="ms.label"></div>
+              </div>
+              <div style="text-align:left">
+                <div class="milestone-amount" x-text="'SAR ' + fmt(ms.amount)"></div>
+                <div style="font-size:0.72rem;color:var(--gray);text-align:left" x-text="ms.pct + '% من العقد'"></div>
+              </div>
+            </div>
+
+            <!-- Meta row -->
+            <div class="milestone-meta">
+              <div class="meta-tag"><i class="fas fa-calendar-alt"></i> <span x-text="'استحقاق: ' + formatDate(ms.dueDate)"></span></div>
+              <!-- released date -->
+              <template x-if="ms.status === 'released' && ms.releasedAt">
+                <div class="meta-tag" style="color:var(--success)"><i class="fas fa-check-circle"></i> <span x-text="'تم الإفراج: ' + formatDate(ms.releasedAt)"></span></div>
+              </template>
+              <!-- submitted date -->
+              <template x-if="ms.status === 'pending_approval' && ms.submittedAt">
+                <div class="meta-tag" style="color:#b45309"><i class="fas fa-upload"></i> <span x-text="'رُفعت في: ' + formatDate(ms.submittedAt)"></span></div>
+              </template>
+            </div>
+
+            <!-- Status pill -->
+            <span class="status-pill" :class="'pill-' + ms.status">
+              <template x-if="ms.status === 'released'"><i class="fas fa-check-circle"></i></template>
+              <template x-if="ms.status === 'pending_approval'"><i class="fas fa-hourglass-half"></i></template>
+              <template x-if="ms.status === 'held'"><i class="fas fa-lock"></i></template>
+              <template x-if="ms.status === 'pending'"><i class="fas fa-minus-circle"></i></template>
+              <template x-if="ms.status === 'disputed'"><i class="fas fa-exclamation-triangle"></i></template>
+              <span x-text="statusLabel(ms.status)"></span>
+            </span>
+
+            <!-- Note -->
+            <div class="milestone-note" x-text="ms.note"></div>
+
+            <!-- Evidence files (pending_approval) -->
+            <template x-if="ms.evidence && ms.evidence.length">
+              <div class="evidence-list">
+                <div style="font-size:0.75rem;color:var(--gray);margin-bottom:0.2rem;font-weight:600">المستندات المرفوعة:</div>
+                <template x-for="file in ms.evidence" :key="file">
+                  <a class="evidence-file" href="#" @click.prevent>
+                    <i :class="file.endsWith('.pdf') ? 'fas fa-file-pdf' : 'fas fa-file-archive'"></i>
+                    <span x-text="file"></span>
+                    <i class="fas fa-download" style="margin-right:auto;font-size:0.7rem;opacity:0.6"></i>
+                  </a>
+                </template>
+              </div>
+            </template>
+
+            <!-- Actions -->
+            <template x-if="ms.status === 'pending_approval'">
+              <div class="milestone-actions">
+                <button class="btn-approve" @click="openApproveModal(ms)">
+                  <i class="fas fa-check"></i>
+                  موافقة على الإفراج
+                </button>
+                <button class="btn-dispute" @click="openDisputeModal(ms)">رفع نزاع</button>
+              </div>
+            </template>
+
+            <template x-if="ms.status === 'disputed'">
+              <div class="milestone-actions">
+                <button class="btn-support">
+                  <i class="fas fa-headset"></i>
+                  تواصل مع الدعم
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ─── PAYMENT BREAKDOWN ─── -->
+    <div class="breakdown-card">
+      <div class="breakdown-title"><i class="fas fa-calculator"></i> ملخص الفاتورة</div>
+
+      <div class="breakdown-row">
+        <span class="breakdown-label">أجرة العمل (الإجمالي)</span>
+        <span class="breakdown-amount teal">SAR 2,100,000</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">رسوم المنصة (15%)</span>
+        <span class="breakdown-amount">SAR 315,000</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">ضريبة القيمة المضافة (15%)</span>
+        <span class="breakdown-amount">SAR 362,250</span>
+      </div>
+      <div class="breakdown-row total-row">
+        <span>الإجمالي</span>
+        <span class="breakdown-amount teal">SAR 2,777,250</span>
+      </div>
+
+      <div class="breakdown-note">
+        <i class="fas fa-info-circle" style="margin-left:0.3rem;color:var(--accent)"></i>
+        الدفع يتم مرحلة بمرحلة حسب الجدول أعلاه — يُفرج عن كل دفعة بعد موافقتك على اكتمال المرحلة.
+      </div>
+      <div class="breakdown-note" style="margin-top:0.5rem">
+        <i class="fas fa-percent" style="margin-left:0.3rem;color:var(--accent)"></i>
+        رسوم المنصة محسوبة على قيمة العمل المُنجز عند كل إفراج
+      </div>
+    </div>
+
+  </div><!-- /page-body -->
+
+  <!-- ─── STICKY CHAT ─── -->
+  <div class="sticky-chat">
+    <div class="sticky-chat-inner">
+      <a href="chat.html?type=tender&id=1" class="btn-chat">
+        <i class="fas fa-comment-dots"></i>
+        تواصل مع المقاول
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══════ APPROVE MODAL ═══════ -->
+  <div class="modal-overlay" x-show="approveModal.open" x-transition.opacity style="display:none" @click.self="approveModal.open = false">
+    <div class="modal-box" x-transition.scale @click.stop>
+      <div class="modal-title">
+        <i class="fas fa-check-circle" style="color:var(--success)"></i>
+        تأكيد الإفراج عن الدفعة
+      </div>
+      <div class="modal-subtitle" x-text="approveModal.label"></div>
+      <div class="modal-amount" x-text="'SAR ' + fmt(approveModal.amount)"></div>
+      <div class="modal-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>بمجرد الموافقة سيتم تحويل المبلغ فوراً لحساب المقاول ولا يمكن التراجع عن هذا الإجراء.</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirm" @click="confirmApprove()">
+          <i class="fas fa-check" style="margin-left:0.4rem"></i>
+          تأكيد الإفراج
+        </button>
+        <button class="btn-modal-cancel" @click="approveModal.open = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ DISPUTE MODAL ═══════ -->
+  <div class="modal-overlay" x-show="disputeModal.open" x-transition.opacity style="display:none" @click.self="disputeModal.open = false">
+    <div class="modal-box" x-transition.scale @click.stop>
+      <div class="modal-title">
+        <i class="fas fa-exclamation-triangle" style="color:var(--error)"></i>
+        رفع نزاع
+      </div>
+      <div class="modal-subtitle" style="margin-bottom:0.75rem">
+        المرحلة: <strong x-text="disputeModal.label"></strong>
+      </div>
+      <select class="form-select-ar" x-model="disputeModal.reason">
+        <option value="">— اختر سبب النزاع —</option>
+        <option value="incomplete">لم يكتمل العمل</option>
+        <option value="quality">مشكلة في الجودة</option>
+        <option value="specs">عدم الالتزام بالمواصفات</option>
+        <option value="other">أخرى</option>
+      </select>
+      <div class="upload-note">
+        <i class="fas fa-cloud-upload-alt"></i>
+        يمكنك إرفاق صور أو مستندات داعمة لطلب النزاع عبر البريد الإلكتروني للدعم
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirm" style="background:linear-gradient(135deg,var(--error),#f87171)" @click="confirmDispute()" :disabled="!disputeModal.reason">
+          <i class="fas fa-paper-plane" style="margin-left:0.4rem"></i>
+          إرسال النزاع
+        </button>
+        <button class="btn-modal-cancel" @click="disputeModal.open = false">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TOAST ─── -->
+  <div class="toast-wrapper">
+    <div class="toast-msg" :class="[toast.type, toast.show ? 'show' : '']" x-text="toast.msg"></div>
+  </div>
+
+</div><!-- /x-data -->
+
+<!-- Alpine.js -->
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+  /* ─── Dark-mode toggle ─── */
+  function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+    document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+  }
+
+  /* ─── Set correct icon on load ─── */
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+  });
+
+  /* ─── Alpine Component ─── */
+  function milestoneApp() {
+    const MILESTONES = [
+      {
+        id: 1,
+        label: 'دفعة التعبئة (مقدم)',
+        amount: 490000,
+        pct: 20,
+        dueDate: '2025-02-01',
+        status: 'released',
+        releasedAt: '2025-02-03',
+        evidence: null,
+        note: 'تم الإفراج تلقائياً بعد توقيع العقد'
+      },
+      {
+        id: 2,
+        label: 'اكتمال الأساسات',
+        amount: 612500,
+        pct: 25,
+        dueDate: '2025-04-15',
+        status: 'pending_approval',
+        submittedAt: '2025-04-12',
+        evidence: ['تقرير الأساسات.pdf', 'صور الأساسات.zip'],
+        note: 'تم رفع الأدلة، بانتظار موافقتك'
+      },
+      {
+        id: 3,
+        label: 'اكتمال الهيكل الإنشائي',
+        amount: 612500,
+        pct: 25,
+        dueDate: '2025-06-01',
+        status: 'held',
+        evidence: null,
+        note: 'محجوز — في انتظار إتمام المرحلة'
+      },
+      {
+        id: 4,
+        label: 'اكتمال التشطيبات',
+        amount: 490000,
+        pct: 20,
+        dueDate: '2025-08-01',
+        status: 'pending',
+        evidence: null,
+        note: 'لم تبدأ بعد'
+      },
+      {
+        id: 5,
+        label: 'التسليم النهائي (احتجاز)',
+        amount: 245000,
+        pct: 10,
+        dueDate: '2025-09-15',
+        status: 'pending',
+        evidence: null,
+        note: 'احتجاز — يُفرج عنه بعد انتهاء فترة الضمان'
+      }
+    ];
+
+    return {
+      milestones: MILESTONES,
+
+      approveModal: { open: false, id: null, label: '', amount: 0 },
+      disputeModal: { open: false, id: null, label: '', reason: '' },
+      toast: { show: false, msg: '', type: 'success', _timer: null },
+
+      /* ─── Computed ─── */
+      get releasedTotal() {
+        return this.milestones
+          .filter(m => m.status === 'released')
+          .reduce((s, m) => s + m.amount, 0);
+      },
+      get releasedPct() {
+        return Math.round(this.releasedTotal / 2450000 * 100);
+      },
+      get heldTotal() {
+        return 2450000 - this.releasedTotal;
+      },
+      get overallPct() {
+        return this.releasedPct;
+      },
+
+      /* ─── Init ─── */
+      init() {
+        // Read tenderId from URL and update back-link
+        const _tndId = new URLSearchParams(location.search).get('tenderId');
+        if (_tndId) {
+          const backLink = document.querySelector('a.nav-back');
+          if (backLink) backLink.href = 'tender-bids.html?tenderId=' + _tndId;
+        }
+      },
+
+      /* ─── Helpers ─── */
+      fmt(n) {
+        return Number(n).toLocaleString('ar-SA');
+      },
+      formatDate(d) {
+        if (!d) return '';
+        const [y, m, day] = d.split('-');
+        const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                        'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+        return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
+      },
+      statusLabel(s) {
+        const map = {
+          released: 'تم الإفراج',
+          pending_approval: 'بانتظار الموافقة',
+          held: 'محجوز',
+          pending: 'لم تبدأ',
+          disputed: 'قيد النزاع'
+        };
+        return map[s] || s;
+      },
+
+      /* ─── Approve flow ─── */
+      openApproveModal(ms) {
+        this.approveModal = { open: true, id: ms.id, label: ms.label, amount: ms.amount };
+      },
+      async confirmApprove() {
+        const ms = this.milestones.find(m => m.id === this.approveModal.id);
+        const _tndId = new URLSearchParams(location.search).get('tenderId');
+        if (_tndId && _tndId.includes('-') && _tndId.length > 10) {
+          try { await API.payments.release(_tndId); } catch(e) {}
+        }
+        if (ms) {
+          ms.status = 'released';
+          ms.releasedAt = new Date().toISOString().split('T')[0];
+          ms.note = 'تم الإفراج بموافقتك';
+        }
+        this.approveModal.open = false;
+        this.showToast('تم الإفراج بنجاح ✓', 'success');
+      },
+
+      /* ─── Dispute flow ─── */
+      openDisputeModal(ms) {
+        this.disputeModal = { open: true, id: ms.id, label: ms.label, reason: '' };
+      },
+      confirmDispute() {
+        if (!this.disputeModal.reason) return;
+        const ms = this.milestones.find(m => m.id === this.disputeModal.id);
+        if (ms) {
+          ms.status = 'disputed';
+          ms.note = 'قيد النزاع — سيتواصل معك فريق الدعم';
+        }
+        this.disputeModal.open = false;
+        this.showToast('تم فتح قضية النزاع، سيتواصل معك فريق الدعم خلال 24 ساعة', 'warning');
+      },
+
+      /* ─── Toast ─── */
+      showToast(msg, type = 'success') {
+        if (this.toast._timer) clearTimeout(this.toast._timer);
+        this.toast.msg = msg;
+        this.toast.type = type;
+        this.toast.show = true;
+        this.toast._timer = setTimeout(() => { this.toast.show = false; }, 3500);
+      }
+    };
+  }
+</script>
+
+</body>
+</html>

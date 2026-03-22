@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الاستشارات - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        nav { background: white; padding: 1rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; flex-shrink: 0; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; font-size: 0.9rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .avatar-btn { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
+
+        .page-header { background: white; border-bottom: 1px solid #e2e8f0; padding: 1.25rem 5%; }
+        .page-header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+        .page-title { font-size: 1.3rem; font-weight: 800; }
+        .page-title span { color: var(--primary); }
+        .page-subtitle { font-size: 0.85rem; color: var(--gray); margin-top: 0.2rem; }
+        .header-search { display: flex; align-items: center; background: var(--light); border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; max-width: 360px; flex: 1; }
+        .header-search input { flex: 1; border: none; background: transparent; padding: 0.5rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; }
+        .header-search button { background: var(--primary); border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; font-family: 'Tajawal', sans-serif; white-space: nowrap; }
+
+        .page-layout { max-width: 1200px; margin: 0 auto; padding: 1.5rem 5%; display: flex; gap: 1.5rem; }
+
+        /* Filters */
+        .filters-sidebar { width: 230px; flex-shrink: 0; }
+        .filter-panel { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        .filter-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .filter-clear { font-size: 0.75rem; color: var(--primary); cursor: pointer; font-weight: 500; }
+        .filter-option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; cursor: pointer; }
+        .filter-option input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+        .filter-option label { font-size: 0.85rem; cursor: pointer; flex: 1; }
+        .filter-option .count { font-size: 0.72rem; color: var(--gray); }
+        .filter-option input[type=radio] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+
+        /* Results */
+        .results-area { flex: 1; min-width: 0; }
+        .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .results-count { font-size: 0.9rem; color: var(--gray); }
+        .results-count strong { color: var(--dark); }
+        .sort-select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.45rem 0.85rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; background: white; cursor: pointer; }
+
+        /* Consultant Cards — same layout as provider cards in search-services.html */
+        .consultants-list { display: flex; flex-direction: column; gap: 1rem; }
+        .consultant-card { background: white; border-radius: 16px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 1.25rem; transition: box-shadow 0.2s, transform 0.2s; }
+        .consultant-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .consultant-card.hidden { display: none; }
+        .cons-avatar { width: 64px; height: 64px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.4rem; flex-shrink: 0; position: relative; }
+        .verified-tick { position: absolute; bottom: 0; left: 0; width: 20px; height: 20px; background: var(--success); border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: white; }
+        .cons-info { flex: 1; min-width: 0; }
+        .cons-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.15rem; }
+        .cons-specialty { color: var(--gray); font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .cons-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--gray); }
+        .cons-meta span { display: flex; align-items: center; gap: 0.25rem; }
+        .rating { color: #f59e0b; font-weight: 600; }
+        .cons-tags { display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; }
+        .tag { background: var(--light); border-radius: 6px; padding: 0.15rem 0.5rem; font-size: 0.72rem; color: var(--gray); }
+        .cons-right { text-align: center; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .cons-price { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .cons-price small { font-size: 0.72rem; font-weight: 400; color: var(--gray); display: block; }
+        .btn-book { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 0.5rem 1.1rem; font-family: 'Tajawal', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-book:hover { background: #026f7e; }
+        .btn-chat-cons { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 10px; padding: 0.4rem 0.9rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+        .btn-chat-cons:hover { background: rgba(2,128,144,0.08); color: var(--primary); }
+        .avail-badge { font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 8px; }
+        .avail-yes { background: rgba(16,185,129,0.12); color: #065f46; }
+        .avail-no { background: rgba(239,68,68,0.1); color: #991b1b; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.75rem; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.15rem; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; background: var(--light); border: none; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.4rem; }
+        .form-control { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.9rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+        .slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.4rem; }
+        .slot-btn { border: 1.5px solid #e2e8f0; background: white; border-radius: 8px; padding: 0.45rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; cursor: pointer; text-align: center; transition: all 0.15s; }
+        .slot-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .slot-btn.selected { background: var(--primary); border-color: var(--primary); color: white; font-weight: 600; }
+        .modal-footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-full { flex: 1; padding: 0.7rem; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; }
+        .btn-submit { background: var(--primary); color: white; }
+        .btn-submit:hover { background: #026f7e; }
+        .btn-cancel { background: var(--light); color: var(--dark); }
+
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--gray); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* Theme Toggle */
+        .theme-toggle { width: 34px; height: 34px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+
+        /* Dark Mode */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark nav { background: #1e293b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a.active { color: var(--primary); }
+        html.dark .page-header { background: #1e293b; border-color: #334155; }
+        html.dark .header-search { background: #0f172a; border-color: #334155; }
+        html.dark .header-search input { color: #e2e8f0; }
+        html.dark .filter-panel { background: #1e293b; }
+        html.dark .filter-option label { color: #cbd5e1; }
+        html.dark .sort-select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark .consultant-card { background: #1e293b; }
+        html.dark .tag { background: #0f172a; color: #94a3b8; }
+        html.dark .modal { background: #1e293b; }
+        html.dark .form-control { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .form-control:focus { border-color: var(--primary); }
+        html.dark .slot-btn { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+        html.dark .slot-btn:hover { border-color: var(--primary); color: var(--primary); }
+        html.dark .slot-btn.selected { background: var(--primary); color: white; }
+        html.dark .btn-cancel { background: #334155; color: #e2e8f0; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            .filters-sidebar { display: none; }
+            .page-layout { flex-direction: column; }
+            .consultant-card { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<script>
+  (function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    if (!localStorage.getItem('khedmah_demo')) {
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+
+<body>
+<script src="js/api.js"></script>
+    <nav>
+        <div class="nav-content">
+            <a href="home.html" class="logo">KHEDMAH</a>
+            <div class="nav-links">
+                <a href="search-services.html">الخدمات</a>
+                <a href="tenders.html">المناقصات</a>
+                <a href="equipment.html">المعدات</a>
+                <a href="consultations.html" class="active">الاستشارات</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="customer-dashboard.html" class="avatar-btn">م</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div class="page-header-inner">
+            <div>
+                <div class="page-title">الاستشارات <span>المتخصصة</span></div>
+                <div class="page-subtitle">احجز جلسة مع خبراء معتمدين في مجالك</div>
+            </div>
+            <div class="header-search">
+                <input type="text" id="searchInput" placeholder="🔍 ابحث عن استشاري..." oninput="applyFilters()">
+                <button onclick="applyFilters()">بحث</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-layout">
+        <aside class="filters-sidebar">
+            <div class="filter-panel">
+                <div class="filter-title">التخصص <span class="filter-clear" onclick="clearFilters()">مسح الكل</span></div>
+                <div class="filter-option"><input type="checkbox" id="sp1" data-filter="spec" value="هندسة" onchange="applyFilters()"><label for="sp1">🏗️ هندسة ومقاولات</label><span class="count">18</span></div>
+                <div class="filter-option"><input type="checkbox" id="sp2" data-filter="spec" value="قانون" onchange="applyFilters()"><label for="sp2">⚖️ قانوني وعقود</label><span class="count">12</span></div>
+                <div class="filter-option"><input type="checkbox" id="sp3" data-filter="spec" value="مالية" onchange="applyFilters()"><label for="sp3">📊 مالية وأعمال</label><span class="count">15</span></div>
+                <div class="filter-option"><input type="checkbox" id="sp4" data-filter="spec" value="تقنية" onchange="applyFilters()"><label for="sp4">💻 تقنية المعلومات</label><span class="count">21</span></div>
+                <div class="filter-option"><input type="checkbox" id="sp5" data-filter="spec" value="صحة" onchange="applyFilters()"><label for="sp5">🏥 صحة وطب</label><span class="count">9</span></div>
+            </div>
+            <div class="filter-panel">
+                <div class="filter-title">التقييم</div>
+                <div class="filter-option"><input type="checkbox" id="r5" data-filter="rating" value="5" onchange="applyFilters()"><label for="r5">⭐ 4.5 فأعلى</label></div>
+                <div class="filter-option"><input type="checkbox" id="r4" data-filter="rating" value="4" onchange="applyFilters()"><label for="r4">⭐ 4.0 فأعلى</label></div>
+            </div>
+            <div class="filter-panel">
+                <div class="filter-title">نوع الجلسة</div>
+                <div class="filter-option"><input type="checkbox" id="m1" data-filter="mode" value="video" onchange="applyFilters()"><label for="m1">📹 فيديو</label></div>
+                <div class="filter-option"><input type="checkbox" id="m2" data-filter="mode" value="chat" onchange="applyFilters()"><label for="m2">💬 دردشة</label></div>
+                <div class="filter-option"><input type="checkbox" id="m3" data-filter="mode" value="inperson" onchange="applyFilters()"><label for="m3">🤝 حضوري</label></div>
+            </div>
+        </aside>
+
+        <div class="results-area">
+            <div class="results-header">
+                <div class="results-count">عرض <strong id="visibleCount">6</strong> من <strong>6</strong> استشاري</div>
+                <select class="sort-select" id="sortSelect" onchange="sortConsultants()">
+                    <option value="rating">الأعلى تقييمًا</option>
+                    <option value="price_low">السعر: الأقل</option>
+                    <option value="price_high">السعر: الأعلى</option>
+                    <option value="experience">الأكثر خبرة</option>
+                </select>
+            </div>
+
+            <div class="consultants-list" id="consultantsList">
+
+                <div class="consultant-card" data-spec="هندسة" data-rating="4.9" data-price="350" data-exp="15" data-mode="video">
+                    <div class="cons-avatar">خ<div class="verified-tick">✓</div></div>
+                    <div class="cons-info">
+                        <div class="cons-name">م. خالد العمري</div>
+                        <div class="cons-specialty">مستشار هندسي — مشاريع البنية التحتية</div>
+                        <div class="cons-meta">
+                            <span class="rating">⭐ 4.9</span>
+                            <span>📋 320 جلسة</span>
+                            <span>💼 15 سنة خبرة</span>
+                            <span>📹 فيديو</span>
+                        </div>
+                        <div class="cons-tags">
+                            <span class="tag">المقاولات</span>
+                            <span class="tag">إدارة مشاريع</span>
+                            <span class="tag">عقود البناء</span>
+                        </div>
+                    </div>
+                    <div class="cons-right">
+                        <div class="cons-price">350 ر.س<small>/ساعة</small></div>
+                        <span class="avail-badge avail-yes">متاح اليوم</span>
+                        <button class="btn-book" onclick="openBookModal('م. خالد العمري', 350)">حجز جلسة</button>
+                        <a href="chat.html?type=consult&id=1" class="btn-chat-cons">💬 تواصل</a>
+                    </div>
+                </div>
+
+                <div class="consultant-card" data-spec="قانون" data-rating="4.8" data-price="500" data-exp="12" data-mode="video">
+                    <div class="cons-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">س<div class="verified-tick">✓</div></div>
+                    <div class="cons-info">
+                        <div class="cons-name">أ. سارة الغامدي</div>
+                        <div class="cons-specialty">مستشارة قانونية — عقود وملكية فكرية</div>
+                        <div class="cons-meta">
+                            <span class="rating">⭐ 4.8</span>
+                            <span>📋 210 جلسة</span>
+                            <span>💼 12 سنة خبرة</span>
+                            <span>📹 فيديو</span>
+                        </div>
+                        <div class="cons-tags">
+                            <span class="tag">عقود تجارية</span>
+                            <span class="tag">نزاعات عمالية</span>
+                        </div>
+                    </div>
+                    <div class="cons-right">
+                        <div class="cons-price">500 ر.س<small>/ساعة</small></div>
+                        <span class="avail-badge avail-yes">متاح اليوم</span>
+                        <button class="btn-book" onclick="openBookModal('أ. سارة الغامدي', 500)">حجز جلسة</button>
+                        <a href="chat.html?type=consult&id=2" class="btn-chat-cons">💬 تواصل</a>
+                    </div>
+                </div>
+
+                <div class="consultant-card" data-spec="مالية" data-rating="4.7" data-price="280" data-exp="10" data-mode="chat">
+                    <div class="cons-avatar" style="background:linear-gradient(135deg,#059669,#34d399)">ف<div class="verified-tick">✓</div></div>
+                    <div class="cons-info">
+                        <div class="cons-name">أ. فهد السلمي</div>
+                        <div class="cons-specialty">مستشار مالي — استثمار وتخطيط</div>
+                        <div class="cons-meta">
+                            <span class="rating">⭐ 4.7</span>
+                            <span>📋 185 جلسة</span>
+                            <span>💼 10 سنوات خبرة</span>
+                            <span>💬 دردشة</span>
+                        </div>
+                        <div class="cons-tags">
+                            <span class="tag">الاستثمار</span>
+                            <span class="tag">الميزانية</span>
+                            <span class="tag">الضرائب</span>
+                        </div>
+                    </div>
+                    <div class="cons-right">
+                        <div class="cons-price">280 ر.س<small>/ساعة</small></div>
+                        <span class="avail-badge avail-yes">متاح اليوم</span>
+                        <button class="btn-book" onclick="openBookModal('أ. فهد السلمي', 280)">حجز جلسة</button>
+                        <a href="chat.html?type=consult&id=3" class="btn-chat-cons">💬 تواصل</a>
+                    </div>
+                </div>
+
+                <div class="consultant-card" data-spec="تقنية" data-rating="4.9" data-price="420" data-exp="8" data-mode="video">
+                    <div class="cons-avatar" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)">ر<div class="verified-tick">✓</div></div>
+                    <div class="cons-info">
+                        <div class="cons-name">م. ريم الشهري</div>
+                        <div class="cons-specialty">مستشارة تقنية — بنية تحتية وأمن سيبراني</div>
+                        <div class="cons-meta">
+                            <span class="rating">⭐ 4.9</span>
+                            <span>📋 290 جلسة</span>
+                            <span>💼 8 سنوات خبرة</span>
+                            <span>📹 فيديو</span>
+                        </div>
+                        <div class="cons-tags">
+                            <span class="tag">أمن سيبراني</span>
+                            <span class="tag">Cloud</span>
+                            <span class="tag">DevOps</span>
+                        </div>
+                    </div>
+                    <div class="cons-right">
+                        <div class="cons-price">420 ر.س<small>/ساعة</small></div>
+                        <span class="avail-badge avail-no">محجوز</span>
+                        <button class="btn-book" onclick="openBookModal('م. ريم الشهري', 420)">حجز جلسة</button>
+                        <a href="chat.html?type=consult&id=4" class="btn-chat-cons">💬 تواصل</a>
+                    </div>
+                </div>
+
+                <div class="consultant-card" data-spec="هندسة" data-rating="4.6" data-price="300" data-exp="18" data-mode="inperson">
+                    <div class="cons-avatar" style="background:linear-gradient(135deg,#f59e0b,#fcd34d)">ع<div class="verified-tick">✓</div></div>
+                    <div class="cons-info">
+                        <div class="cons-name">م. عبدالله المطيري</div>
+                        <div class="cons-specialty">مستشار هندسي — كهرباء وطاقة شمسية</div>
+                        <div class="cons-meta">
+                            <span class="rating">⭐ 4.6</span>
+                            <span>📋 410 جلسة</span>
+                            <span>💼 18 سنة خبرة</span>
+                            <span>🤝 حضوري</span>
+                        </div>
+                        <div class="cons-tags">
+                            <span class="tag">كهرباء</span>
+                            <span class="tag">طاقة شمسية</span>
+                            <span class="tag">تصاميم</span>
+                        </div>
+                    </div>
+                    <div class="cons-right">
+                        <div class="cons-price">300 ر.س<small>/ساعة</small></div>
+                        <span class="avail-badge avail-yes">متاح اليوم</span>
+                        <button class="btn-book" onclick="openBookModal('م. عبدالله المطيري', 300)">حجز جلسة</button>
+                        <a href="chat.html?type=consult&id=5" class="btn-chat-cons">💬 تواصل</a>
+                    </div>
+                </div>
+
+                <div class="consultant-card" data-spec="صحة" data-rating="4.8" data-price="600" data-exp="20" data-mode="video">
+                    <div class="cons-avatar" style="background:linear-gradient(135deg,#ef4444,#f87171)">ن<div class="verified-tick">✓</div></div>
+                    <div class="cons-info">
+                        <div class="cons-name">د. نورة الزهراني</div>
+                        <div class="cons-specialty">استشارية طبية — أمراض القلب</div>
+                        <div class="cons-meta">
+                            <span class="rating">⭐ 4.8</span>
+                            <span>📋 560 جلسة</span>
+                            <span>💼 20 سنة خبرة</span>
+                            <span>📹 فيديو</span>
+                        </div>
+                        <div class="cons-tags">
+                            <span class="tag">أمراض القلب</span>
+                            <span class="tag">ضغط الدم</span>
+                            <span class="tag">الوقاية</span>
+                        </div>
+                    </div>
+                    <div class="cons-right">
+                        <div class="cons-price">600 ر.س<small>/ساعة</small></div>
+                        <span class="avail-badge avail-yes">متاح اليوم</span>
+                        <button class="btn-book" onclick="openBookModal('د. نورة الزهراني', 600)">حجز جلسة</button>
+                        <a href="chat.html?type=consult&id=6" class="btn-chat-cons">💬 تواصل</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="icon">🔍</div>
+                <p>لا يوجد استشاريون يطابقون معايير البحث</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Modal -->
+    <div class="modal-overlay" id="bookModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">حجز جلسة استشارية</div>
+                <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الاستشاري</label>
+                <div style="background:var(--light); border-radius:10px; padding:0.65rem 0.9rem; font-size:0.9rem;" id="bookConsName"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">تاريخ الجلسة *</label>
+                <input type="date" class="form-control" id="bookDate">
+            </div>
+            <div class="form-group">
+                <label class="form-label">الوقت المفضل *</label>
+                <div class="slot-grid" id="slotGrid">
+                    <button class="slot-btn" onclick="selectSlot(this)">9:00 ص</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">10:00 ص</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">11:00 ص</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">12:00 م</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">2:00 م</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">4:00 م</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">6:00 م</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">7:00 م</button>
+                    <button class="slot-btn" onclick="selectSlot(this)">8:00 م</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">موضوع الاستشارة</label>
+                <textarea class="form-control" id="bookTopic" placeholder="اشرح بإيجاز ما تحتاج مناقشته..."></textarea>
+            </div>
+            <div style="background:var(--light); border-radius:10px; padding:0.75rem 1rem; font-size:0.88rem; margin-top:0.5rem;">
+                <div style="display:flex; justify-content:space-between;">
+                    <span>سعر الجلسة (ساعة)</span>
+                    <strong id="bookPrice" style="color:var(--primary)">0 ر.س</strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-cancel" onclick="closeModal('bookModal')">إلغاء</button>
+                <button class="btn-full btn-submit" onclick="confirmBook()">تأكيد الحجز</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            const specs = [...document.querySelectorAll('[data-filter="spec"]:checked')].map(el => el.value);
+            const modes = [...document.querySelectorAll('[data-filter="mode"]:checked')].map(el => el.value);
+            const ratings = [...document.querySelectorAll('[data-filter="rating"]:checked')].map(el => parseFloat(el.value));
+            const minRating = ratings.length ? Math.min(...ratings) : 0;
+            const cards = document.querySelectorAll('.consultant-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const show = (!q || card.textContent.toLowerCase().includes(q))
+                    && (specs.length === 0 || specs.includes(card.dataset.spec))
+                    && (modes.length === 0 || modes.includes(card.dataset.mode))
+                    && parseFloat(card.dataset.rating) >= minRating;
+                card.classList.toggle('hidden', !show);
+                if (show) visible++;
+            });
+            document.getElementById('visibleCount').textContent = visible;
+            document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        function sortConsultants() {
+            const sort = document.getElementById('sortSelect').value;
+            const list = document.getElementById('consultantsList');
+            [...list.querySelectorAll('.consultant-card')]
+                .sort((a, b) => sort === 'price_low' ? a.dataset.price - b.dataset.price
+                    : sort === 'price_high' ? b.dataset.price - a.dataset.price
+                    : sort === 'experience' ? b.dataset.exp - a.dataset.exp
+                    : b.dataset.rating - a.dataset.rating)
+                .forEach(c => list.appendChild(c));
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('[data-filter]').forEach(el => el.checked = false);
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        let _bookingConsultantName = '';
+        let _bookingConsultantPrice = 0;
+
+        function openBookModal(name, price) {
+            _bookingConsultantName  = name;
+            _bookingConsultantPrice = price;
+            document.getElementById('bookConsName').textContent = name;
+            document.getElementById('bookPrice').textContent = price.toLocaleString() + ' ر.س';
+            document.getElementById('bookDate').value = '';
+            document.getElementById('bookTopic').value = '';
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('bookModal').classList.add('show');
+        }
+
+        function selectSlot(btn) {
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        async function confirmBook() {
+            const date  = document.getElementById('bookDate').value;
+            const slot  = document.querySelector('.slot-btn.selected');
+            const topic = document.getElementById('bookTopic').value.trim() || 'استشارة';
+            if (!date || !slot) { alert('يرجى اختيار التاريخ والوقت'); return; }
+            closeModal('bookModal');
+            showToast('تم تأكيد الحجز ✅ — جارٍ الانتقال للدفع...');
+            let reqId = 'CONS-' + Date.now().toString().slice(-6);
+            try {
+                const res = await API.consultations.book({
+                    consultantName: _bookingConsultantName,
+                    topic,
+                    scheduledDate: date,
+                    timeSlot: slot.textContent,
+                    pricePerHour: _bookingConsultantPrice,
+                });
+                if (res?.id) reqId = res.id;
+            } catch(e) { /* proceed with demo ID */ }
+            setTimeout(() => {
+                const params = new URLSearchParams({
+                    requestId:    reqId,
+                    service:      'استشارة — ' + _bookingConsultantName,
+                    hasMaterials: 'false',
+                    materialsEst: '0',
+                    serviceAmount: _bookingConsultantPrice,
+                });
+                window.location.href = 'payment-escrow.html?' + params.toString();
+            }, 1000);
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.9rem;z-index:9999;font-family:Tajawal,sans-serif;';
+            t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+
+        // Role-aware dashboard link
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const user = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                const btn = document.querySelector('.avatar-btn');
+                if (btn && user.role === 'provider') btn.href = 'provider-dashboard.html';
+            } catch(e) {}
+        });
+    </script>
+</body>
+</html>

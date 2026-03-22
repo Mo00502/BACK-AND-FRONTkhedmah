@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقييم الخدمة - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* Nav */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-content { max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .btn-back { color: var(--gray); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .btn-back:hover { color: var(--primary); }
+
+        /* Container */
+        .container { max-width: 600px; margin: 2.5rem auto; padding: 0 5%; }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1.75rem 2rem;
+            color: white;
+            text-align: center;
+        }
+        .card-header h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .card-header p { opacity: 0.85; font-size: 0.9rem; }
+        .card-body { padding: 2rem; }
+
+        /* Provider Info */
+        .provider-summary {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--light);
+            border-radius: 14px;
+            margin-bottom: 1.75rem;
+        }
+        .prov-avatar {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 800; font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .prov-info { flex: 1; }
+        .prov-name { font-weight: 700; font-size: 1rem; }
+        .prov-service { color: var(--gray); font-size: 0.85rem; margin-top: 0.15rem; }
+        .prov-date { color: var(--gray); font-size: 0.8rem; margin-top: 0.1rem; }
+        .prov-amount { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .prov-amount small { font-size: 0.75rem; color: var(--gray); font-weight: 400; }
+
+        /* Star Rating */
+        .rating-section { margin-bottom: 1.75rem; }
+        .rating-label { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; }
+        .stars-container { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 0.5rem; }
+        .star-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 2.5rem; transition: transform 0.15s;
+            line-height: 1;
+            filter: grayscale(1) opacity(0.3);
+        }
+        .star-btn:hover, .star-btn.active { filter: none; transform: scale(1.1); }
+        .rating-caption {
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            min-height: 1.4rem;
+            transition: all 0.2s;
+        }
+
+        /* Sub-ratings */
+        .sub-ratings { margin-bottom: 1.75rem; }
+        .sub-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.9rem;
+            gap: 1rem;
+        }
+        .sub-label { font-size: 0.88rem; color: var(--dark); font-weight: 500; flex: 1; }
+        .sub-stars { display: flex; gap: 0.25rem; }
+        .sub-star {
+            background: none; border: none; cursor: pointer;
+            font-size: 1.3rem; transition: filter 0.1s;
+            filter: grayscale(1) opacity(0.3);
+        }
+        .sub-star:hover, .sub-star.active { filter: none; }
+
+        /* Review Text */
+        .review-section { margin-bottom: 1.75rem; }
+        .field-label { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .review-textarea {
+            width: 100%;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color 0.2s;
+            line-height: 1.6;
+        }
+        .review-textarea:focus { border-color: var(--primary); }
+        .char-count { text-align: left; font-size: 0.75rem; color: var(--gray); margin-top: 4px; }
+
+        /* Quick Tags */
+        .quick-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.75rem; }
+        .tag-chip {
+            background: var(--light);
+            border: 1.5px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.82rem;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.2s;
+            color: var(--gray);
+        }
+        .tag-chip:hover { border-color: var(--primary); color: var(--primary); }
+        .tag-chip.selected { background: rgba(2,128,144,0.1); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+        /* Photo Upload */
+        .photo-section { margin-bottom: 1.75rem; }
+        .photo-grid { display: flex; gap: 0.75rem; }
+        .photo-slot {
+            width: 90px; height: 90px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer; transition: border-color 0.2s;
+            overflow: hidden;
+            font-size: 0.7rem; color: var(--gray); gap: 0.3rem;
+        }
+        .photo-slot:hover { border-color: var(--primary); }
+        .photo-slot span { font-size: 1.5rem; }
+        .photo-slot.filled { border-style: solid; border-color: var(--primary); }
+        .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Recommend Toggle */
+        .recommend-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--light);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+        .recommend-text { font-size: 0.9rem; }
+        .recommend-text strong { font-weight: 600; }
+        .recommend-text p { color: var(--gray); font-size: 0.8rem; margin-top: 0.2rem; }
+        .toggle {
+            position: relative;
+            width: 50px; height: 28px;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: #cbd5e1;
+            border-radius: 28px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 22px; height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px; right: 3px;
+            transition: transform 0.3s;
+        }
+        .toggle input:checked + .toggle-slider { background: var(--success); }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(-22px); }
+
+        /* Submit */
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 1rem;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .submit-btn:hover { opacity: 0.92; }
+        .submit-btn:active { transform: scale(0.99); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav { background: #1e293b !important; border-color: #334155; }
+        html.dark .card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .provider-summary { background: #0f172a; }
+        html.dark .prov-name { color: #e2e8f0; }
+        html.dark .prov-service, html.dark .prov-date { color: #94a3b8; }
+        html.dark .sub-label { color: #cbd5e1; }
+        html.dark .review-textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .review-textarea::placeholder { color: #64748b; }
+        html.dark .review-textarea:focus { border-color: var(--primary) !important; }
+        html.dark .tag-chip { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        html.dark .tag-chip:hover { border-color: var(--primary); color: #02C39A; }
+        html.dark .tag-chip.selected { background: rgba(2,128,144,0.1); border-color: var(--primary); color: #02C39A; }
+        html.dark .photo-slot { border-color: #334155; color: #94a3b8; }
+        html.dark .photo-slot:hover { border-color: var(--primary); }
+        html.dark .recommend-section { background: #0f172a; }
+        html.dark .recommend-text strong { color: #e2e8f0; }
+        html.dark .recommend-text p { color: #94a3b8; }
+        html.dark .field-label, html.dark .rating-label { color: #cbd5e1; }
+        html.dark .char-count { color: #64748b; }
+        html.dark .btn-back { color: #94a3b8; }
+        html.dark .success-overlay p { color: #94a3b8; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        /* Success state */
+        .success-overlay {
+            display: none;
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+        .success-overlay .big-check { font-size: 4rem; margin-bottom: 1rem; }
+        .success-overlay h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .success-overlay p { color: var(--gray); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .success-overlay a {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.7rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script>
+        (function() {
+            const demo = localStorage.getItem('khedmah_demo');
+            if (!demo) { window.location.href = 'login.html'; return; }
+            try {
+                const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
+            } catch(e) {}
+        })();
+    </script>
+
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div style="display:flex;align-items:center;gap:1rem;">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="customer-dashboard.html" class="btn-back">← العودة للوحة التحكم</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>⭐ تقييم الخدمة</h2>
+                <p>رأيك يساعد المجتمع في اختيار الأفضل</p>
+            </div>
+
+            <div class="card-body" id="formBody">
+
+                <!-- Provider Summary -->
+                <div class="provider-summary">
+                    <div class="prov-avatar">خ</div>
+                    <div class="prov-info">
+                        <div class="prov-name">خالد العمري</div>
+                        <div class="prov-service">🔧 دهانات داخلية</div>
+                        <div class="prov-date">📅 5 مارس 2026</div>
+                    </div>
+                    <div>
+                        <div class="prov-amount">650 ر.س <small>شامل ضريبة</small></div>
+                    </div>
+                </div>
+
+                <!-- Main Star Rating -->
+                <div class="rating-section">
+                    <div class="rating-label">التقييم الإجمالي *</div>
+                    <div class="stars-container" id="mainStars">
+                        <button class="star-btn" data-val="1" onclick="setRating(1)">⭐</button>
+                        <button class="star-btn" data-val="2" onclick="setRating(2)">⭐</button>
+                        <button class="star-btn" data-val="3" onclick="setRating(3)">⭐</button>
+                        <button class="star-btn" data-val="4" onclick="setRating(4)">⭐</button>
+                        <button class="star-btn" data-val="5" onclick="setRating(5)">⭐</button>
+                    </div>
+                    <div class="rating-caption" id="ratingCaption">اختر تقييمك</div>
+                </div>
+
+                <!-- Sub Ratings -->
+                <div class="sub-ratings">
+                    <div class="sub-row">
+                        <span class="sub-label">جودة العمل</span>
+                        <div class="sub-stars" data-cat="quality">
+                            <button class="sub-star" onclick="setSubRating('quality',1)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('quality',2)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('quality',3)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('quality',4)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('quality',5)">⭐</button>
+                        </div>
+                    </div>
+                    <div class="sub-row">
+                        <span class="sub-label">الالتزام بالموعد</span>
+                        <div class="sub-stars" data-cat="punctuality">
+                            <button class="sub-star" onclick="setSubRating('punctuality',1)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('punctuality',2)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('punctuality',3)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('punctuality',4)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('punctuality',5)">⭐</button>
+                        </div>
+                    </div>
+                    <div class="sub-row">
+                        <span class="sub-label">التواصل والاحترافية</span>
+                        <div class="sub-stars" data-cat="communication">
+                            <button class="sub-star" onclick="setSubRating('communication',1)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('communication',2)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('communication',3)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('communication',4)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('communication',5)">⭐</button>
+                        </div>
+                    </div>
+                    <div class="sub-row">
+                        <span class="sub-label">نظافة مكان العمل</span>
+                        <div class="sub-stars" data-cat="cleanliness">
+                            <button class="sub-star" onclick="setSubRating('cleanliness',1)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('cleanliness',2)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('cleanliness',3)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('cleanliness',4)">⭐</button>
+                            <button class="sub-star" onclick="setSubRating('cleanliness',5)">⭐</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tags -->
+                <div>
+                    <div class="field-label">ما الذي أعجبك؟ (اختياري)</div>
+                    <div class="quick-tags">
+                        <button class="tag-chip" onclick="toggleTag(this)">✅ عمل دقيق</button>
+                        <button class="tag-chip" onclick="toggleTag(this)">⏰ التزم بالوقت</button>
+                        <button class="tag-chip" onclick="toggleTag(this)">💬 تواصل ممتاز</button>
+                        <button class="tag-chip" onclick="toggleTag(this)">🧹 نظيف ومرتب</button>
+                        <button class="tag-chip" onclick="toggleTag(this)">💰 سعر مناسب</button>
+                        <button class="tag-chip" onclick="toggleTag(this)">🔄 سأتعامل معه مجدداً</button>
+                    </div>
+                </div>
+
+                <!-- Review Text -->
+                <div class="review-section" style="margin-top:1.25rem">
+                    <div class="field-label">اكتب تجربتك (اختياري)</div>
+                    <textarea
+                        class="review-textarea"
+                        id="reviewText"
+                        placeholder="شارك تجربتك مع هذا المزود لتساعد العملاء الآخرين في اتخاذ قرارهم..."
+                        maxlength="500"
+                        oninput="updateCount(this)"
+                    ></textarea>
+                    <div class="char-count"><span id="charCount">0</span>/500</div>
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="photo-section">
+                    <div class="field-label">صور العمل (اختياري، حتى 3 صور)</div>
+                    <div class="photo-grid">
+                        <div class="photo-slot" onclick="document.getElementById('photo1').click()">
+                            <span>📷</span>إضافة صورة
+                            <input type="file" id="photo1" accept="image/*" style="display:none" onchange="previewPhoto(this,0)">
+                        </div>
+                        <div class="photo-slot" onclick="document.getElementById('photo2').click()">
+                            <span>📷</span>إضافة صورة
+                            <input type="file" id="photo2" accept="image/*" style="display:none" onchange="previewPhoto(this,1)">
+                        </div>
+                        <div class="photo-slot" onclick="document.getElementById('photo3').click()">
+                            <span>📷</span>إضافة صورة
+                            <input type="file" id="photo3" accept="image/*" style="display:none" onchange="previewPhoto(this,2)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommend Toggle -->
+                <div class="recommend-section">
+                    <div class="recommend-text">
+                        <strong>هل توصي بهذا المزود؟</strong>
+                        <p>سيظهر هذا التوصية في صفحة المزود</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="recommendToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <button class="submit-btn" id="submitBtn" onclick="submitReview()" disabled>
+                    اختر تقييمك أولاً
+                </button>
+            </div>
+
+            <!-- Success state -->
+            <div class="success-overlay" id="successOverlay">
+                <div class="big-check">🎉</div>
+                <h2>شكراً على تقييمك!</h2>
+                <p>ساهمت في مساعدة أكثر من 500 عميل في منطقتك على اتخاذ قرار صحيح</p>
+                <a href="customer-dashboard.html">← العودة للوحة التحكم</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        let mainRating = 0;
+        const captions = ['', 'تجربة سيئة 😞', 'أقل من المتوسط 😐', 'جيد 👍', 'جيد جداً 😊', 'ممتاز! 🌟'];
+
+        function setRating(val) {
+            mainRating = val;
+            document.querySelectorAll('#mainStars .star-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i < val);
+            });
+            document.getElementById('ratingCaption').textContent = captions[val];
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = 'إرسال التقييم';
+        }
+
+        function setSubRating(cat, val) {
+            const container = document.querySelector(`.sub-stars[data-cat="${cat}"]`);
+            if (!container) return;
+            container.querySelectorAll('.sub-star').forEach((btn, i) => {
+                btn.classList.toggle('active', i < val);
+            });
+        }
+
+        function toggleTag(btn) {
+            btn.classList.toggle('selected');
+        }
+
+        function updateCount(el) {
+            document.getElementById('charCount').textContent = el.value.length;
+        }
+
+        function previewPhoto(input, idx) {
+            const slots = document.querySelectorAll('.photo-slot');
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                slots[idx].innerHTML = `<img src="${e.target.result}" alt="preview">`;
+                slots[idx].classList.add('filled');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Read requestId and service context from URL
+        (function() {
+            const p = new URLSearchParams(location.search);
+            const reqId   = p.get('requestId');
+            const service = p.get('service') ? decodeURIComponent(p.get('service')) : null;
+            if (reqId) {
+                // Try to populate service name from URL or localStorage
+                const stored = (() => { try { return JSON.parse(localStorage.getItem('khedmah_current_request') || '{}'); } catch(e) { return {}; } })();
+                const svcName = service || stored.service || null;
+                const svcEl = document.querySelector('.prov-service');
+                if (svcEl && svcName) svcEl.textContent = '🔧 ' + svcName;
+            }
+        })();
+
+        async function submitReview() {
+            if (!mainRating) return;
+            const reqId = new URLSearchParams(location.search).get('requestId') || '';
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'جاري الإرسال...';
+            try {
+                await API.reviews.create(reqId, {
+                    score: mainRating,
+                    comment: document.getElementById('reviewText')?.value?.trim() || '',
+                });
+                document.getElementById('formBody').style.display = 'none';
+                document.getElementById('successOverlay').style.display = 'block';
+            } catch(err) {
+                btn.disabled = false;
+                btn.textContent = 'إرسال التقييم';
+                API.toast('❌ ' + API.errorMsg(err));
+            }
+        }
+    </script>
+</body>
+</html>

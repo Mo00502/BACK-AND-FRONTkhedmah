@@ -1,0 +1,46 @@
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsDateString,
+  IsEnum,
+  MaxLength,
+  Min,
+  Max,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ConsultationMode } from '@prisma/client';
+
+export class CreateConsultationDto {
+  @ApiProperty({ example: 'consultant-electrical' })
+  @IsString()
+  serviceId: string;
+
+  @ApiProperty({ example: 'استشارة في تصميم الشبكة الكهربائية' })
+  @IsString()
+  @MaxLength(200)
+  topic: string;
+
+  @ApiPropertyOptional({ example: 'أحتاج مراجعة مخططات التوزيع الكهربائي لمشروع تجاري' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  description?: string;
+
+  @ApiPropertyOptional({ enum: ConsultationMode, default: ConsultationMode.CHAT })
+  @IsOptional()
+  @IsEnum(ConsultationMode)
+  mode?: ConsultationMode;
+
+  @ApiPropertyOptional({ example: 60, description: 'Duration in minutes' })
+  @IsOptional()
+  @IsInt()
+  @Min(15)
+  @Max(480)
+  durationMinutes?: number;
+
+  @ApiPropertyOptional({ example: '2026-03-25T10:00:00Z' })
+  @IsOptional()
+  @IsDateString()
+  scheduledAt?: string;
+}

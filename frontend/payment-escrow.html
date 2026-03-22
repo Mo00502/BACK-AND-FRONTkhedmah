@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدفع الآمن - Khedmah</title>
+    <script src="js/api.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary:#028090; --secondary:#00A896; --accent:#02C39A;
+            --dark:#1E293B; --light:#F8FAFC; --white:#FFFFFF;
+            --gray:#64748B; --success:#10B981; --warning:#F59E0B;
+            --danger:#EF4444; --materials:#7C3AED;
+        }
+        body { font-family:'Tajawal',sans-serif; background:var(--light); color:var(--dark); }
+
+        /* ── Nav ── */
+        nav { background:white; padding:1rem 5%; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+        .nav-content { max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; }
+        .logo { font-size:1.8rem; font-weight:800; color:var(--primary); text-decoration:none; }
+        .secure-badge { display:flex; align-items:center; gap:.5rem; color:var(--success); font-weight:600; }
+
+        /* ── Layout ── */
+        .payment-container { max-width:1200px; margin:2rem auto; padding:0 5%; display:grid; grid-template-columns:1fr 420px; gap:2rem; }
+        @media(max-width:968px){ .payment-container{grid-template-columns:1fr;} }
+
+        /* ── Cards ── */
+        .card { background:white; border-radius:20px; padding:2rem; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+        .card + .card { margin-top:1.5rem; }
+
+        /* ── Step chooser ── */
+        .order-type-section { margin-bottom:1.5rem; }
+        .order-type-section h3 { font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:var(--dark); }
+        .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+        .type-card {
+            border:2px solid #e2e8f0; border-radius:16px; padding:1.3rem 1rem;
+            cursor:pointer; transition:all .25s; text-align:center;
+        }
+        .type-card:hover { border-color:var(--accent); }
+        .type-card.selected-service { border-color:var(--primary); background:rgba(2,128,144,.06); }
+        .type-card.selected-materials { border-color:var(--materials); background:rgba(124,58,237,.06); }
+        .type-icon { font-size:2.2rem; margin-bottom:.5rem; }
+        .type-title { font-weight:700; font-size:.95rem; margin-bottom:.3rem; }
+        .type-desc { font-size:.82rem; color:var(--gray); line-height:1.4; }
+        .type-badge {
+            display:inline-block; font-size:.75rem; font-weight:700;
+            padding:.2rem .6rem; border-radius:20px; margin-top:.5rem;
+        }
+        .badge-escrow { background:rgba(16,185,129,.15); color:var(--success); }
+        .badge-materials { background:rgba(124,58,237,.15); color:var(--materials); }
+
+        /* ── Materials estimate input ── */
+        .materials-input-section {
+            background:linear-gradient(135deg,rgba(124,58,237,.07),rgba(124,58,237,.03));
+            border:1.5px solid rgba(124,58,237,.3);
+            border-radius:14px; padding:1.2rem 1.4rem; margin-bottom:1.5rem;
+        }
+        .materials-input-section label { font-weight:700; color:var(--materials); display:block; margin-bottom:.5rem; }
+        .materials-input-section input {
+            width:100%; padding:.8rem 1rem; border:2px solid rgba(124,58,237,.3);
+            border-radius:10px; font-family:'Tajawal',sans-serif; font-size:16px;
+            color:var(--dark);
+        }
+        .materials-input-section input:focus { outline:none; border-color:var(--materials); }
+        .materials-hint { font-size:.82rem; color:var(--materials); margin-top:.5rem; opacity:.8; }
+
+        /* ── Split breakdown banner ── */
+        .split-breakdown {
+            border-radius:14px; padding:1.2rem 1.4rem; margin-bottom:1.5rem;
+            display:grid; gap:.7rem;
+        }
+        .split-service { background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(2,195,154,.05)); border:1.5px solid rgba(16,185,129,.3); }
+        .split-row { display:flex; justify-content:space-between; align-items:center; }
+        .split-label { display:flex; align-items:center; gap:.5rem; font-weight:600; font-size:.92rem; }
+        .split-label .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .dot-service { background:var(--success); }
+        .dot-materials { background:var(--materials); }
+        .split-amount { font-weight:800; font-size:1rem; }
+        .split-note { font-size:.78rem; color:var(--gray); margin-top:.2rem; }
+        .split-total-row { display:flex; justify-content:space-between; padding-top:.7rem; border-top:2px solid #e2e8f0; font-size:1.15rem; font-weight:800; }
+
+        /* ── Escrow banner ── */
+        .escrow-banner {
+            background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(2,195,154,.1));
+            border:2px solid var(--success); border-radius:15px; padding:1.3rem 1.5rem; margin-bottom:1.5rem;
+        }
+        .escrow-banner h3 { color:var(--success); font-size:1.1rem; margin-bottom:.8rem; display:flex; align-items:center; gap:.5rem; }
+        .escrow-steps { display:grid; gap:.7rem; }
+        .escrow-step { display:flex; align-items:start; gap:.8rem; color:var(--gray); font-size:.9rem; }
+        .step-number { background:var(--success); color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; flex-shrink:0; }
+
+        /* ── Payment methods ── */
+        .methods-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
+        .method-card { padding:1.1rem; border:2px solid #e2e8f0; border-radius:14px; text-align:center; cursor:pointer; transition:all .25s; }
+        .method-card:hover { border-color:var(--accent); }
+        .method-card.selected { border-color:var(--primary); background:rgba(2,128,144,.05); }
+        .method-icon { font-size:2rem; margin-bottom:.4rem; }
+        .method-name { font-weight:600; font-size:.85rem; color:var(--dark); }
+
+        /* ── Card form ── */
+        .card-visual { background:linear-gradient(135deg,var(--primary),var(--secondary)); padding:1.8rem; border-radius:15px; color:white; margin-bottom:1.3rem; }
+        .card-chip { width:46px; height:36px; background:rgba(255,255,255,.3); border-radius:7px; margin-bottom:1.2rem; }
+        .card-number-display { font-size:1.4rem; letter-spacing:3px; margin-bottom:.8rem; font-family:monospace; }
+        .card-info-row { display:flex; justify-content:space-between; }
+        .form-group { margin-bottom:1.2rem; }
+        .form-group label { display:block; margin-bottom:.4rem; font-weight:600; font-size:.92rem; }
+        .form-group input { width:100%; padding:.85rem 1.1rem; border:2px solid #e2e8f0; border-radius:11px; font-family:'Tajawal',sans-serif; font-size:16px; transition:all .25s; }
+        .form-group input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(2,128,144,.1); }
+        .card-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+        /* ── Pay button ── */
+        .pay-btn { width:100%; padding:1.2rem; background:linear-gradient(135deg,var(--primary),var(--secondary)); color:white; border:none; border-radius:14px; font-size:1.2rem; font-weight:700; cursor:pointer; font-family:'Tajawal',sans-serif; transition:all .25s; display:flex; align-items:center; justify-content:center; gap:.5rem; }
+        .pay-btn:hover:not(:disabled) { transform:translateY(-3px); box-shadow:0 10px 30px rgba(2,128,144,.3); }
+        .pay-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
+        /* ── Apple Pay button — proper Apple brand styling ── */
+        .apple-pay-container { text-align:center; padding:1.5rem 0 0.5rem; }
+        .apple-pay-header { display:flex; align-items:center; justify-content:center; gap:.75rem; margin-bottom:1rem; }
+        .apple-pay-logo-wrap { display:flex; align-items:center; justify-content:center; gap:.5rem; }
+        .apple-pay-logo-wrap svg { display:block; }
+        .apple-pay-desc { color:var(--gray); font-size:.88rem; margin-bottom:1.5rem; line-height:1.6; }
+        /* Native Apple Pay button — Safari renders this as the real Apple Pay button */
+        .apple-pay-btn {
+            -webkit-appearance: -apple-pay-button;
+            -apple-pay-button-type: pay;
+            -apple-pay-button-style: black;
+            width: 100%;
+            height: 56px;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            display: block;
+        }
+        /* Fallback for non-Safari / non-Apple-Pay-capable browsers */
+        @supports not (-webkit-appearance: -apple-pay-button) {
+            .apple-pay-btn {
+                appearance: none;
+                background: #000;
+                border-radius: 14px;
+                height: 56px;
+                width: 100%;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: .625rem;
+                transition: opacity .2s, transform .15s;
+            }
+            .apple-pay-btn:hover { opacity: .85; }
+            .apple-pay-btn:active { opacity: .7; transform: scale(.98); }
+        }
+        .apple-pay-btn-inner {
+            display: flex; align-items: center; justify-content: center; gap: .625rem;
+            pointer-events: none;
+        }
+        .apple-pay-wordmark {
+            font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.1rem; font-weight: 500; color: #fff;
+            letter-spacing: -.02em;
+        }
+        .apple-pay-amount {
+            font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            font-size: .95rem; color: rgba(255,255,255,.75);
+            letter-spacing: -.01em; margin-top:-.1rem;
+        }
+        .apple-pay-divider { width:1px; height:20px; background:rgba(255,255,255,.3); margin:0 .25rem; }
+        .apple-pay-security { display:flex; align-items:center; justify-content:center; gap:.5rem; margin-top:.9rem; color:var(--gray); font-size:.8rem; }
+        .apple-pay-security svg { flex-shrink:0; }
+
+        /* ── Sidebar ── */
+        .sidebar-card { background:white; padding:1.5rem; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,.05); margin-bottom:1.5rem; }
+        .sidebar-card h3 { font-size:1.1rem; margin-bottom:1rem; color:var(--dark); font-weight:700; }
+
+        .service-summary { display:flex; gap:1rem; padding-bottom:1rem; border-bottom:1px solid #f1f5f9; margin-bottom:1rem; }
+        .service-icon { width:55px; height:55px; background:linear-gradient(135deg,var(--primary),var(--accent)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:white; flex-shrink:0; }
+
+        /* ── Price breakdown sidebar ── */
+        .price-breakdown { display:grid; gap:.7rem; }
+        .price-row { display:flex; justify-content:space-between; align-items:start; gap:.5rem; font-size:.92rem; color:var(--gray); }
+        .price-row .pr-label { display:flex; align-items:center; gap:.4rem; }
+        .price-row .pr-note { font-size:.75rem; color:var(--gray); opacity:.75; margin-top:.15rem; }
+        .price-row.service-row .pr-label { color:var(--success); font-weight:600; }
+        .price-row.materials-row .pr-label { color:var(--materials); font-weight:600; }
+        .price-row.total-row { font-size:1.2rem; font-weight:800; color:var(--dark); padding-top:.8rem; border-top:2px solid #f1f5f9; margin-top:.3rem; }
+
+        /* ── Security ── */
+        .security-features { display:grid; gap:.8rem; }
+        .security-item { display:flex; align-items:center; gap:.7rem; color:var(--gray); font-size:.88rem; }
+        .security-icon { color:var(--success); font-size:1.1rem; width:20px; text-align:center; }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .sidebar-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .type-card { border-color: #334155; color: #e2e8f0; }
+        html.dark .type-card:hover { border-color: var(--accent); }
+        html.dark .type-desc { color: #94a3b8; }
+        html.dark .method-card { border-color: #334155; }
+        html.dark .method-card:hover { border-color: var(--accent); }
+        html.dark .method-name { color: #e2e8f0; }
+        html.dark .form-group input { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-group input::placeholder { color: #64748b; }
+        html.dark .form-group input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(2,128,144,0.1); }
+        html.dark .form-group label { color: #cbd5e1; }
+        html.dark .materials-input-section input { background: #0f172a; color: #e2e8f0; }
+        html.dark .split-total-row { border-color: #334155; color: #e2e8f0; }
+        html.dark .price-row { color: #94a3b8; }
+        html.dark .price-row.total-row { color: #e2e8f0; border-color: #334155; }
+        html.dark .service-summary { border-color: #334155; }
+        html.dark .security-item { color: #94a3b8; }
+        html.dark .split-result-row { background: #0f172a; }
+        html.dark .sr-desc { color: #94a3b8; }
+        html.dark .split-note { color: #94a3b8; }
+        html.dark .secure-badge { color: var(--success); }
+        html.dark .info-box { background: rgba(2,195,154,0.12) !important; color: #cbd5e1; }
+        html.dark .amount-row { border-color: #334155; }
+        html.dark .amount-label { color: #94a3b8; }
+        html.dark .amount-value { color: #e2e8f0; }
+        html.dark .split-toggle-btn { border-color: #334155; color: #94a3b8; }
+        html.dark .split-toggle-btn:hover { border-color: var(--accent); color: #e2e8f0; }
+        html.dark .eflow-label { color: #cbd5e1; }
+        html.dark .eflow-num.pending { background: #334155; color: #64748b; }
+        html.dark .eflow-badge.gray { background: #334155; color: #94a3b8; }
+        html.dark .receipt-status-section { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.35); }
+        html.dark .receipt-status-section h4 { color: #e2e8f0; }
+        html.dark .receipt-status-row { color: #94a3b8; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        /* ── Split payment toggle ── */
+        .split-toggle-wrap { display:flex; gap:.6rem; margin-bottom:1.5rem; }
+        .split-toggle-btn {
+            flex:1; padding:.75rem 1rem; border:2px solid #e2e8f0; border-radius:12px;
+            background:transparent; font-family:'Tajawal',sans-serif; font-size:.92rem;
+            font-weight:600; cursor:pointer; color:var(--gray); transition:all .22s;
+        }
+        .split-toggle-btn:hover { border-color:var(--accent); color:var(--dark); }
+        .split-toggle-btn.active-service { border-color:var(--primary); background:rgba(2,128,144,.08); color:var(--primary); }
+        .split-toggle-btn.active-materials { border-color:var(--accent); background:rgba(2,195,154,.08); color:var(--primary); }
+
+        /* ── Enhanced amount-row breakdown ── */
+        .amount-row { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0; border-bottom:1px dashed #e2e8f0; font-size:.9rem; }
+        .amount-row.total { border-bottom:none; border-top:2px solid #e2e8f0; padding-top:.75rem; font-weight:700; font-size:1rem; }
+        .amount-label { color:var(--gray); }
+        .amount-value { font-weight:600; color:var(--dark); }
+        .status-tag { font-size:.7rem; padding:.15rem .5rem; border-radius:50px; font-weight:600; margin-right:.4rem; }
+        .status-tag.held { background:rgba(2,128,144,.1); color:var(--primary); }
+        .status-tag.early-release { background:rgba(2,195,154,.1); color:var(--accent); }
+
+        /* ── Info box (materials explainer) ── */
+        .info-box { background:rgba(2,195,154,0.08); border-right:3px solid var(--accent); border-radius:8px; padding:.75rem; font-size:.8rem; margin-top:.6rem; margin-bottom:1rem; color:var(--dark); line-height:1.6; }
+
+        /* ── Escrow flow steps with status badges ── */
+        .escrow-flow { display:grid; gap:.85rem; margin:1.2rem 0; }
+        .eflow-step { display:flex; align-items:center; gap:.85rem; }
+        .eflow-num { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; flex-shrink:0; }
+        .eflow-num.done { background:var(--success); color:white; }
+        .eflow-num.held { background:var(--primary); color:white; }
+        .eflow-num.active { background:var(--warning); color:white; }
+        .eflow-num.pending { background:#e2e8f0; color:var(--gray); }
+        .eflow-body { flex:1; display:flex; justify-content:space-between; align-items:center; }
+        .eflow-label { font-size:.9rem; color:var(--dark); }
+        .eflow-badge { font-size:.72rem; font-weight:700; padding:.2rem .6rem; border-radius:50px; white-space:nowrap; }
+        .eflow-badge.green { background:rgba(16,185,129,.15); color:var(--success); }
+        .eflow-badge.teal { background:rgba(2,128,144,.12); color:var(--primary); }
+        .eflow-badge.amber { background:rgba(245,158,11,.15); color:var(--warning); }
+        .eflow-badge.gray { background:#f1f5f9; color:var(--gray); }
+
+        /* ── Materials receipt upload status ── */
+        .receipt-status-section { border:1.5px dashed rgba(245,158,11,.5); border-radius:14px; padding:1.1rem 1.3rem; margin-bottom:1.5rem; background:rgba(245,158,11,.04); }
+        .receipt-status-section h4 { font-size:.95rem; font-weight:700; color:var(--dark); margin-bottom:.5rem; }
+        .receipt-status-row { display:flex; align-items:center; gap:.7rem; font-size:.88rem; color:var(--gray); }
+        .receipt-status-row .receipt-icon { font-size:1.3rem; }
+
+        /* ── Success overlay ── */
+        .success-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .success-box { background:white; border-radius:24px; padding:2.5rem; max-width:460px; width:90%; text-align:center; }
+        .success-icon { font-size:4rem; margin-bottom:1rem; }
+        .success-box h2 { font-size:1.6rem; font-weight:800; margin-bottom:.8rem; }
+        .split-result { display:grid; gap:.7rem; margin:1.2rem 0; text-align:right; }
+        .split-result-row { display:flex; align-items:start; gap:.8rem; background:#f8fafc; padding:.9rem 1rem; border-radius:12px; }
+        .split-result-row .sr-icon { font-size:1.5rem; flex-shrink:0; margin-top:.1rem; }
+        .split-result-row .sr-title { font-weight:700; font-size:.95rem; margin-bottom:.2rem; }
+        .split-result-row .sr-desc { font-size:.82rem; color:var(--gray); line-height:1.4; }
+        .split-result-row.service-row-result { border-right:3px solid var(--success); }
+        .split-result-row.materials-row-result { border-right:3px solid var(--materials); }
+        .success-btn { width:100%; padding:1rem; background:linear-gradient(135deg,var(--primary),var(--secondary)); color:white; border:none; border-radius:12px; font-size:1.1rem; font-weight:700; cursor:pointer; font-family:'Tajawal',sans-serif; margin-top:1rem; }
+    </style>
+</head>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+<body x-data="paymentApp()" x-init="init()">
+
+    <!-- Nav -->
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div style="display:flex;align-items:center;gap:1rem;">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <div class="secure-badge">🔒 دفع آمن ومحمي</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="payment-container">
+
+        <!-- ═══ RIGHT: Payment Form ═══ -->
+        <div>
+            <div class="card">
+                <div style="margin-bottom:1.5rem;">
+                    <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:.3rem;">إتمام الدفع</h2>
+                    <p style="color:var(--gray);font-size:.92rem;">اختر نوع الطلب وطريقة الدفع</p>
+                </div>
+
+                <!-- ── STEP 1: Order type chooser ── -->
+                <div class="order-type-section">
+                    <h3>١. ماذا تحتاج في هذا الطلب؟</h3>
+                    <div class="type-grid">
+                        <div class="type-card" :class="orderType==='service' ? 'selected-service' : ''" @click="setOrderType('service')">
+                            <div class="type-icon">👷</div>
+                            <div class="type-title">خدمة فقط</div>
+                            <div class="type-desc">أحتاج فقط للمزود يأتي وينفذ الخدمة</div>
+                            <span class="type-badge badge-escrow">رسوم الخدمة محمية بالضمان</span>
+                        </div>
+                        <div class="type-card" :class="orderType==='materials' ? 'selected-materials' : ''" @click="setOrderType('materials')">
+                            <div class="type-icon">🔩</div>
+                            <div class="type-title">خدمة + مواد</div>
+                            <div class="type-desc">أريد المزود يشتري أو يجلب المواد اللازمة</div>
+                            <span class="type-badge badge-materials">ميزانية مواد منفصلة ومحكومة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Split Payment Toggle ── -->
+                <div style="margin-bottom:1.2rem;">
+                    <h3 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;color:var(--dark);">١أ. نوع الدفع</h3>
+                    <div class="split-toggle-wrap">
+                        <button class="split-toggle-btn" :class="!hasMaterials ? 'active-service' : ''" @click="toggleSplit(false)">
+                            👷 خدمة فقط
+                        </button>
+                        <button class="split-toggle-btn" :class="hasMaterials ? 'active-materials' : ''" @click="toggleSplit(true)">
+                            🔩 خدمة + مواد
+                        </button>
+                    </div>
+
+                    <!-- Split breakdown card (shown when hasMaterials) -->
+                    <div x-show="hasMaterials" x-transition style="border:1.5px solid #e2e8f0;border-radius:14px;padding:1.1rem 1.3rem;margin-bottom:.5rem;">
+                        <div class="amount-row">
+                            <span class="amount-label">
+                                <span class="status-tag held">محجوز 🔒</span>
+                                أجرة العمل
+                            </span>
+                            <span class="amount-value" style="color:var(--success);">SAR <span x-text="serviceAmt"></span></span>
+                        </div>
+                        <div class="amount-row">
+                            <span class="amount-label">
+                                <span class="status-tag early-release">قابل للإفراج المبكر</span>
+                                مواد ومستلزمات
+                            </span>
+                            <span class="amount-value" style="color:var(--materials);">SAR <span x-text="materialsAmt"></span></span>
+                        </div>
+                        <div class="amount-row" style="border-bottom:1px dashed #e2e8f0;">
+                            <span class="amount-label">المجموع الفرعي</span>
+                            <span class="amount-value">SAR <span x-text="splitSubtotal"></span></span>
+                        </div>
+                        <div class="amount-row" style="border-bottom:1px dashed #e2e8f0;">
+                            <span class="amount-label">رسوم المنصة (15%)</span>
+                            <span class="amount-value">SAR <span x-text="splitPlatformFee"></span></span>
+                        </div>
+                        <div class="amount-row" style="border-bottom:1px dashed #e2e8f0;">
+                            <span class="amount-label">ضريبة القيمة المضافة (15%)</span>
+                            <span class="amount-value">SAR <span x-text="splitVat"></span></span>
+                        </div>
+                        <div class="amount-row total">
+                            <span>الإجمالي</span>
+                            <span class="amount-value" style="color:var(--primary);">SAR <span x-text="splitTotal"></span></span>
+                        </div>
+                    </div>
+
+                    <!-- Info box for materials explanation -->
+                    <div class="info-box" x-show="hasMaterials" x-transition>
+                        💡 سيتم الإفراج عن تكلفة المواد للمزود عند رفع إيصال الشراء، بينما تبقى أجرة العمل محجوزة حتى إتمام الخدمة.
+                    </div>
+                </div>
+
+                <!-- ── Materials Receipt Upload Status (shown when hasMaterials) ── -->
+                <div class="receipt-status-section" x-show="hasMaterials" x-transition>
+                    <h4>📋 رفع إيصال المواد</h4>
+                    <p style="font-size:.82rem;color:var(--gray);margin-bottom:.75rem;line-height:1.5;">
+                        المزود سيرفع هنا إيصال شراء المواد ليتم الإفراج عن تكلفة المواد
+                    </p>
+                    <div class="receipt-status-row">
+                        <span class="receipt-icon">⏳</span>
+                        <span>إيصال المواد: <strong style="color:var(--warning);">انتظار رفع الإيصال من المزود</strong></span>
+                    </div>
+                </div>
+
+                <!-- ── STEP 2: Materials estimate (shown only when materials selected) ── -->
+                <div class="materials-input-section" x-show="orderType==='materials'" x-transition>
+                    <label>💜 المبلغ التقديري للمواد والمستلزمات (ريال)</label>
+                    <input type="number" min="1" placeholder="مثال: 350" x-model.number="materialsEstimate" @input="updateBreakdown()">
+                    <p class="materials-hint">
+                        💡 هذا المبلغ سيكون متاحاً فوراً للمزود لشراء المواد المطلوبة للطلب.
+                        أي مبلغ غير مستخدم سيُعاد إليك تلقائياً.
+                    </p>
+                </div>
+
+                <!-- ── Split breakdown (shown when materials selected) ── -->
+                <div class="split-breakdown split-service" x-show="orderType==='materials' && materialsEstimate>0" x-transition>
+                    <div class="split-row">
+                        <div class="split-label">
+                            <span class="dot dot-service"></span>
+                            <span>رسوم الخدمة</span>
+                        </div>
+                        <div>
+                            <div class="split-amount" style="color:var(--success)" x-text="serviceAmount.toFixed(2)+' ريال'"></div>
+                        </div>
+                    </div>
+                    <div class="split-note" style="padding-right:1.3rem;color:var(--success)">
+                        🔒 محجوز في الضمان — يُطلق فقط بعد تأكيدك إتمام الخدمة
+                    </div>
+                    <div style="height:1px;background:#e2e8f0;margin:.3rem 0;"></div>
+                    <div class="split-row">
+                        <div class="split-label">
+                            <span class="dot dot-materials"></span>
+                            <span>ميزانية المواد</span>
+                        </div>
+                        <div>
+                            <div class="split-amount" style="color:var(--materials)" x-text="materialsEstimate.toFixed(2)+' ريال'"></div>
+                        </div>
+                    </div>
+                    <div class="split-note" style="padding-right:1.3rem;color:var(--materials)">
+                        ⚡ متاح فوراً — مخصص حصراً لمشتريات مواد هذا الطلب
+                    </div>
+                    <div class="split-total-row">
+                        <span>المجموع</span>
+                        <span x-text="totalAmount.toFixed(2)+' ريال'"></span>
+                    </div>
+                </div>
+
+                <!-- ── Escrow protection steps with status badges ── -->
+                <div class="escrow-banner" x-transition>
+                    <h3>🛡️ مراحل الضمان والحماية</h3>
+                    <div class="escrow-flow">
+                        <div class="eflow-step">
+                            <div class="eflow-num done">✓</div>
+                            <div class="eflow-body">
+                                <span class="eflow-label">تدفع رسوم الخدمة عبر Moyasar</span>
+                                <span class="eflow-badge green">مدفوع ✓</span>
+                            </div>
+                        </div>
+                        <div class="eflow-step">
+                            <div class="eflow-num held">🔒</div>
+                            <div class="eflow-body">
+                                <span class="eflow-label">المبلغ محجوز في صندوق أمان Khedmah</span>
+                                <span class="eflow-badge teal">محجوز 🔒</span>
+                            </div>
+                        </div>
+                        <div class="eflow-step">
+                            <div class="eflow-num active">⚡</div>
+                            <div class="eflow-body">
+                                <span class="eflow-label">المزود ينفذ العمل المتفق عليه</span>
+                                <span class="eflow-badge amber">جارٍ</span>
+                            </div>
+                        </div>
+                        <div class="eflow-step">
+                            <div class="eflow-num pending">4</div>
+                            <div class="eflow-body">
+                                <span class="eflow-label">أنت تؤكد اكتمال الخدمة بشكل مُرضٍ</span>
+                                <span class="eflow-badge gray">في انتظار تأكيدك</span>
+                            </div>
+                        </div>
+                        <div class="eflow-step">
+                            <div class="eflow-num pending">5</div>
+                            <div class="eflow-body">
+                                <span class="eflow-label">المبلغ يُطلق للمزود — أو تُستردّ أموالك</span>
+                                <span class="eflow-badge gray">في انتظار الإفراج</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Payment methods ── -->
+                <div style="margin-bottom:1rem;">
+                    <h3 style="margin-bottom:1rem;font-weight:700;">٢. طريقة الدفع</h3>
+                    <div class="methods-grid">
+                        <div class="method-card" :class="payMethod==='card'?'selected':''" @click="payMethod='card'">
+                            <div class="method-icon">💳</div>
+                            <div class="method-name">بطاقة / مدى</div>
+                        </div>
+                        <div class="method-card" :class="payMethod==='stc'?'selected':''" @click="payMethod='stc'">
+                            <div class="method-icon">📱</div>
+                            <div class="method-name">STC Pay</div>
+                        </div>
+                        <div class="method-card" :class="payMethod==='apple'?'selected':''" @click="payMethod='apple'">
+                            <div class="method-icon">🍎</div>
+                            <div class="method-name">Apple Pay</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Card form ── -->
+                <div x-show="payMethod==='card'" x-transition>
+                    <div class="card-visual">
+                        <div class="card-chip"></div>
+                        <div class="card-number-display" x-text="cardDisplay || '•••• •••• •••• ••••'"></div>
+                        <div class="card-info-row">
+                            <span x-text="cardName || 'اسم حامل البطاقة'" style="font-size:.9rem;opacity:.9;"></span>
+                            <span x-text="cardExpiry || 'MM/YY'" style="font-size:.9rem;opacity:.9;"></span>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="submitPayment()">
+                        <div class="form-group">
+                            <label>رقم البطاقة</label>
+                            <input type="text" placeholder="1234 5678 9012 3456" maxlength="19"
+                                x-model="cardRaw"
+                                @input="formatCard($event)"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>اسم حامل البطاقة</label>
+                            <input type="text" placeholder="كما هو مكتوب على البطاقة" x-model="cardName" required>
+                        </div>
+                        <div class="card-row">
+                            <div class="form-group">
+                                <label>تاريخ الانتهاء</label>
+                                <input type="text" placeholder="MM/YY" maxlength="5"
+                                    x-model="cardExpiry"
+                                    @input="formatExpiry($event)"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>CVV</label>
+                                <input type="password" placeholder="•••" maxlength="3"
+                                    x-model="cardCvc"
+                                    @input="$event.target.value=$event.target.value.replace(/\D/g,'')"
+                                    required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="pay-btn" :disabled="processing">
+                            <span x-show="!processing">🔒</span>
+                            <span x-show="processing">⏳</span>
+                            <span x-text="processing ? 'جاري المعالجة...' : 'ادفع '+totalWithVat.toFixed(2)+' ريال (شامل الضريبة)'"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ── STC / Apple Pay placeholders ── -->
+                <div x-show="payMethod==='stc'" x-transition style="text-align:center;padding:2rem 0;">
+                    <div style="font-size:3rem;margin-bottom:1rem;">📱</div>
+                    <p style="font-weight:600;margin-bottom:.5rem;">ستُوجَّه إلى تطبيق STC Pay</p>
+                    <p style="color:var(--gray);font-size:.9rem;">لإتمام الدفع بأمان عبر محفظتك الرقمية</p>
+                    <button class="pay-btn" style="margin-top:1.5rem;" @click="submitPayment()">
+                        📱 ادفع عبر STC Pay — <span x-text="totalWithVat.toFixed(2)+' ريال (شامل الضريبة)'"></span>
+                    </button>
+                </div>
+                <!-- ── Apple Pay ── -->
+                <div x-show="payMethod==='apple'" x-transition>
+                    <div class="apple-pay-container">
+
+                        <!-- Apple Pay identity -->
+                        <div class="apple-pay-header">
+                            <!-- Apple logo (official monochrome SVG mark) -->
+                            <svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M18.157 13.956c-.028-3.19 2.609-4.737 2.729-4.813-1.488-2.173-3.8-2.472-4.617-2.503-1.962-.199-3.84 1.155-4.836 1.155-.994 0-2.52-1.13-4.148-1.099-2.126.033-4.095 1.239-5.19 3.134-2.22 3.844-.567 9.535 1.592 12.654 1.059 1.527 2.314 3.238 3.969 3.176 1.596-.065 2.199-1.025 4.128-1.025 1.929 0 2.485 1.025 4.18.988 1.717-.028 2.806-1.553 3.856-3.087a16.36 16.36 0 001.754-3.562c-.04-.016-3.378-1.292-3.417-5.018zM15.007 4.47C15.897 3.389 16.499 1.9 16.328.38c-1.295.056-2.864.862-3.79 1.944-.832.963-1.559 2.502-1.363 3.978 1.447.113 2.928-.735 3.832-1.832z" fill="#1D1D1F"/>
+                            </svg>
+                            <span style="font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; font-size:1.25rem; font-weight:600; color:var(--dark); letter-spacing:-.02em;">Pay</span>
+                        </div>
+
+                        <p class="apple-pay-desc">
+                            أسرع وأأمن طريقة دفع. استخدم Face ID أو Touch ID بدون إدخال أي بيانات بطاقة.
+                        </p>
+
+                        <!-- Native Apple Pay button (Safari renders this as real Apple Pay) -->
+                        <button class="apple-pay-btn" @click="submitPayment()">
+                            <!-- Fallback content for non-Safari browsers -->
+                            <span class="apple-pay-btn-inner">
+                                <!-- Apple  SVG in white -->
+                                <svg width="18" height="22" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M18.157 13.956c-.028-3.19 2.609-4.737 2.729-4.813-1.488-2.173-3.8-2.472-4.617-2.503-1.962-.199-3.84 1.155-4.836 1.155-.994 0-2.52-1.13-4.148-1.099-2.126.033-4.095 1.239-5.19 3.134-2.22 3.844-.567 9.535 1.592 12.654 1.059 1.527 2.314 3.238 3.969 3.176 1.596-.065 2.199-1.025 4.128-1.025 1.929 0 2.485 1.025 4.18.988 1.717-.028 2.806-1.553 3.856-3.087a16.36 16.36 0 001.754-3.562c-.04-.016-3.378-1.292-3.417-5.018zM15.007 4.47C15.897 3.389 16.499 1.9 16.328.38c-1.295.056-2.864.862-3.79 1.944-.832.963-1.559 2.502-1.363 3.978 1.447.113 2.928-.735 3.832-1.832z" fill="#fff"/>
+                                </svg>
+                                <span class="apple-pay-wordmark">Pay</span>
+                                <span class="apple-pay-divider"></span>
+                                <span class="apple-pay-amount" x-text="totalWithVat.toFixed(2)+' SAR'"></span>
+                            </span>
+                        </button>
+
+                        <!-- Trust line -->
+                        <div class="apple-pay-security">
+                            <svg width="13" height="16" viewBox="0 0 13 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M6.5 0L0 2.909v4.364C0 11.127 2.773 14.782 6.5 16 10.227 14.782 13 11.127 13 7.273V2.909L6.5 0z" fill="#64748B"/>
+                            </svg>
+                            Face ID / Touch ID · بيانات بطاقتك مشفرة ومحمية بالكامل
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ LEFT: Sidebar ═══ -->
+        <div>
+            <!-- Order Summary -->
+            <div class="sidebar-card">
+                <h3>ملخص الطلب</h3>
+                <div class="service-summary">
+                    <div class="service-icon">🔧</div>
+                    <div>
+                        <div style="font-weight:700;margin-bottom:.3rem;" x-text="serviceName"></div>
+                        <div style="color:var(--gray);font-size:.88rem;" x-text="'طلب: ' + currentRequestId"></div>
+                    </div>
+                </div>
+
+                <!-- Dynamic price breakdown -->
+                <div class="price-breakdown">
+                    <div class="price-row service-row">
+                        <div>
+                            <div class="pr-label">🟢 رسوم الخدمة</div>
+                            <div class="pr-note">محمية بالضمان — تُطلق بعد تأكيدك</div>
+                        </div>
+                        <strong style="color:var(--success)" x-text="serviceAmount.toFixed(2)+' ريال'"></strong>
+                    </div>
+
+                    <div class="price-row materials-row" x-show="orderType==='materials' && materialsEstimate>0" x-transition>
+                        <div>
+                            <div class="pr-label">🟣 ميزانية المواد</div>
+                            <div class="pr-note">متاحة فوراً لمشتريات المزود</div>
+                        </div>
+                        <strong style="color:var(--materials)" x-text="materialsEstimate.toFixed(2)+' ريال'"></strong>
+                    </div>
+
+                    <div class="price-row" style="font-size:.88rem;">
+                        <span style="color:var(--gray);">المجموع قبل الضريبة</span>
+                        <span x-text="subtotal.toFixed(2)+' ريال'"></span>
+                    </div>
+                    <div class="price-row" style="font-size:.88rem;">
+                        <span style="color:var(--gray);">ضريبة القيمة المضافة (15%)</span>
+                        <span x-text="vatAmount.toFixed(2)+' ريال'"></span>
+                    </div>
+                    <div class="price-row total-row">
+                        <span>المجموع الإجمالي شامل الضريبة</span>
+                        <span x-text="totalWithVat.toFixed(2)+' ريال'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What each amount means -->
+            <div class="sidebar-card">
+                <h3>💡 كيف يعمل نظام الدفع المزدوج؟</h3>
+                <div style="display:grid;gap:.9rem;">
+                    <div style="display:flex;gap:.8rem;align-items:start;">
+                        <div style="font-size:1.4rem;flex-shrink:0;">🔒</div>
+                        <div>
+                            <div style="font-weight:700;color:var(--success);font-size:.92rem;margin-bottom:.2rem;">رسوم الخدمة — محجوزة بالضمان</div>
+                            <div style="font-size:.82rem;color:var(--gray);line-height:1.5;">لا يصل إليها المزود حتى تؤكد رضاك التام عن الخدمة. أموالك محمية تماماً.</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:.8rem;align-items:start;" x-show="orderType==='materials'" x-transition>
+                        <div style="font-size:1.4rem;flex-shrink:0;">⚡</div>
+                        <div>
+                            <div style="font-weight:700;color:var(--materials);font-size:.92rem;margin-bottom:.2rem;">ميزانية المواد — متاحة فوراً</div>
+                            <div style="font-size:.82rem;color:var(--gray);line-height:1.5;">مبلغ مخصص حصراً لشراء مستلزمات طلبك. المزود يرفع إيصالات الشراء، وأي مبلغ فائض يُعاد إليك.</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:.8rem;align-items:start;">
+                        <div style="font-size:1.4rem;flex-shrink:0;">↩️</div>
+                        <div>
+                            <div style="font-weight:700;font-size:.92rem;margin-bottom:.2rem;">استرداد مضمون</div>
+                            <div style="font-size:.82rem;color:var(--gray);line-height:1.5;">إذا لم تُنجز الخدمة أو لم تُستخدم المواد، نسترد أموالك بالكامل.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div class="sidebar-card">
+                <h3>الأمان والحماية</h3>
+                <div class="security-features">
+                    <div class="security-item"><span class="security-icon">🛡️</span> صندوق ضمان مشفر ومحمي</div>
+                    <div class="security-item"><span class="security-icon">🔒</span> تشفير 256-bit SSL</div>
+                    <div class="security-item"><span class="security-icon">✅</span> دفع إلكتروني معتمد (Moyasar)</div>
+                    <div class="security-item"><span class="security-icon">💯</span> ضمان استرداد كامل عند الإلغاء</div>
+                    <div class="security-item"><span class="security-icon">🔐</span> بيانات البطاقة لا تُحفظ</div>
+                    <div class="security-item"><span class="security-icon">⏱️</span> دعم فني 24/7</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ SUCCESS OVERLAY ══ -->
+    <div class="success-overlay" x-show="showSuccess" x-transition style="display:none;">
+        <div class="success-box">
+            <div class="success-icon">🎉</div>
+            <h2>تم الدفع بنجاح!</h2>
+            <p style="color:var(--gray);font-size:.9rem;margin-bottom:1rem;">
+                إجمالي المبلغ المدفوع: <strong x-text="totalWithVat.toFixed(2)+' ريال'"></strong>
+            </p>
+
+            <div class="split-result">
+                <div class="split-result-row service-row-result">
+                    <div class="sr-icon">🔒</div>
+                    <div>
+                        <div class="sr-title">رسوم الخدمة — <span x-text="serviceAmount.toFixed(2)+' ريال'"></span></div>
+                        <div class="sr-desc">محجوزة في صندوق الضمان. ستُطلق للمزود فقط بعد تأكيدك الشخصي لإتمام الخدمة، أو تلقائياً بعد 48 ساعة من الإتمام.</div>
+                    </div>
+                </div>
+                <div class="split-result-row materials-row-result" x-show="orderType==='materials' && materialsEstimate>0" x-transition>
+                    <div class="sr-icon">⚡</div>
+                    <div>
+                        <div class="sr-title" style="color:var(--materials);">ميزانية المواد — <span x-text="materialsEstimate.toFixed(2)+' ريال'"></span></div>
+                        <div class="sr-desc">متاحة الآن للمزود حصراً لمشتريات هذا الطلب. المزود سيرفع إيصالات وأدلة الشراء. المبلغ الفائض يُعاد إليك تلقائياً.</div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="color:var(--success);font-weight:600;margin-top:1rem;">جارٍ الانتقال للمحادثة مع المزود... 💬</p>
+        </div>
+    </div>
+
+    <script>
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+
+    function paymentApp() {
+        return {
+            orderType:         'service',
+            materialsEstimate: 0,
+            serviceAmount:     180,
+            baseFee:           180,
+            subtotal:          180,
+            vatAmount:         27,
+            totalAmount:       180,   // pre-VAT display (legacy — kept for pay button text)
+            totalWithVat:      207,
+            // Split-payment toggle state (hasMaterials mirrors orderType for the new toggle UI)
+            hasMaterials:      false,
+            materialsAmt:      150,
+            serviceAmt:        200,
+            get splitSubtotal()   { return this.serviceAmt + (this.hasMaterials ? this.materialsAmt : 0); },
+            get splitPlatformFee(){ return Math.round(this.serviceAmt * 0.15); },
+            get splitVat()        { return Math.round(this.splitSubtotal * 0.15); },
+            get splitTotal()      { return this.splitSubtotal + this.splitPlatformFee + this.splitVat; },
+            payMethod:         'card',
+            cardRaw:           '',
+            cardDisplay:       '',
+            cardName:          '',
+            cardExpiry:        '',
+            cardCvc:           '',
+            processing:        false,
+            showSuccess:       false,
+            currentRequestId:  'REQ-demo-001',
+            serviceName:       'إصلاح تسريب مياه',
+
+            init() {
+                // Auth guard
+                if (!API.isLoggedIn()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                // Read params forwarded from quote-request.html
+                const p = new URLSearchParams(location.search);
+                if (p.get('requestId'))    this.currentRequestId = p.get('requestId');
+                if (p.get('service'))      this.serviceName      = p.get('service');
+                if (p.get('serviceAmount')) this.baseFee = parseFloat(p.get('serviceAmount'));
+                const hasMat  = p.get('hasMaterials') === 'true';
+                const matEst  = parseFloat(p.get('materialsEst') || '0');
+                if (hasMat) {
+                    this.setOrderType('materials');
+                    if (matEst > 0) this.materialsEstimate = matEst;
+                }
+                this.updateBreakdown();
+            },
+
+            setOrderType(type) {
+                this.orderType = type;
+                this.hasMaterials = (type === 'materials');
+                if (type === 'service') {
+                    this.materialsEstimate = 0;
+                }
+                this.updateBreakdown();
+            },
+
+            toggleSplit(val) {
+                this.hasMaterials = val;
+                this.setOrderType(val ? 'materials' : 'service');
+            },
+
+            updateBreakdown() {
+                const mat = this.orderType === 'materials' ? Number(this.materialsEstimate) : 0;
+                this.serviceAmount = this.baseFee;
+                this.subtotal      = this.baseFee + mat;
+                this.vatAmount     = +(this.subtotal * 0.15).toFixed(2);
+                this.totalAmount   = this.subtotal;           // pre-VAT subtotal
+                this.totalWithVat  = +(this.subtotal + this.vatAmount).toFixed(2);
+            },
+
+            formatCard(e) {
+                let v = e.target.value.replace(/\D/g, '').slice(0, 16);
+                this.cardDisplay = v.match(/.{1,4}/g)?.join(' ') || v;
+                e.target.value   = this.cardDisplay;
+            },
+
+            formatExpiry(e) {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2,4);
+                this.cardExpiry = v;
+                e.target.value  = v;
+            },
+
+            async submitPayment() {
+                if (this.processing) return;
+                if (this.orderType === 'materials' && this.materialsEstimate <= 0) {
+                    alert('⚠️ يرجى إدخال المبلغ التقديري للمواد أولاً');
+                    return;
+                }
+                this.processing = true;
+                try {
+                    const [month, year] = (this.cardExpiry || '/').split('/');
+                    const source = this.payMethod === 'card'
+                        ? { type: 'creditcard', name: this.cardName || 'Customer',
+                            number: this.cardRaw.replace(/\s/g, ''),
+                            month: (month || '').trim(),
+                            year: '20' + ((year || '').trim()),
+                            cvc: this.cardCvc }
+                        : { type: this.payMethod === 'stc' ? 'stcpay' : 'applepay' };
+                    await API.payments.initiate(this.currentRequestId, {
+                        source,
+                        serviceAmount: this.serviceAmount,
+                        materialsAmount: this.orderType === 'materials' ? Number(this.materialsEstimate) : 0,
+                    });
+                    this.processing  = false;
+                    this.showSuccess = true;
+                    setTimeout(() => {
+                        const p = new URLSearchParams({
+                            type:      'service',
+                            requestId: this.currentRequestId,
+                            service:   this.serviceName,
+                            paid:      '1',
+                            serviceAmount: String(Math.round(this.serviceAmount)),
+                            materialsEst:  String(this.orderType === 'materials' ? this.materialsEstimate : 0),
+                        });
+                        window.location.href = 'chat.html?' + p.toString();
+                    }, 1500);
+                } catch(err) {
+                    this.processing = false;
+                    API.toast('❌ ' + API.errorMsg(err));
+                }
+            }
+        }
+    }
+    </script>
+</body>
+</html>

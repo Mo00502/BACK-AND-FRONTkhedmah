@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملف المزود - Khedmah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --gray: #64748B;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            min-height: 100vh;
+            padding-bottom: 5rem;
+        }
+
+        /* NAV */
+        nav {
+            background: white;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.875rem 5%;
+        }
+        .logo {
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-back {
+            font-size: 0.85rem;
+            color: var(--gray);
+            text-decoration: none;
+        }
+        .nav-back:hover { color: var(--primary); }
+        .theme-toggle {
+            width: 36px; height: 36px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .avatar-btn {
+            width: 36px; height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        /* PROFILE HERO */
+        .profile-hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #0f3460 60%, var(--primary) 100%);
+            color: white;
+            padding: 2rem 5% 1.5rem;
+        }
+        .profile-hero-inner {
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .avatar-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .prof-avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 2rem;
+            flex-shrink: 0;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .verified-badge {
+            background: var(--success);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            margin-top: 0.4rem;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .prof-info h1 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 0.2rem;
+        }
+        .prof-title {
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 0.4rem;
+        }
+        .prof-meta-row {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.65);
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+        .rating-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.88rem;
+            color: white;
+        }
+        .avail-indicator {
+            max-width: 800px;
+            margin: 0.875rem auto 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 0.5rem 0.875rem;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* STATS BAR */
+        .stats-bar {
+            background: white;
+            display: flex;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .stats-bar .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 1rem 0.5rem;
+            border-left: 1px solid #f1f5f9;
+        }
+        .stats-bar .stat-item:last-child { border-left: none; }
+        .stats-bar .stat-num {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+        .stats-bar .stat-lbl {
+            font-size: 0.68rem;
+            color: var(--gray);
+            margin-top: 0.1rem;
+        }
+
+        /* TAGS STRIP */
+        .tags-strip { background: white; border-bottom: 1px solid #f1f5f9; }
+        .tags-scroll {
+            display: flex;
+            gap: 0.4rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding: 0.875rem 5%;
+        }
+        .tags-scroll::-webkit-scrollbar { display: none; }
+        .tag-chip {
+            background: rgba(2,128,144,0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            padding: 0.3rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* TAB BAR */
+        .tab-bar {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 0 5%;
+            overflow-x: auto;
+            scrollbar-width: none;
+            position: sticky;
+            top: 56px;
+            z-index: 50;
+        }
+        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            flex-shrink: 0;
+            padding: 0.875rem 1rem;
+            border: none;
+            background: none;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            border-bottom: 2.5px solid transparent;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* TAB PANELS */
+        .tab-panel {
+            padding: 1rem 5% 6rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* SECTION CARDS */
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 0.875rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+        .section-count {
+            font-size: 0.75rem;
+            color: var(--gray);
+            font-weight: 400;
+        }
+
+        /* INFO ROWS */
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0;
+            font-size: 0.88rem;
+            color: var(--dark);
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-icon { font-size: 1rem; flex-shrink: 0; }
+        .bio-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+            margin-bottom: 0.875rem;
+        }
+
+        /* BEST AT */
+        .best-at-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .best-at-chip {
+            background: linear-gradient(135deg, rgba(2,128,144,0.1), rgba(2,195,154,0.1));
+            color: var(--primary);
+            border: 1.5px solid rgba(2,128,144,0.2);
+            border-radius: 10px;
+            padding: 0.45rem 0.875rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        /* LOCATION */
+        .location-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--dark);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .districts-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+        .district-chip {
+            background: var(--light);
+            color: var(--dark);
+            border-radius: 8px;
+            padding: 0.3rem 0.65rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .mode-badge {
+            display: inline-block;
+            background: rgba(2,128,144,0.08);
+            color: var(--primary);
+            border-radius: 8px;
+            padding: 0.3rem 0.75rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        /* SCHEDULE */
+        .schedule-table {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .sched-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.88rem;
+        }
+        .sched-day { font-weight: 600; color: var(--dark); }
+        .sched-time { color: var(--gray); }
+        .sched-closed { color: var(--error); }
+
+        /* CERTIFICATIONS */
+        .cert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            color: var(--dark);
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .cert-item:last-child { border-bottom: none; }
+        .cert-ico { font-size: 1.1rem; flex-shrink: 0; }
+
+        /* SERVICES */
+        .service-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 1rem;
+        }
+        .service-row:last-child { border-bottom: none; }
+        .svc-info { flex: 1; }
+        .svc-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+        .svc-name.featured::before { content: '⭐ '; }
+        .svc-desc { font-size: 0.8rem; color: var(--gray); }
+        .svc-price { text-align: left; flex-shrink: 0; }
+        .svc-amount {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        .svc-unit { font-size: 0.72rem; color: var(--gray); }
+
+        /* PORTFOLIO */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem;
+        }
+        .port-item {
+            background: var(--light);
+            border-radius: 14px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .port-ico { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .port-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.3rem;
+        }
+        .port-type { font-size: 0.75rem; color: var(--gray); }
+        .port-year {
+            font-size: 0.72rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* REVIEWS */
+        .rating-summary {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 1rem;
+        }
+        .rating-big {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .rating-stars-col {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .review-card {
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .review-card:last-child { border-bottom: none; }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.4rem;
+        }
+        .reviewer-name {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: var(--dark);
+        }
+        .review-date { font-size: 0.75rem; color: var(--gray); }
+        .review-stars { color: #f59e0b; font-size: 0.85rem; margin-bottom: 0.3rem; }
+        .review-text {
+            font-size: 0.85rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* STICKY CTA BAR */
+        .cta-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #f1f5f9;
+            padding: 0.875rem 5%;
+            padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+        }
+        .cta-price-num {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+        .cta-price-unit { font-size: 0.75rem; color: var(--gray); }
+        .cta-btns { display: flex; gap: 0.5rem; }
+        .btn-chat-cta {
+            background: transparent;
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-book-cta {
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* DARK MODE */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark nav,
+        html.dark .stats-bar,
+        html.dark .tab-bar,
+        html.dark .cta-bar,
+        html.dark .tags-strip { background: #1e293b; border-color: #334155; }
+        html.dark .section-card { background: #1e293b; }
+        html.dark .section-title { color: #64748b; }
+        html.dark .svc-name,
+        html.dark .sched-day,
+        html.dark .port-title,
+        html.dark .reviewer-name,
+        html.dark .location-row { color: #e2e8f0; }
+        html.dark .svc-desc,
+        html.dark .review-text,
+        html.dark .bio-text { color: #94a3b8; }
+        html.dark .service-row,
+        html.dark .sched-row,
+        html.dark .review-card,
+        html.dark .rating-summary,
+        html.dark .info-row,
+        html.dark .cert-item { border-color: #334155; }
+        html.dark .port-item { background: #0f172a; }
+        html.dark .best-at-chip {
+            background: rgba(2,128,144,0.15);
+            border-color: rgba(2,128,144,0.3);
+        }
+        html.dark .btn-chat-cta { border-color: var(--primary); color: var(--accent); }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+        html.dark .tab-btn { color: #64748b; }
+        html.dark .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        html.dark .info-row { color: #cbd5e1; }
+        html.dark .tag-chip { background: rgba(2,128,144,0.15); }
+        html.dark .district-chip { background: #0f172a; color: #cbd5e1; }
+        html.dark .cert-item { color: #cbd5e1; }
+        html.dark .stats-bar .stat-item { border-color: #334155; }
+        html.dark .logo { color: var(--accent); }
+        html.dark .cta-price-num { color: var(--accent); }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+
+<!-- NAV -->
+<nav>
+    <div class="nav-inner">
+        <a href="home.html" class="logo">KHEDMAH</a>
+        <div class="nav-actions">
+            <a href="search-services.html" class="nav-back">← بحث</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <a href="customer-dashboard.html" class="avatar-btn">م</a>
+        </div>
+    </div>
+</nav>
+
+<!-- PROFILE HERO -->
+<div class="profile-hero">
+    <div class="profile-hero-inner">
+        <div class="avatar-wrap">
+            <div class="prof-avatar" id="profAvatar"></div>
+            <div class="verified-badge" id="verifiedBadge" style="display:none">✓ موثق</div>
+        </div>
+        <div class="prof-info">
+            <h1 id="profName"></h1>
+            <div class="prof-title" id="profTitle"></div>
+            <div class="prof-meta-row">
+                <span id="profCategory"></span>
+                <span>•</span>
+                <span id="profCity"></span>
+            </div>
+            <div class="rating-row">
+                <span class="stars">⭐</span>
+                <span id="profRating"></span>
+                <span id="profReviewCount" style="opacity:0.7"></span>
+            </div>
+        </div>
+    </div>
+    <div class="avail-indicator" id="availIndicator"></div>
+</div>
+
+<!-- QUICK STATS BAR -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-num" id="statJobs"></div>
+        <div class="stat-lbl">خدمة مكتملة</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-num" id="statYears"></div>
+        <div class="stat-lbl">سنوات خبرة</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-num" id="statResponse"></div>
+        <div class="stat-lbl">وقت الرد</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-num" id="statRepeat"></div>
+        <div class="stat-lbl">عملاء متكررون</div>
+    </div>
+</div>
+
+<!-- SERVICE TAGS -->
+<div class="tags-strip">
+    <div class="tags-scroll" id="profTags"></div>
+</div>
+
+<!-- MAIN BODY — Alpine.js tabs -->
+<div class="profile-body" x-data="{ tab: 'about' }">
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+        <button class="tab-btn" :class="{ active: tab === 'about' }" @click="tab = 'about'">عن المزود</button>
+        <button class="tab-btn" :class="{ active: tab === 'services' }" @click="tab = 'services'">الخدمات</button>
+        <button class="tab-btn" :class="{ active: tab === 'portfolio' }" @click="tab = 'portfolio'">الأعمال</button>
+        <button class="tab-btn" :class="{ active: tab === 'reviews' }" @click="tab = 'reviews'">التقييمات</button>
+    </div>
+
+    <!-- TAB: About -->
+    <div class="tab-panel" x-show="tab === 'about'">
+
+        <!-- About section -->
+        <div class="section-card">
+            <div class="section-title">عن المزود</div>
+            <p class="bio-text" id="profBio"></p>
+            <div class="info-row">
+                <span class="info-icon">🌍</span>
+                <span id="profLanguages"></span>
+            </div>
+            <div class="info-row" id="emergencyRow" style="display:none">
+                <span class="info-icon">🚨</span>
+                <span>متاح للطوارئ</span>
+            </div>
+            <div class="info-row" id="sameDayRow" style="display:none">
+                <span class="info-icon">⚡</span>
+                <span>خدمة في نفس اليوم</span>
+            </div>
+        </div>
+
+        <!-- Best At section -->
+        <div class="section-card">
+            <div class="section-title">الأقوى في</div>
+            <div class="best-at-grid" id="bestAtGrid"></div>
+        </div>
+
+        <!-- Location section -->
+        <div class="section-card">
+            <div class="section-title">الموقع ونطاق الخدمة</div>
+            <div class="location-row">
+                <span>📍</span>
+                <span id="profCity2"></span>
+            </div>
+            <div class="districts-wrap" id="profDistricts"></div>
+            <div id="profMode"></div>
+        </div>
+
+        <!-- Availability section -->
+        <div class="section-card">
+            <div class="section-title">أوقات العمل</div>
+            <div class="schedule-table" id="scheduleTable"></div>
+        </div>
+
+        <!-- Certifications -->
+        <div class="section-card" id="certsSection" style="display:none">
+            <div class="section-title">الشهادات والاعتمادات</div>
+            <div id="certsList"></div>
+        </div>
+
+    </div>
+
+    <!-- TAB: Services -->
+    <div class="tab-panel" x-show="tab === 'services'">
+        <div class="section-card">
+            <div class="section-title">الخدمات المقدمة <span class="section-count" id="servicesCount"></span></div>
+            <div id="servicesList"></div>
+        </div>
+    </div>
+
+    <!-- TAB: Portfolio -->
+    <div class="tab-panel" x-show="tab === 'portfolio'">
+        <div class="section-card">
+            <div class="section-title">نماذج من الأعمال</div>
+            <div class="portfolio-grid" id="portfolioGrid"></div>
+        </div>
+    </div>
+
+    <!-- TAB: Reviews -->
+    <div class="tab-panel" x-show="tab === 'reviews'">
+        <div class="section-card">
+            <div class="section-title">التقييمات والآراء</div>
+            <div class="rating-summary" id="ratingSummary"></div>
+            <div id="reviewsList"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- STICKY CTA BAR -->
+<div class="cta-bar">
+    <div id="ctaPrice">
+        <div class="cta-price-num" id="ctaPriceNum"></div>
+        <div class="cta-price-unit" id="ctaPriceUnit"></div>
+    </div>
+    <div class="cta-btns">
+        <a href="chat.html?type=service&id=1" class="btn-chat-cta" id="ctaChatBtn">💬 محادثة</a>
+        <a href="quote-request.html" class="btn-book-cta" id="ctaBookBtn">طلب خدمة</a>
+    </div>
+</div>
+
+<script>
+    // Auth guard
+    (function() {
+        if (!API.isLoggedIn()) { window.location.href = 'login.html'; return; }
+        const role = API.auth.getRole();
+        if (role === 'provider') { window.location.href = 'provider-dashboard.html'; }
+    })();
+
+    // Provider data
+    const PROVIDERS = {
+        khalid: {
+            name: 'خالد العمري',
+            title: 'كهربائي معتمد',
+            type: 'home',
+            category: 'كهرباء',
+            subcategory: 'تمديدات وصيانة',
+            verified: true,
+            rating: 4.9,
+            reviewCount: 47,
+            jobsCompleted: 127,
+            yearsExp: 8,
+            responseTime: '< ساعتين',
+            city: 'الرياض',
+            districts: ['حي النزهة','حي الروضة','حي العليا','حي الملقا'],
+            serviceMode: 'onsite',
+            emergency: true,
+            sameDay: true,
+            available: true,
+            startingPrice: 80,
+            priceUnit: 'ساعة',
+            phone: '+966501234567',
+            whatsapp: true,
+            bio: 'كهربائي محترف بخبرة 8 سنوات في التمديدات الكهربائية والصيانة المنزلية والصناعية. أعمل بدقة عالية وأضمن جودة العمل مع خدمة ما بعد الإنجاز.',
+            languages: ['العربية', 'الإنجليزية'],
+            services: [
+                { name: 'تمديدات كهربائية', desc: 'تمديد كامل للمنازل والمكاتب', price: 80, unit: 'ساعة', featured: true },
+                { name: 'لوحات توزيع', desc: 'تركيب وصيانة لوحات التوزيع', price: 200, unit: 'زيارة', featured: true },
+                { name: 'إضاءة LED', desc: 'تركيب وتغيير الإضاءة', price: 50, unit: 'ساعة', featured: false },
+                { name: 'كاميرات مراقبة', desc: 'تركيب أنظمة CCTV', price: 300, unit: 'مشروع', featured: false },
+                { name: 'صيانة طارئة', desc: 'خدمة 24 ساعة للحالات العاجلة', price: 150, unit: 'زيارة', featured: false },
+            ],
+            bestAt: ['تشخيص الأعطال بدقة','لوحات توزيع','طوارئ كهربائية','تمديدات جديدة','إضاءة ذكية'],
+            portfolio: [
+                { title: 'تمديد كهربائي كامل - فيلا سكنية', type: 'تمديدات', emoji: '⚡', year: '2024' },
+                { title: 'تركيب 24 كاميرا - مجمع تجاري', type: 'أنظمة أمن', emoji: '📷', year: '2024' },
+                { title: 'إضاءة LED ذكية - شقة 4 غرف', type: 'إضاءة', emoji: '💡', year: '2023' },
+            ],
+            certifications: ['شهادة مزاول كهربائي - وزارة الموارد البشرية', 'دورة السلامة الكهربائية - OSHA'],
+            schedule: { sun:'8-18', mon:'8-18', tue:'8-18', wed:'8-18', thu:'8-18', fri:'closed', sat:'14-22' },
+            reviews: [
+                { name: 'محمد أ.', rating: 5, date: 'منذ أسبوع', text: 'عمل رائع وسريع ونظيف. أنصح به بشدة.' },
+                { name: 'سارة م.', rating: 5, date: 'منذ أسبوعين', text: 'محترف جداً، أنجز العمل في وقت قياسي.' },
+                { name: 'فهد ع.', rating: 4, date: 'منذ شهر', text: 'كهربائي ممتاز، أسعاره معقولة.' },
+            ],
+            completionRate: 98,
+            repeatRate: 72,
+            tags: ['تمديدات كهربائية','لوحات توزيع','إضاءة LED','كاميرات مراقبة','طوارئ'],
+        },
+        salem: {
+            name: 'سالم القحطاني',
+            title: 'مهندس كهربائي ومستشار',
+            type: 'consultant',
+            category: 'هندسة كهربائية',
+            subcategory: 'تصميم وإشراف',
+            verified: true,
+            rating: 4.8,
+            reviewCount: 39,
+            jobsCompleted: 98,
+            yearsExp: 12,
+            responseTime: '< 4 ساعات',
+            city: 'الرياض',
+            districts: ['الرياض وضواحيها'],
+            serviceMode: 'both',
+            emergency: false,
+            sameDay: false,
+            available: true,
+            startingPrice: 500,
+            priceUnit: 'استشارة',
+            phone: '+966502345678',
+            whatsapp: true,
+            bio: 'مهندس كهربائي بخبرة 12 عاماً في التصميم والإشراف على مشاريع البنية التحتية الكهربائية للمشاريع السكنية والتجارية والصناعية.',
+            languages: ['العربية', 'الإنجليزية'],
+            services: [
+                { name: 'تصميم كهربائي', desc: 'تصميم المخططات الكهربائية', price: 1500, unit: 'مشروع', featured: true },
+                { name: 'مراجعة المخططات', desc: 'مراجعة وتدقيق المخططات الكهربائية', price: 500, unit: 'استشارة', featured: true },
+                { name: 'إشراف على التنفيذ', desc: 'إشراف دوري على أعمال التنفيذ', price: 2000, unit: 'شهر', featured: false },
+                { name: 'دراسة الأحمال', desc: 'حساب الأحمال وتحديد المتطلبات', price: 800, unit: 'مشروع', featured: false },
+            ],
+            bestAt: ['تصميم المخططات الكهربائية','دراسة الأحمال','مراجعة BOQ','إشراف التنفيذ','استشارات الطاقة الشمسية'],
+            portfolio: [
+                { title: 'تصميم كهربائي - برج سكني 20 طابق', type: 'تصميم', emoji: '🏢', year: '2024' },
+                { title: 'مراجعة مخططات - مجمع تجاري', type: 'مراجعة', emoji: '📐', year: '2023' },
+                { title: 'إشراف تنفيذي - مصنع صناعي', type: 'إشراف', emoji: '🏭', year: '2023' },
+            ],
+            certifications: ['بكالوريوس هندسة كهربائية - جامعة الملك سعود', 'عضوية هيئة المهندسين السعوديين', 'شهادة PMP'],
+            schedule: { sun:'9-17', mon:'9-17', tue:'9-17', wed:'9-17', thu:'9-17', fri:'closed', sat:'closed' },
+            reviews: [
+                { name: 'شركة النور', rating: 5, date: 'منذ أسبوع', text: 'مهندس محترف يتقن عمله ويلتزم بالمواعيد.' },
+                { name: 'أحمد م.', rating: 5, date: 'منذ 3 أسابيع', text: 'تصميم احترافي ومتميز.' },
+            ],
+            completionRate: 100,
+            repeatRate: 85,
+            tags: ['تصميم كهربائي','مخططات','إشراف','BOQ','طاقة شمسية','استشارات'],
+        },
+        fahad: {
+            name: 'فهد الدوسري',
+            title: 'سباك معتمد',
+            type: 'home',
+            category: 'سباكة',
+            subcategory: 'صيانة وتركيب',
+            verified: true,
+            rating: 4.7,
+            reviewCount: 29,
+            jobsCompleted: 74,
+            yearsExp: 6,
+            responseTime: '< 3 ساعات',
+            city: 'الرياض',
+            districts: ['حي العليا','حي السليمانية','حي الورود'],
+            serviceMode: 'onsite',
+            emergency: true,
+            sameDay: true,
+            available: false,
+            startingPrice: 65,
+            priceUnit: 'ساعة',
+            phone: '+966503456789',
+            whatsapp: false,
+            bio: 'سباك محترف متخصص في أعمال السباكة المنزلية والتجارية مع خبرة 6 سنوات في تركيب وصيانة أنظمة المياه والصرف الصحي.',
+            languages: ['العربية'],
+            services: [
+                { name: 'إصلاح التسريبات', desc: 'كشف وإصلاح تسريبات المياه', price: 65, unit: 'ساعة', featured: true },
+                { name: 'تركيب حمامات', desc: 'تركيب المغاسل والمراحيض والدشات', price: 300, unit: 'مشروع', featured: true },
+                { name: 'استبدال المواسير', desc: 'استبدال المواسير القديمة أو التالفة', price: 200, unit: 'مشروع', featured: false },
+            ],
+            bestAt: ['كشف التسريبات','تركيب الحمامات','صيانة طوارئ','ضغط المياه','مضخات المياه'],
+            portfolio: [
+                { title: 'تركيب 3 حمامات كاملة - شقة جديدة', type: 'تركيب', emoji: '🚿', year: '2024' },
+                { title: 'إصلاح تسريب رئيسي - فيلا', type: 'إصلاح', emoji: '🔧', year: '2024' },
+            ],
+            certifications: ['شهادة في أعمال السباكة - المعهد الفني'],
+            schedule: { sun:'8-20', mon:'8-20', tue:'8-20', wed:'8-20', thu:'8-20', fri:'14-20', sat:'10-20' },
+            reviews: [
+                { name: 'نورة ع.', rating: 5, date: 'منذ أسبوعين', text: 'حل المشكلة بسرعة وبأسعار مناسبة جداً.' },
+                { name: 'خالد ر.', rating: 4, date: 'منذ شهر', text: 'عمل جيد ونظيف.' },
+            ],
+            completionRate: 95,
+            repeatRate: 60,
+            tags: ['تسريبات','سباكة','حمامات','طوارئ','مواسير'],
+        },
+        abdulrahman: {
+            name: 'عبدالرحمن الشهري',
+            title: 'كهربائي وفني تكييف',
+            type: 'home',
+            category: 'كهرباء وتكييف',
+            subcategory: 'صيانة عامة',
+            verified: true,
+            rating: 4.6,
+            reviewCount: 22,
+            jobsCompleted: 61,
+            yearsExp: 5,
+            responseTime: '< 4 ساعات',
+            city: 'الرياض',
+            districts: ['حي الروضة','حي الصحافة','حي النزهة'],
+            serviceMode: 'onsite',
+            emergency: false,
+            sameDay: false,
+            available: true,
+            startingPrice: 60,
+            priceUnit: 'ساعة',
+            phone: '+966504567890',
+            whatsapp: true,
+            bio: 'فني متخصص في أعمال الكهرباء والتكييف المنزلي بخبرة 5 سنوات.',
+            languages: ['العربية'],
+            services: [
+                { name: 'صيانة تكييف', desc: 'تنظيف وصيانة مكيفات', price: 120, unit: 'وحدة', featured: true },
+                { name: 'كهرباء عامة', desc: 'صيانة وإصلاح الكهرباء', price: 60, unit: 'ساعة', featured: true },
+            ],
+            bestAt: ['صيانة التكييف','كهرباء منزلية','تنظيف الفلاتر','إصلاح الأعطال'],
+            portfolio: [
+                { title: 'صيانة 8 مكيفات - مبنى إداري', type: 'صيانة', emoji: '❄️', year: '2024' },
+            ],
+            certifications: [],
+            schedule: { sun:'9-18', mon:'9-18', tue:'9-18', wed:'9-18', thu:'9-18', fri:'closed', sat:'closed' },
+            reviews: [
+                { name: 'ليلى م.', rating: 5, date: 'منذ أسبوع', text: 'ممتاز وسريع في التشخيص.' },
+            ],
+            completionRate: 92,
+            repeatRate: 55,
+            tags: ['تكييف','كهرباء','صيانة','تنظيف فلاتر'],
+        },
+        mohammad: {
+            name: 'محمد الغامدي',
+            title: 'نجار ومزود صيانة عامة',
+            type: 'home',
+            category: 'نجارة وصيانة',
+            subcategory: 'تركيب وإصلاح',
+            verified: false,
+            rating: 4.5,
+            reviewCount: 18,
+            jobsCompleted: 43,
+            yearsExp: 4,
+            responseTime: '< 6 ساعات',
+            city: 'الرياض',
+            districts: ['حي الورود','حي العزيزية'],
+            serviceMode: 'onsite',
+            emergency: false,
+            sameDay: false,
+            available: true,
+            startingPrice: 55,
+            priceUnit: 'ساعة',
+            phone: '+966505678901',
+            whatsapp: false,
+            bio: 'فني نجارة وصيانة منزلية شاملة بخبرة 4 سنوات في تركيب وإصلاح الأثاث والأبواب والنوافذ.',
+            languages: ['العربية'],
+            services: [
+                { name: 'تركيب أثاث', desc: 'تركيب جميع أنواع الأثاث', price: 55, unit: 'ساعة', featured: true },
+                { name: 'إصلاح الأبواب', desc: 'إصلاح وضبط الأبواب والنوافذ', price: 100, unit: 'زيارة', featured: true },
+            ],
+            bestAt: ['تركيب الأثاث','الأبواب والنوافذ','الديكور الخشبي'],
+            portfolio: [
+                { title: 'تركيب مطبخ كامل - شقة', type: 'نجارة', emoji: '🪵', year: '2024' },
+            ],
+            certifications: [],
+            schedule: { sun:'9-18', mon:'9-18', tue:'9-18', wed:'9-18', thu:'9-18', fri:'closed', sat:'10-16' },
+            reviews: [
+                { name: 'عمر ك.', rating: 4, date: 'منذ أسبوعين', text: 'عمل جيد وأسعار مناسبة.' },
+            ],
+            completionRate: 88,
+            repeatRate: 45,
+            tags: ['نجارة','أثاث','أبواب','صيانة منزلية'],
+        }
+    };
+
+    function applyProfileData(data) {
+
+        // Update page title
+        document.title = `${data.name} - Khedmah`;
+
+        // Avatar
+        const avatarEl = document.getElementById('profAvatar');
+        avatarEl.textContent = data.name.charAt(0);
+        const avatarColors = {
+            home: '#028090,#02C39A',
+            consultant: '#4338ca,#818cf8',
+            contractor: '#f59e0b,#fcd34d',
+            equipment: '#059669,#34d399',
+            manpower: '#dc2626,#f87171'
+        };
+        const colors = (avatarColors[data.type] || '#028090,#02C39A').split(',');
+        avatarEl.style.background = `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`;
+
+        // Verified badge
+        if (data.verified) {
+            document.getElementById('verifiedBadge').style.display = 'inline-block';
+        }
+
+        // Header info
+        document.getElementById('profName').textContent = data.name;
+        document.getElementById('profTitle').textContent = data.title;
+        document.getElementById('profCategory').textContent = data.category;
+        document.getElementById('profCity').textContent = '📍 ' + data.city;
+        document.getElementById('profRating').textContent = data.rating;
+        document.getElementById('profReviewCount').textContent = `(${data.reviewCount} تقييم)`;
+
+        // Availability indicator
+        const avail = document.getElementById('availIndicator');
+        if (data.available) {
+            let txt = '🟢 متاح الآن للحجز';
+            if (data.emergency) txt += ' &nbsp;•&nbsp; 🚨 خدمة طوارئ';
+            if (data.sameDay) txt += ' &nbsp;•&nbsp; ⚡ نفس اليوم';
+            avail.innerHTML = txt;
+        } else {
+            avail.innerHTML = '🔴 غير متاح حالياً';
+        }
+
+        // Stats
+        document.getElementById('statJobs').textContent = data.jobsCompleted + '+';
+        document.getElementById('statYears').textContent = data.yearsExp;
+        document.getElementById('statResponse').textContent = data.responseTime;
+        document.getElementById('statRepeat').textContent = data.repeatRate + '%';
+
+        // Tags
+        const tagsEl = document.getElementById('profTags');
+        tagsEl.innerHTML = data.tags.map(t => `<span class="tag-chip">${t}</span>`).join('');
+
+        // Bio
+        document.getElementById('profBio').textContent = data.bio;
+        document.getElementById('profLanguages').textContent = 'اللغات: ' + data.languages.join(' • ');
+
+        // Emergency / same-day rows
+        if (data.emergency) document.getElementById('emergencyRow').style.display = 'flex';
+        if (data.sameDay) document.getElementById('sameDayRow').style.display = 'flex';
+
+        // Best at
+        document.getElementById('bestAtGrid').innerHTML = data.bestAt.map(b => `<span class="best-at-chip">${b}</span>`).join('');
+
+        // Location
+        document.getElementById('profCity2').textContent = data.city;
+        const districtsEl = document.getElementById('profDistricts');
+        districtsEl.innerHTML = '<div class="districts-chips">' + data.districts.map(d => `<span class="district-chip">${d}</span>`).join('') + '</div>';
+
+        const modes = { onsite: '📍 خدمة في الموقع فقط', remote: '💻 خدمة عن بُعد فقط', both: '📍💻 في الموقع وعن بُعد' };
+        document.getElementById('profMode').innerHTML = `<div class="mode-badge">${modes[data.serviceMode] || ''}</div>`;
+
+        // Schedule
+        const days = { sun: 'الأحد', mon: 'الاثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس', fri: 'الجمعة', sat: 'السبت' };
+        const schedEl = document.getElementById('scheduleTable');
+        schedEl.innerHTML = Object.entries(data.schedule).map(([key, val]) => {
+            const timeStr = val === 'closed'
+                ? '<span class="sched-closed">مغلق</span>'
+                : `<span class="sched-time">${val.replace('-', ' — ')}</span>`;
+            return `<div class="sched-row"><span class="sched-day">${days[key]}</span>${timeStr}</div>`;
+        }).join('');
+
+        // Certifications
+        if (data.certifications && data.certifications.length > 0) {
+            document.getElementById('certsSection').style.display = 'block';
+            document.getElementById('certsList').innerHTML = data.certifications.map(c =>
+                `<div class="cert-item"><span class="cert-ico">🏅</span><span>${c}</span></div>`
+            ).join('');
+        }
+
+        // Services
+        document.getElementById('servicesCount').textContent = `(${data.services.length})`;
+        document.getElementById('servicesList').innerHTML = data.services.map(s => `
+            <div class="service-row">
+                <div class="svc-info">
+                    <div class="svc-name ${s.featured ? 'featured' : ''}">${s.name}</div>
+                    <div class="svc-desc">${s.desc}</div>
+                </div>
+                <div class="svc-price">
+                    <div class="svc-amount">${s.price === 0 ? 'حسب الاتفاق' : s.price + ' ر.س'}</div>
+                    <div class="svc-unit">${s.unit}</div>
+                </div>
+            </div>`
+        ).join('');
+
+        // Portfolio
+        document.getElementById('portfolioGrid').innerHTML = data.portfolio.map(p => `
+            <div class="port-item">
+                <div class="port-ico">${p.emoji}</div>
+                <div class="port-title">${p.title}</div>
+                <div class="port-type">${p.type}</div>
+                <div class="port-year">${p.year}</div>
+            </div>`
+        ).join('');
+
+        // Reviews
+        document.getElementById('reviewsList').innerHTML = data.reviews.map(r => `
+            <div class="review-card">
+                <div class="review-header">
+                    <span class="reviewer-name">${r.name}</span>
+                    <span class="review-date">${r.date}</span>
+                </div>
+                <div class="review-stars">${'⭐'.repeat(r.rating)}</div>
+                <div class="review-text">${r.text}</div>
+            </div>`
+        ).join('');
+
+        // Rating summary
+        document.getElementById('ratingSummary').innerHTML = `
+            <div class="rating-big">${data.rating}</div>
+            <div style="font-size:1.5rem">⭐</div>
+            <div style="font-size:0.82rem;color:var(--gray)">
+                ${data.reviewCount} تقييم<br>
+                <span style="font-size:0.75rem">معدل الإنجاز: ${data.completionRate}%</span>
+            </div>`;
+
+        // CTA bar
+        document.getElementById('ctaPriceNum').textContent = `من ${data.startingPrice} ر.س`;
+        document.getElementById('ctaPriceUnit').textContent = `/ ${data.priceUnit}`;
+        document.getElementById('ctaBookBtn').href = `quote-request.html?category=${encodeURIComponent(data.category)}`;
+        document.getElementById('ctaChatBtn').href = `chat.html?type=service&providerId=${encodeURIComponent(id)}`;
+    }
+
+    function loadProfile() {
+        const id = new URLSearchParams(location.search).get('id') || 'khalid';
+        const isUUID = id.includes('-') && id.length > 10;
+        if (isUUID) {
+            API.providers.getProfile(id).then(p => {
+                // Map API response to the same shape loadProfile uses
+                const data = {
+                    name: p.user?.name || p.name || 'مزود خدمة',
+                    title: p.bio || p.category || '',
+                    category: p.category || '',
+                    city: p.city || '',
+                    rating: parseFloat(p.ratingAvg || 0).toFixed(1),
+                    reviewCount: p.ratingCount || 0,
+                    available: p.available ?? true,
+                    emergency: false, sameDay: false,
+                    jobsCompleted: p.jobsCompleted || 0,
+                    yearsExp: p.yearsOfExperience || 0,
+                    responseTime: 'خلال ساعة',
+                    repeatRate: 0,
+                    bio: p.bio || '',
+                    languages: ['العربية'],
+                    serviceMode: 'both',
+                    verified: p.verificationStatus === 'APPROVED',
+                    districts: [], tags: p.services?.map(s => s.name) || [],
+                    services: (p.services || []).map(s => ({
+                        name: s.name, desc: s.description || '',
+                        price: Number(s.price) || 0, unit: 'للزيارة', featured: false
+                    })),
+                    certifications: [], portfolio: [], reviews: [],
+                    completionRate: 95,
+                    startingPrice: p.services?.[0] ? Number(p.services[0].price) : 0,
+                    priceUnit: 'للزيارة',
+                    schedule: { sun:'09:00-18:00', mon:'09:00-18:00', tue:'09:00-18:00', wed:'09:00-18:00', thu:'09:00-18:00', fri:'closed', sat:'closed' },
+                    bestAt: [], type: 'home',
+                };
+                applyProfileData(data);
+                document.getElementById('ctaBookBtn').href = `quote-request.html?category=${encodeURIComponent(data.category)}&providerId=${id}`;
+            }).catch(() => {
+                // Fall back to demo data
+                applyProfileData(PROVIDERS[id] || PROVIDERS['khalid']);
+            });
+        } else {
+            applyProfileData(PROVIDERS[id] || PROVIDERS['khalid']);
+        }
+    }
+    loadProfile();
+
+    // Dark mode
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+    }
+
+    // Init dark mode
+    (function() {
+        const theme = localStorage.getItem('khedmah_theme');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.getElementById('themeToggle').textContent = '☀️';
+        }
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "khedmah",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Khedmah — home-services marketplace monorepo (backend + frontend)",
+  "scripts": {
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:test": "cd backend && npm run test",
+    "backend:test:e2e": "cd backend && npm run test:e2e",
+    "backend:install": "cd backend && npm install",
+    "frontend:serve": "cd frontend && npx serve . -p 3001",
+    "install:all": "npm run backend:install",
+    "dev": "npm run backend:dev"
+  },
+  "workspaces": [
+    "backend"
+  ]
+}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - خدمة</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --error: #EF4444;
+            --success: #10B981;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .card {
+            max-width: 460px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+            overflow: hidden;
+            animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 3rem 2rem 2.5rem;
+            text-align: center;
+            color: white;
+        }
+        .logo { font-size: 3.5rem; margin-bottom: 1rem; }
+        .card-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .card-header p { opacity: 0.85; font-size: 0.95rem; }
+        .card-body { padding: 2.5rem; }
+
+        .form-group { margin-bottom: 1.4rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--dark); }
+        .input-wrap { position: relative; }
+        .input-icon {
+            position: absolute; right: 1.1rem; top: 50%;
+            transform: translateY(-50%); font-size: 1.2rem; pointer-events: none;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.9rem 3rem 0.9rem 1.2rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            direction: ltr;
+            text-align: right;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(2,128,144,0.12);
+        }
+        .eye-btn {
+            position: absolute; left: 1.1rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none; cursor: pointer;
+            font-size: 1.1rem; color: #94A3B8;
+        }
+        .hint { font-size: 0.82rem; color: #64748B; margin-top: 0.35rem; }
+
+        .alert {
+            padding: 0.9rem 1rem; border-radius: 10px;
+            margin-bottom: 1.3rem; font-weight: 600;
+            display: none; text-align: center; font-size: 0.9rem;
+        }
+        .alert.error  { background: rgba(239,68,68,0.1);  border: 2px solid var(--error);   color: var(--error);   }
+        .alert.success{ background: rgba(16,185,129,0.1); border: 2px solid var(--success);  color: var(--success); }
+        .alert.show   { display: block; animation: shake 0.4s; }
+        .alert.success.show { animation: none; }
+        @keyframes shake {
+            0%,100%{ transform: translateX(0); }
+            30%    { transform: translateX(-8px); }
+            70%    { transform: translateX(8px); }
+        }
+
+        .submit-btn {
+            width: 100%; padding: 1.1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 12px;
+            font-size: 1.15rem; font-weight: 700; cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .submit-btn:hover  { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(2,128,144,0.3); }
+        .submit-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+        .links { margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: #64748B; }
+        .links a { color: var(--primary); font-weight: 700; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+        .divider { margin: 1.2rem 0; text-align: center; color: #94A3B8; font-size: 0.85rem; }
+        .divider::before, .divider::after {
+            content: '';
+            display: inline-block; width: 35%; height: 1px;
+            background: #E2E8F0; vertical-align: middle; margin: 0 0.6rem;
+        }
+        .register-links { display: flex; gap: 0.8rem; flex-direction: column; margin-top: 0.5rem; }
+        .outline-btn {
+            width: 100%; padding: 0.85rem;
+            border: 2px solid var(--primary); border-radius: 12px;
+            background: transparent; color: var(--primary);
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            font-family: 'Tajawal', sans-serif; text-align: center;
+            text-decoration: none; display: block;
+            transition: background 0.2s, color 0.2s;
+        }
+        .outline-btn:hover { background: var(--primary); color: white; }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark .card { background: #1e293b !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+        html.dark .form-group input { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-group input::placeholder { color: #64748b; }
+        html.dark .form-group label { color: #cbd5e1; }
+        html.dark .divider { border-color: #334155; color: #94a3b8; }
+        html.dark .divider::before, html.dark .divider::after { background: #334155; }
+        html.dark .links, html.dark .hint { color: #94a3b8; }
+        html.dark .alert.error  { background: rgba(239,68,68,0.15); }
+        html.dark .alert.success { background: rgba(16,185,129,0.15); }
+        html.dark .outline-btn { background: transparent; }
+        .theme-toggle { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 40px; height: 40px; border-radius: 50%; background: white; border: 1.5px solid #e2e8f0; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 999; }
+        html.dark .theme-toggle { background: #1e293b; border-color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <div class="logo">🏠</div>
+            <h1>خدمة</h1>
+            <p>تسجيل الدخول إلى حسابك</p>
+        </div>
+        <div class="card-body">
+            <div class="alert error" id="errorAlert"></div>
+            <div class="alert success" id="successAlert"></div>
+
+            <form id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="identifier">البريد الإلكتروني أو اسم المستخدم</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">📧</span>
+                        <input
+                            type="text"
+                            id="identifier"
+                            placeholder="sara@example.com أو sara_kh"
+                            autocomplete="username"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="••••••••"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button type="button" class="eye-btn" onclick="togglePass()">👁️</button>
+                    </div>
+                    <div class="hint">
+                        <a href="forgot-password.html" style="color:var(--primary);font-weight:600;">نسيت كلمة المرور؟</a>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>🔓</span><span>تسجيل الدخول</span>
+                </button>
+            </form>
+
+            <div class="divider">أو</div>
+
+            <div class="register-links">
+                <a href="register-customer.html" class="outline-btn">👤 إنشاء حساب عميل</a>
+                <a href="register-provider.html" class="outline-btn">🔧 إنشاء حساب مزود خدمة</a>
+            </div>
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (localStorage.getItem('khedmah_demo')) {
+            const u = localStorage.getItem('khedmah_user');
+            try {
+                const parsed = JSON.parse(u);
+                window.location.href = parsed.role === 'provider'
+                    ? 'provider-dashboard.html'
+                    : 'customer-dashboard.html';
+            } catch {
+                window.location.href = 'customer-dashboard.html';
+            }
+        }
+
+        function togglePass() {
+            const inp = document.getElementById('password');
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+
+        function showAlert(type, msg) {
+            const el = document.getElementById(type + 'Alert');
+            el.textContent = msg;
+            el.classList.add('show');
+            if (type === 'error') {
+                setTimeout(() => el.classList.remove('show'), 4000);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('identifier').value.trim();
+            const password   = document.getElementById('password').value;
+            const btn        = document.getElementById('submitBtn');
+
+            if (!identifier || !password) {
+                showAlert('error', '❌ يرجى ملء جميع الحقول');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span><span>جاري التحقق...</span>';
+
+            try {
+                const user = await API.auth.login(identifier, password);
+                btn.innerHTML = '<span>✅</span><span>تم تسجيل الدخول</span>';
+                showAlert('success', '✅ مرحباً بعودتك ' + (user.profile?.nameAr || user.username || '') + '!');
+
+                setTimeout(() => {
+                    const role = user.role?.toLowerCase() || '';
+                    if (role === 'admin' || role === 'super_admin' || role === 'support') {
+                        window.location.href = 'admin-dashboard.html';
+                    } else if (role === 'provider') {
+                        window.location.href = 'provider-dashboard.html';
+                    } else {
+                        window.location.href = 'customer-dashboard.html';
+                    }
+                }, 1000);
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔓</span><span>تسجيل الدخول</span>';
+                showAlert('error', '❌ ' + API.errorMsg(err));
+            }
+        });
+    </script>
+</body>
+</html>

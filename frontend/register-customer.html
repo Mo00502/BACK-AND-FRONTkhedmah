@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب عميل - خدمة</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --secondary: #00A896; --accent: #02C39A;
+            --dark: #1E293B; --error: #EF4444; --success: #10B981;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 2rem;
+        }
+        .card {
+            max-width: 500px; width: 100%;
+            background: white; border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+            overflow: hidden; animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 2.5rem 2rem; text-align: center; color: white;
+        }
+        .logo { font-size: 3rem; margin-bottom: 0.8rem; }
+        .card-header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .card-header p { opacity: 0.85; font-size: 0.95rem; }
+        .card-body { padding: 2.5rem; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 1.3rem; }
+        .form-group label { display: block; margin-bottom: 0.45rem; font-weight: 700; color: var(--dark); font-size: 0.95rem; }
+        .input-wrap { position: relative; }
+        .input-icon {
+            position: absolute; right: 1rem; top: 50%;
+            transform: translateY(-50%); font-size: 1.1rem; pointer-events: none;
+        }
+        .form-group input {
+            width: 100%; padding: 0.85rem 2.8rem 0.85rem 1rem;
+            border: 2px solid #E2E8F0; border-radius: 12px;
+            font-family: 'Tajawal', sans-serif; font-size: 16px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .form-group input[dir="ltr"] { direction: ltr; text-align: right; }
+        .form-group input:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(2,128,144,0.12);
+        }
+        .form-group input.is-invalid { border-color: var(--error); }
+        .eye-btn {
+            position: absolute; left: 1rem; top: 50%;
+            transform: translateY(-50%); background: none; border: none;
+            cursor: pointer; font-size: 1.1rem; color: #94A3B8;
+        }
+        .field-error { color: var(--error); font-size: 0.8rem; margin-top: 0.3rem; display: none; }
+        .field-error.show { display: block; }
+        .hint { font-size: 0.8rem; color: #64748B; margin-top: 0.3rem; }
+
+        /* Password strength bar */
+        .strength-bar { height: 4px; border-radius: 4px; background: #E2E8F0; margin-top: 0.5rem; overflow: hidden; }
+        .strength-fill { height: 100%; width: 0%; border-radius: 4px; transition: width 0.3s, background 0.3s; }
+        .strength-label { font-size: 0.78rem; margin-top: 0.3rem; font-weight: 600; }
+
+        .alert {
+            padding: 0.9rem 1rem; border-radius: 10px;
+            margin-bottom: 1.3rem; font-weight: 600;
+            display: none; text-align: center; font-size: 0.9rem;
+        }
+        .alert.error   { background: rgba(239,68,68,0.1);  border: 2px solid var(--error);   color: var(--error); }
+        .alert.success { background: rgba(16,185,129,0.1); border: 2px solid var(--success);  color: var(--success); }
+        .alert.show    { display: block; }
+
+        /* Success state */
+        .success-state { display: none; text-align: center; padding: 1.5rem 0; }
+        .success-state.show { display: block; }
+        .success-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .success-state h2 { font-size: 1.5rem; font-weight: 800; color: var(--dark); margin-bottom: 0.5rem; }
+        .success-state p  { color: #64748B; font-size: 0.95rem; line-height: 1.7; }
+        .success-state .email-box {
+            background: rgba(2,128,144,0.08); border: 2px solid var(--primary);
+            border-radius: 12px; padding: 0.8rem; margin: 1rem 0;
+            font-weight: 700; color: var(--primary); font-size: 1rem;
+        }
+
+        .submit-btn {
+            width: 100%; padding: 1.1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 12px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .submit-btn:hover  { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(2,128,144,0.28); }
+        .submit-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+        .links { margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: #64748B; }
+        .links a { color: var(--primary); font-weight: 700; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+
+        .terms { font-size: 0.82rem; color: #94A3B8; text-align: center; margin-top: 1.2rem; line-height: 1.5; }
+        .terms a { color: var(--primary); }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark .card { background: #1e293b !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+        html.dark .form-group input { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-group input::placeholder { color: #64748b; }
+        html.dark .form-group label { color: #cbd5e1; }
+        html.dark .links, html.dark .hint, html.dark .terms { color: #94a3b8; }
+        html.dark .alert.error  { background: rgba(239,68,68,0.15); }
+        html.dark .alert.success { background: rgba(16,185,129,0.15); }
+        html.dark .success-state h2 { color: #e2e8f0; }
+        html.dark .success-state p  { color: #94a3b8; }
+        html.dark .strength-bar { background: #334155; }
+        .theme-toggle { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 40px; height: 40px; border-radius: 50%; background: white; border: 1.5px solid #e2e8f0; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 999; }
+        html.dark .theme-toggle { background: #1e293b; border-color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <div class="logo">👤</div>
+            <h1>إنشاء حساب عميل</h1>
+            <p>احجز خدمات منزلية موثوقة بكل سهولة</p>
+        </div>
+        <div class="card-body">
+            <div class="alert error" id="errorAlert"></div>
+
+            <!-- Registration Form -->
+            <form id="regForm" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nameAr">الاسم بالعربية</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✍️</span>
+                            <input type="text" id="nameAr" placeholder="سارة">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nameEn">الاسم بالإنجليزية</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✍️</span>
+                            <input type="text" id="nameEn" placeholder="Sara" dir="ltr">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">البريد الإلكتروني <span style="color:var(--error)">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon">📧</span>
+                        <input type="email" id="email" placeholder="sara@example.com" dir="ltr" required>
+                    </div>
+                    <div class="field-error" id="emailErr">يرجى إدخال بريد إلكتروني صحيح</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">اسم المستخدم <span style="color:var(--error)">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🆔</span>
+                        <input type="text" id="username" placeholder="sara_kh" dir="ltr" required>
+                    </div>
+                    <div class="hint">3–30 حرفاً: أحرف إنجليزية وأرقام وشرطة سفلية فقط</div>
+                    <div class="field-error" id="usernameErr">اسم المستخدم غير صالح (3–30 حرفاً، أحرف إنجليزية/أرقام/_)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">كلمة المرور <span style="color:var(--error)">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" placeholder="••••••••" autocomplete="new-password" required oninput="updateStrength()">
+                        <button type="button" class="eye-btn" onclick="togglePass('password')">👁️</button>
+                    </div>
+                    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+                    <div class="strength-label" id="strengthLabel"></div>
+                    <div class="field-error" id="passwordErr">8 أحرف على الأقل تشمل حرفاً كبيراً وصغيراً ورقماً</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm">تأكيد كلمة المرور <span style="color:var(--error)">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="confirm" placeholder="••••••••" autocomplete="new-password" required>
+                        <button type="button" class="eye-btn" onclick="togglePass('confirm')">👁️</button>
+                    </div>
+                    <div class="field-error" id="confirmErr">كلمتا المرور غير متطابقتين</div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>✨</span><span>إنشاء الحساب</span>
+                </button>
+
+                <div class="terms">
+                    بالتسجيل أنت توافق على
+                    <a href="#">شروط الاستخدام</a> و
+                    <a href="#">سياسة الخصوصية</a>
+                </div>
+            </form>
+
+            <!-- Email sent success state -->
+            <div class="success-state" id="successState">
+                <div class="success-icon">📬</div>
+                <h2>تحقق من بريدك الإلكتروني</h2>
+                <p>أرسلنا رابط التحقق إلى:</p>
+                <div class="email-box" id="sentToEmail"></div>
+                <p>انقر على الرابط في الإيميل لتفعيل حسابك. الرابط صالح لمدة 24 ساعة.</p>
+                <br>
+                <a href="login.html" style="color:var(--primary);font-weight:700;">← العودة لتسجيل الدخول</a>
+            </div>
+
+            <div class="links">
+                لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a>
+            </div>
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+
+    <script src="js/api.js"></script>
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        function togglePass(id) {
+            const inp = document.getElementById(id);
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+
+        function updateStrength() {
+            const pw = document.getElementById('password').value;
+            const fill  = document.getElementById('strengthFill');
+            const label = document.getElementById('strengthLabel');
+            let score = 0;
+            if (pw.length >= 8)  score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[a-z]/.test(pw)) score++;
+            if (/\d/.test(pw))    score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+            const levels = [
+                { pct: '0%',  color: '#E2E8F0', text: '' },
+                { pct: '25%', color: '#EF4444', text: '🔴 ضعيفة جداً' },
+                { pct: '50%', color: '#F59E0B', text: '🟡 مقبولة' },
+                { pct: '75%', color: '#3B82F6', text: '🔵 جيدة' },
+                { pct: '90%', color: '#10B981', text: '🟢 قوية' },
+                { pct: '100%', color: '#059669', text: '✅ قوية جداً' },
+            ];
+            const l = levels[score] || levels[0];
+            fill.style.width = l.pct;
+            fill.style.background = l.color;
+            label.textContent = l.text;
+            label.style.color = l.color;
+        }
+
+        function showErr(id, show) {
+            document.getElementById(id).classList.toggle('show', show);
+            const input = document.getElementById(id.replace('Err',''));
+            if (input) input.classList.toggle('is-invalid', show);
+        }
+
+        document.getElementById('regForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email    = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm  = document.getElementById('confirm').value;
+
+            let valid = true;
+
+            // Email
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            showErr('emailErr', !emailOk);
+            if (!emailOk) valid = false;
+
+            // Username
+            const usernameOk = /^[a-zA-Z0-9_]{3,30}$/.test(username);
+            showErr('usernameErr', !usernameOk);
+            if (!usernameOk) valid = false;
+
+            // Password
+            const passOk = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password);
+            showErr('passwordErr', !passOk);
+            if (!passOk) valid = false;
+
+            // Confirm
+            const confirmOk = password === confirm;
+            showErr('confirmErr', !confirmOk);
+            if (!confirmOk) valid = false;
+
+            if (!valid) return;
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span><span>جاري إنشاء الحساب...</span>';
+
+            try {
+                const nameAr = document.getElementById('nameAr')?.value?.trim() || '';
+                await API.auth.registerCustomer({ email, username, password, nameAr: nameAr || undefined });
+                document.getElementById('regForm').style.display = 'none';
+                document.getElementById('sentToEmail').textContent = email;
+                document.getElementById('successState').classList.add('show');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🚀</span><span>إنشاء الحساب</span>';
+                const errEl = document.getElementById('globalErr');
+                if (errEl) {
+                    errEl.textContent = '❌ ' + API.errorMsg(err);
+                    errEl.style.display = 'block';
+                    setTimeout(() => errEl.style.display = 'none', 5000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

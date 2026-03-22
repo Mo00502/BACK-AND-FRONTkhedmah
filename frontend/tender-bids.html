@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عروض المناقصة - Khedmah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #028090;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: #f1f5f9; color: var(--dark); }
+
+        /* Nav */
+        nav { background: white; box-shadow: 0 1px 6px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100; }
+        .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 5%; }
+        .nav-right { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-weight: 900; font-size: 1.2rem; color: var(--primary); text-decoration: none; }
+        .nav-back { font-size: 0.85rem; color: var(--gray); text-decoration: none; }
+        .nav-back:hover { color: var(--primary); }
+        .nav-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .avatar-btn { width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; text-decoration: none; font-size: 0.9rem; }
+
+        /* Tender header bar */
+        .tender-header-bar { background: linear-gradient(135deg, var(--dark), #0f3460); color: white; padding: 1.5rem 5%; }
+        .tender-header-inner { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+        .tender-title { font-size: 1.15rem; font-weight: 800; color: white; margin-bottom: 0.4rem; line-height: 1.3; }
+        .tender-title-row { display: flex; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; }
+        .status-badge { background: var(--success); color: white; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 0.2rem; }
+        .tender-info-row { display: flex; gap: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.65); flex-wrap: wrap; margin-top: 0.4rem; }
+        .countdown-num { font-size: 2rem; font-weight: 900; color: var(--accent); text-align: center; line-height: 1; }
+        .countdown-lbl { font-size: 0.72rem; color: rgba(255,255,255,0.6); text-align: center; }
+        .tender-countdown { flex-shrink: 0; text-align: center; min-width: 56px; }
+
+        /* Stats bar */
+        .bids-stats-bar { background: white; display: flex; border-bottom: 1px solid #f1f5f9; }
+        .bids-stat { flex: 1; text-align: center; padding: 1rem 0.5rem; border-left: 1px solid #f1f5f9; }
+        .bids-stat:last-child { border-left: none; }
+        .bids-stat-num { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+        .bids-stat-lbl { font-size: 0.72rem; color: var(--gray); }
+
+        /* Main content */
+        .bids-main { max-width: 900px; margin: 0 auto; padding: 1.25rem 5% 3rem; }
+
+        /* Toolbar */
+        .bids-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.75rem; flex-wrap: wrap; }
+        .bids-tabs { display: flex; gap: 0.4rem; }
+        .bid-tab { background: white; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.5rem 0.875rem; font-family: 'Tajawal', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--gray); transition: all 0.15s; display: flex; align-items: center; gap: 0.4rem; }
+        .bid-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .bid-tab-count { background: rgba(255,255,255,0.25); border-radius: 50%; width: 20px; height: 20px; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; }
+        .bid-tab:not(.active) .bid-tab-count { background: #f1f5f9; color: var(--gray); }
+        .sort-select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.5rem 0.875rem; font-family: 'Tajawal', sans-serif; font-size: 0.85rem; outline: none; color: var(--dark); background: white; }
+
+        /* Price insight banner */
+        .price-insight { background: rgba(2,128,144,0.07); border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+        .price-insight-label { color: var(--gray); }
+        .price-insight-range { font-weight: 800; color: var(--primary); }
+        .price-insight-avg { color: var(--gray); font-size: 0.8rem; }
+
+        /* Bid cards */
+        .bids-list { display: flex; flex-direction: column; gap: 0.875rem; }
+        .bid-card { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 2px solid transparent; transition: all 0.2s; position: relative; overflow: hidden; }
+        .bid-card.shortlisted { border-color: var(--warning); }
+        .bid-card.accepted { border-color: var(--success); background: rgba(16,185,129,0.03); }
+        .bid-card.rejected { opacity: 0.5; }
+
+        /* Card header */
+        .bid-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; gap: 1rem; }
+        .bid-company { display: flex; gap: 0.875rem; align-items: flex-start; flex: 1; }
+        .company-avatar { width: 48px; height: 48px; border-radius: 50%; color: white; font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .company-name { font-size: 1rem; font-weight: 800; color: var(--dark); }
+        .company-name-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
+        .verified-badge { background: var(--success); color: white; font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 8px; }
+        .company-meta { font-size: 0.78rem; color: var(--gray); display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+        /* Price column */
+        .bid-price-col { text-align: left; flex-shrink: 0; }
+        .bid-price { font-size: 1.2rem; font-weight: 900; color: var(--primary); white-space: nowrap; }
+        .bid-duration { font-size: 0.75rem; color: var(--gray); text-align: left; }
+
+        /* Status row */
+        .bid-status-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .bid-status-badge { font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 8px; }
+        .bid-status-badge.pending { background: rgba(100,116,139,0.1); color: var(--gray); }
+        .bid-status-badge.shortlisted-badge { background: rgba(245,158,11,0.1); color: #92400e; }
+        .bid-status-badge.accepted-badge { background: rgba(16,185,129,0.1); color: #065f46; }
+        .bid-status-badge.rejected-badge { background: rgba(239,68,68,0.1); color: #991b1b; }
+        .bid-submitted-at { font-size: 0.75rem; color: var(--gray); }
+        .bid-attachment { font-size: 0.75rem; color: var(--primary); font-weight: 600; }
+
+        /* Proposal */
+        .bid-proposal { font-size: 0.88rem; color: var(--gray); line-height: 1.6; margin-bottom: 1rem; }
+
+        /* Breakdown */
+        .bid-breakdown { background: var(--light); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+        .breakdown-title { font-size: 0.78rem; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; }
+        .breakdown-row { display: flex; justify-content: space-between; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
+        .breakdown-row:last-of-type { border-bottom: none; }
+        .total-row { font-weight: 800; color: var(--primary); font-size: 0.95rem; }
+        .extra-info-row { display: flex; gap: 1.5rem; margin-top: 0.6rem; font-size: 0.82rem; color: var(--gray); }
+        .bid-notes { margin-top: 0.6rem; font-size: 0.82rem; color: var(--gray); padding-top: 0.5rem; border-top: 1px solid #e2e8f0; }
+        .notes-label { font-weight: 700; color: var(--dark); margin-left: 0.4rem; }
+
+        /* Action buttons */
+        .bid-actions { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        .btn-expand { background: none; border: none; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; color: var(--primary); cursor: pointer; padding: 0; }
+        .bid-action-btns { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .btn-chat-bid { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 10px; padding: 0.5rem 0.875rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+        .btn-chat-bid:hover { background: rgba(2,128,144,0.06); }
+        .btn-shortlist { background: transparent; color: var(--gray); border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.5rem 0.875rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+        .btn-shortlist.active { background: rgba(245,158,11,0.1); border-color: var(--warning); color: #92400e; }
+        .btn-accept { background: var(--success); color: white; border: none; border-radius: 10px; padding: 0.5rem 0.875rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+        .btn-accept:hover { background: #059669; }
+        .awarded-label { background: rgba(16,185,129,0.1); color: #065f46; font-size: 0.82rem; font-weight: 700; padding: 0.4rem 0.75rem; border-radius: 8px; }
+
+        /* Rejected overlay */
+        .rejected-overlay { display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; font-size: 0.85rem; color: var(--error); font-weight: 600; }
+
+        /* Award section */
+        .award-section { margin-top: 1.5rem; }
+        .award-card { background: white; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 4px 20px rgba(16,185,129,0.15); border: 2px solid var(--success); }
+        .award-card h3 { font-size: 1.2rem; font-weight: 800; color: var(--dark); margin-bottom: 0.4rem; }
+        .award-card p { color: var(--gray); font-size: 0.88rem; margin-bottom: 1.25rem; }
+        .btn-close-tender { background: var(--success); color: white; border: none; border-radius: 14px; padding: 0.875rem 2rem; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; }
+
+        /* Empty state */
+        .empty-bids { text-align: center; padding: 3rem; background: white; border-radius: 16px; color: var(--gray); }
+
+        /* Toast */
+        #pageToast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 0.65rem 1.25rem; border-radius: 10px; font-size: 0.88rem; z-index: 2000; display: none; white-space: nowrap; }
+
+        /* Dark mode */
+        html.dark body { background: #0a0f1c; color: #e2e8f0; }
+        html.dark nav, html.dark .bids-stats-bar { background: #1e293b; border-color: #334155; }
+        html.dark .bids-stat { border-color: #334155; }
+        html.dark .bid-card { background: #1e293b; }
+        html.dark .bid-card.accepted { background: rgba(16,185,129,0.05); }
+        html.dark .company-name { color: #e2e8f0; }
+        html.dark .bid-proposal { color: #94a3b8; }
+        html.dark .bid-breakdown { background: #0f172a; }
+        html.dark .breakdown-row, html.dark .bid-notes { border-color: #334155; }
+        html.dark .btn-expand { color: var(--accent); }
+        html.dark .btn-shortlist { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        html.dark .bid-tab:not(.active) { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark .sort-select { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+        html.dark .price-insight { background: rgba(2,128,144,0.12); }
+        html.dark .award-card { background: #1e293b; }
+        html.dark .award-card h3 { color: #e2e8f0; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+        html.dark .bid-submitted-at, html.dark .company-meta { color: #64748b; }
+        html.dark .rejected-overlay { border-color: #334155; }
+        html.dark .empty-bids { background: #1e293b; }
+        html.dark .notes-label { color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+
+<!-- Auth guard -->
+<script>
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+        if (!localStorage.getItem('khedmah_demo')) {
+            window.location.href = 'login.html';
+            return;
+        }
+        try {
+            const user = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (user.role && user.role !== 'customer') {
+                window.location.href = 'provider-dashboard.html';
+            }
+        } catch(e) {}
+    })();
+</script>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-right">
+            <a href="customer-dashboard.html" class="nav-back">← لوحة التحكم</a>
+            <a href="tenders.html" class="logo">KHEDMAH</a>
+        </div>
+        <div class="nav-actions">
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <a href="customer-dashboard.html" class="avatar-btn">م</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Tender header bar -->
+<div class="tender-header-bar">
+    <div class="tender-header-inner">
+        <div class="tender-meta">
+            <div class="tender-title-row">
+                <h1 class="tender-title" id="tenderTitle"></h1>
+                <span class="status-badge" id="tenderStatus"></span>
+            </div>
+            <div class="tender-info-row">
+                <span id="tenderId"></span>
+                <span>•</span>
+                <span id="tenderCity"></span>
+                <span>•</span>
+                <span id="tenderBudgetDisplay"></span>
+            </div>
+        </div>
+        <div class="tender-countdown">
+            <div class="countdown-num" id="daysLeft"></div>
+            <div class="countdown-lbl">يوم متبقٍ</div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats bar -->
+<div class="bids-stats-bar">
+    <div class="bids-stat">
+        <div class="bids-stat-num" id="totalBids"></div>
+        <div class="bids-stat-lbl">إجمالي العروض</div>
+    </div>
+    <div class="bids-stat">
+        <div class="bids-stat-num" id="shortlistedCount"></div>
+        <div class="bids-stat-lbl">مختصرة</div>
+    </div>
+    <div class="bids-stat">
+        <div class="bids-stat-num" id="viewCount"></div>
+        <div class="bids-stat-lbl">مشاهدة</div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="pageToast"></div>
+
+<!-- Demo Data -->
+<script>
+const TENDER = {
+    id: '#TND-847291',
+    title: 'إنشاء مبنى إداري طابقين — حي النزهة، الرياض',
+    category: 'إنشاء',
+    status: 'open',
+    deadline: '2026-03-25',
+    daysLeft: 7,
+    budget: '450,000 — 600,000 ر.س',
+    city: 'الرياض',
+    bidCount: 12,
+    viewCount: 48,
+};
+
+const BIDS = [
+    {
+        id: 1,
+        company: 'مقاولات الرياض الكبرى',
+        avatar: 'م',
+        avatarColor: '#028090,#02C39A',
+        verified: true,
+        rating: 4.8,
+        reviewCount: 34,
+        yearsExp: 12,
+        completedProjects: 89,
+        price: 520000,
+        breakdown: { labor: 180000, materials: 280000, equipment: 60000 },
+        duration: '4 أشهر',
+        teamSize: 25,
+        proposalSummary: 'نقدم عرضاً شاملاً يتضمن تنفيذ الهيكل الخرساني والأعمال المدنية الكاملة وفق المخططات المعتمدة مع الإشراف الهندسي الدائم.',
+        attachmentName: 'عرض_مقاولات_الرياض.pdf',
+        startAvailability: 'فور التوقيع',
+        submittedAt: 'منذ يومين',
+        status: 'pending',
+        notes: 'الأسعار ثابتة لمدة 30 يوماً. نستطيع توفير ضمان بنكي إذا طُلب.',
+    },
+    {
+        id: 2,
+        company: 'شركة الإنشاء الحديث',
+        avatar: 'ش',
+        avatarColor: '#6366f1,#818cf8',
+        verified: true,
+        rating: 4.6,
+        reviewCount: 21,
+        yearsExp: 8,
+        completedProjects: 52,
+        price: 485000,
+        breakdown: { labor: 160000, materials: 270000, equipment: 55000 },
+        duration: '5 أشهر',
+        teamSize: 18,
+        proposalSummary: 'خبرة واسعة في مشاريع البنية التحتية. سيتم تخصيص مهندس إشراف بدوام كامل طوال مدة المشروع.',
+        attachmentName: null,
+        startAvailability: 'خلال أسبوع',
+        submittedAt: 'منذ 3 أيام',
+        status: 'shortlisted',
+        notes: '',
+    },
+    {
+        id: 3,
+        company: 'مجموعة البناء المتكامل',
+        avatar: 'ب',
+        avatarColor: '#f59e0b,#fcd34d',
+        verified: false,
+        rating: 4.3,
+        reviewCount: 9,
+        yearsExp: 5,
+        completedProjects: 23,
+        price: 440000,
+        breakdown: { labor: 150000, materials: 250000, equipment: 40000 },
+        duration: '4.5 أشهر',
+        teamSize: 15,
+        proposalSummary: 'نقدم أفضل الأسعار مع ضمان الجودة. لدينا فريق متكامل من المهندسين والفنيين ذوي الخبرة.',
+        attachmentName: 'عرض_البناء_المتكامل.pdf',
+        startAvailability: 'خلال أسبوعين',
+        submittedAt: 'منذ 4 أيام',
+        status: 'pending',
+        notes: 'السعر قابل للتفاوض حسب الكميات النهائية.',
+    },
+    {
+        id: 4,
+        company: 'شركة التطوير العمراني',
+        avatar: 'ت',
+        avatarColor: '#059669,#34d399',
+        verified: true,
+        rating: 4.9,
+        reviewCount: 67,
+        yearsExp: 15,
+        completedProjects: 134,
+        price: 570000,
+        breakdown: { labor: 200000, materials: 310000, equipment: 60000 },
+        duration: '3.5 أشهر',
+        teamSize: 35,
+        proposalSummary: 'شركة رائدة في السوق منذ 15 عاماً. نضمن التسليم في الوقت المحدد مع ضمان 2 سنة على جميع الأعمال.',
+        attachmentName: 'عرض_التطوير_العمراني.pdf',
+        startAvailability: 'فور التوقيع',
+        submittedAt: 'منذ 5 أيام',
+        status: 'pending',
+        notes: '',
+    },
+    {
+        id: 5,
+        company: 'مقاولو الخليج المتحدون',
+        avatar: 'خ',
+        avatarColor: '#dc2626,#f87171',
+        verified: true,
+        rating: 4.5,
+        reviewCount: 18,
+        yearsExp: 7,
+        completedProjects: 41,
+        price: 495000,
+        breakdown: { labor: 170000, materials: 275000, equipment: 50000 },
+        duration: '4 أشهر',
+        teamSize: 22,
+        proposalSummary: 'خبرة في المباني الإدارية والتجارية. تقرير تقدم أسبوعي مع صور. جاهزون لبدء العمل فوراً.',
+        attachmentName: null,
+        startAvailability: 'فوري',
+        submittedAt: 'منذ أسبوع',
+        status: 'pending',
+        notes: '',
+    },
+];
+</script>
+
+<!-- Main content (Alpine.js) -->
+<div class="bids-main" x-data="{
+    tab: 'all',
+    sortBy: 'date',
+    expandedBid: null,
+    bids: BIDS,
+    get filteredBids() {
+        let list = this.tab === 'all' ? this.bids
+            : this.tab === 'shortlisted' ? this.bids.filter(b => b.status === 'shortlisted')
+            : this.bids.filter(b => b.status === 'accepted');
+        if (this.sortBy === 'price_low') return [...list].sort((a,b) => a.price - b.price);
+        if (this.sortBy === 'price_high') return [...list].sort((a,b) => b.price - a.price);
+        if (this.sortBy === 'rating') return [...list].sort((a,b) => b.rating - a.rating);
+        return list;
+    },
+    shortlistBid(id) {
+        const bid = this.bids.find(b => b.id === id);
+        if (bid) bid.status = bid.status === 'shortlisted' ? 'pending' : 'shortlisted';
+        updateShortlistedCount(this.bids);
+    },
+    async acceptBid(id) {
+        // First, un-accept any previously accepted bid
+        this.bids.forEach(b => {
+            if (b.status === 'accepted') b.status = 'pending';
+        });
+        // Now accept this bid and reject others
+        this.bids.forEach(b => {
+            if (b.id === id) b.status = 'accepted';
+            else if (b.status === 'pending' || b.status === 'shortlisted') b.status = 'rejected';
+        });
+        updateShortlistedCount(this.bids);
+        showToast('🎉 تم قبول العرض! جارٍ الانتقال إلى دفعات المراحل...');
+        const _tid = new URLSearchParams(location.search).get('tenderId') || TENDER.id;
+        API.tenders.award(_tid, id).catch(() => {});
+        setTimeout(() => { window.location.href = 'milestone-payments.html?tenderId=' + _tid; }, 1800);
+    },
+    rejectBid(id) {
+        const bid = this.bids.find(b => b.id === id);
+        if (bid) { bid.status = 'rejected'; this.expandedBid = null; }
+        updateShortlistedCount(this.bids);
+        showToast('تم رفض العرض');
+    }
+}">
+
+    <!-- Toolbar: tabs + sort -->
+    <div class="bids-toolbar">
+        <div class="bids-tabs">
+            <button class="bid-tab" :class="{active: tab==='all'}" @click="tab='all'">
+                الكل <span class="bid-tab-count" x-text="bids.length"></span>
+            </button>
+            <button class="bid-tab" :class="{active: tab==='shortlisted'}" @click="tab='shortlisted'">
+                مختصرة <span class="bid-tab-count" x-text="bids.filter(b=>b.status==='shortlisted').length"></span>
+            </button>
+            <button class="bid-tab" :class="{active: tab==='accepted'}" @click="tab='accepted'">
+                مقبولة <span class="bid-tab-count" x-text="bids.filter(b=>b.status==='accepted').length"></span>
+            </button>
+        </div>
+        <select class="sort-select" x-model="sortBy">
+            <option value="date">الأحدث</option>
+            <option value="price_low">السعر: الأقل</option>
+            <option value="price_high">السعر: الأعلى</option>
+            <option value="rating">التقييم</option>
+        </select>
+    </div>
+
+    <!-- Price range insight (client-only) -->
+    <div class="price-insight">
+        <span class="price-insight-label">نطاق الأسعار المقدمة:</span>
+        <span class="price-insight-range">440,000 — 570,000 ر.س</span>
+        <span class="price-insight-avg">متوسط: 502,000 ر.س</span>
+    </div>
+
+    <!-- Bid cards list -->
+    <div class="bids-list">
+        <template x-for="bid in filteredBids" :key="bid.id">
+            <div class="bid-card" :class="{ shortlisted: bid.status==='shortlisted', accepted: bid.status==='accepted', rejected: bid.status==='rejected' }">
+
+                <!-- Bid card header -->
+                <div class="bid-card-header">
+                    <div class="bid-company">
+                        <div class="company-avatar" :style="`background:linear-gradient(135deg,${bid.avatarColor.split(',')[0]},${bid.avatarColor.split(',')[1]})`" x-text="bid.avatar"></div>
+                        <div class="company-info">
+                            <div class="company-name-row">
+                                <span class="company-name" x-text="bid.company"></span>
+                                <span class="verified-badge" x-show="bid.verified">✓ موثق</span>
+                            </div>
+                            <div class="company-meta">
+                                <span x-text="'⭐ ' + bid.rating"></span>
+                                <span x-text="'(' + bid.reviewCount + ' تقييم)'"></span>
+                                <span x-text="'· ' + bid.yearsExp + ' سنة خبرة'"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bid-price-col">
+                        <div class="bid-price" x-text="bid.price.toLocaleString('ar-SA') + ' ر.س'"></div>
+                        <div class="bid-duration" x-text="bid.duration"></div>
+                    </div>
+                </div>
+
+                <!-- Status badge -->
+                <div class="bid-status-row">
+                    <span class="bid-status-badge pending" x-show="bid.status==='pending'">قيد المراجعة</span>
+                    <span class="bid-status-badge shortlisted-badge" x-show="bid.status==='shortlisted'">⭐ مختصر</span>
+                    <span class="bid-status-badge accepted-badge" x-show="bid.status==='accepted'">✅ مقبول</span>
+                    <span class="bid-status-badge rejected-badge" x-show="bid.status==='rejected'">مرفوض</span>
+                    <span class="bid-submitted-at" x-text="bid.submittedAt"></span>
+                    <span class="bid-attachment" x-show="bid.attachmentName">📎 <span x-text="bid.attachmentName"></span></span>
+                </div>
+
+                <!-- Proposal summary -->
+                <p class="bid-proposal" x-text="bid.proposalSummary"></p>
+
+                <!-- Price breakdown (expandable) -->
+                <div class="bid-breakdown" x-show="expandedBid === bid.id">
+                    <div class="breakdown-title">تفصيل السعر</div>
+                    <div class="breakdown-row">
+                        <span>العمالة</span>
+                        <span x-text="bid.breakdown.labor.toLocaleString('ar-SA') + ' ر.س'"></span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>المواد</span>
+                        <span x-text="bid.breakdown.materials.toLocaleString('ar-SA') + ' ر.س'"></span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>المعدات</span>
+                        <span x-text="bid.breakdown.equipment.toLocaleString('ar-SA') + ' ر.س'"></span>
+                    </div>
+                    <div class="breakdown-row total-row">
+                        <span>الإجمالي</span>
+                        <span x-text="bid.price.toLocaleString('ar-SA') + ' ر.س'"></span>
+                    </div>
+                    <div class="extra-info-row" x-show="bid.teamSize">
+                        <span>حجم الفريق: <strong x-text="bid.teamSize + ' شخص'"></strong></span>
+                        <span>موعد البدء: <strong x-text="bid.startAvailability"></strong></span>
+                    </div>
+                    <div class="bid-notes" x-show="bid.notes">
+                        <span class="notes-label">ملاحظات المزود:</span>
+                        <span x-text="bid.notes"></span>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="bid-actions" x-show="bid.status !== 'rejected'">
+                    <button class="btn-expand" @click="expandedBid = expandedBid === bid.id ? null : bid.id">
+                        <span x-text="expandedBid === bid.id ? '▲ إخفاء التفاصيل' : '▼ عرض التفاصيل'"></span>
+                    </button>
+                    <div class="bid-action-btns">
+                        <a :href="'chat.html?type=tender&requestId=' + (new URLSearchParams(location.search).get('tenderId') || 'T001') + '&id=' + bid.id" class="btn-chat-bid">💬 تواصل</a>
+                        <button class="btn-shortlist"
+                            :class="{ active: bid.status === 'shortlisted' }"
+                            @click="shortlistBid(bid.id)"
+                            x-show="bid.status !== 'accepted'"
+                            x-text="bid.status === 'shortlisted' ? '★ مختصر' : '☆ اختصار'">
+                        </button>
+                        <button class="btn-accept" @click="acceptBid(bid.id)" x-show="bid.status !== 'accepted'">
+                            ✓ قبول
+                        </button>
+                        <span class="awarded-label" x-show="bid.status === 'accepted'">🏆 الفائز</span>
+                    </div>
+                </div>
+
+                <!-- Rejected state -->
+                <div class="rejected-overlay" x-show="bid.status === 'rejected'">
+                    <span>تم الرفض</span>
+                    <button @click="bid.status='pending'" style="background:none;border:none;color:var(--primary);font-family:'Tajawal',sans-serif;font-size:0.8rem;cursor:pointer;text-decoration:underline">تراجع</button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Empty state -->
+        <div class="empty-bids" x-show="filteredBids.length === 0">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem">📭</div>
+            <p>لا توجد عروض في هذه الفئة بعد</p>
+        </div>
+    </div>
+
+    <!-- Award tender action (shown when a bid is accepted) -->
+    <div class="award-section" x-show="bids.some(b => b.status === 'accepted')">
+        <div class="award-card">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🏆</div>
+            <h3>تم اختيار الفائز</h3>
+            <p>قم بإغلاق المناقصة وإبلاغ جميع المتقدمين</p>
+            <button class="btn-close-tender" onclick="showToast('✅ تم إغلاق المناقصة وإبلاغ جميع المزودين')">إغلاق المناقصة ✓</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+function updateShortlistedCount(bids) {
+    const el = document.getElementById('shortlistedCount');
+    if (el) el.textContent = bids.filter(b => b.status === 'shortlisted').length;
+}
+
+function initPage() {
+    // Read tenderId from URL (passed from tender-create, tender-detail, tender-bids award)
+    const _tndId = new URLSearchParams(location.search).get('tenderId');
+    if (_tndId) {
+        const tidEl = document.getElementById('tenderId');
+        if (tidEl) tidEl.textContent = _tndId;
+    }
+    document.getElementById('tenderTitle').textContent = TENDER.title;
+    if (!_tndId) document.getElementById('tenderId').textContent = TENDER.id;
+    document.getElementById('tenderCity').textContent = '📍 ' + TENDER.city;
+    document.getElementById('tenderBudgetDisplay').textContent = '💰 ' + TENDER.budget;
+    document.getElementById('tenderStatus').textContent = TENDER.status === 'open' ? 'مفتوحة' : 'مغلقة';
+    document.getElementById('daysLeft').textContent = TENDER.daysLeft;
+    document.getElementById('totalBids').textContent = TENDER.bidCount;
+    updateShortlistedCount(BIDS);
+    document.getElementById('viewCount').textContent = TENDER.viewCount;
+}
+
+function showToast(msg) {
+    let t = document.getElementById('pageToast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+(function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = '☀️';
+    }
+    initPage();
+})();
+</script>
+
+</body>
+</html>

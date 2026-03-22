@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خدماتي - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* Nav */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .provider-badge {
+            background: rgba(2,128,144,0.1);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Main */
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 5%; }
+
+        /* Page Header */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;
+        }
+        .page-header h1 { font-size: 1.8rem; font-weight: 800; }
+        .page-header p { color: var(--gray); margin-top: 0.25rem; font-size: 0.95rem; }
+        .btn-add {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.8rem 1.6rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(2,128,144,0.3); }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-pill {
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .stat-pill .num { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .stat-pill .lbl { font-size: 0.85rem; color: var(--gray); }
+
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Service Card */
+        .service-card {
+            background: white;
+            border-radius: 18px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .service-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; left: 0;
+            height: 4px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+        }
+        .service-card.inactive::before { background: #e2e8f0; }
+
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .service-icon-box {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(2,128,144,0.12), rgba(2,195,154,0.12));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        /* Toggle Switch */
+        .toggle-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+        .toggle-label { font-size: 0.8rem; color: var(--gray); }
+        .toggle {
+            position: relative;
+            width: 44px; height: 24px;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: #e2e8f0;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: white;
+            top: 3px; right: 3px;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle input:checked + .toggle-slider { background: var(--success); }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(-20px); }
+
+        .service-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .service-category { font-size: 0.82rem; color: var(--gray); margin-bottom: 0.75rem; }
+        .service-price {
+            display: flex; align-items: baseline; gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .price-amount { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .price-unit { font-size: 0.85rem; color: var(--gray); }
+        .service-duration {
+            font-size: 0.82rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+        .service-desc-text {
+            font-size: 0.88rem;
+            color: var(--gray);
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+            min-height: 40px;
+        }
+
+        .card-actions { display: flex; gap: 0.75rem; }
+        .btn-edit, .btn-delete {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-edit {
+            background: rgba(2,128,144,0.08);
+            color: var(--primary);
+            border: 1px solid rgba(2,128,144,0.2);
+        }
+        .btn-edit:hover { background: var(--primary); color: white; }
+        .btn-delete {
+            background: rgba(239,68,68,0.08);
+            color: var(--error);
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+        .btn-delete:hover { background: var(--error); color: white; }
+
+        /* Inactive overlay text */
+        .inactive-badge {
+            display: none;
+            position: absolute;
+            top: 12px; left: 12px;
+            background: #64748B;
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .service-card.inactive .inactive-badge { display: block; }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header h3 { font-size: 1.3rem; font-weight: 700; }
+        .modal-close {
+            width: 34px; height: 34px;
+            background: var(--light);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: #e2e8f0; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark); }
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            color: var(--dark);
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus { outline: none; border-color: var(--primary); }
+        .form-group textarea { min-height: 90px; resize: vertical; }
+
+        .price-type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; }
+        .price-type-btn {
+            padding: 0.6rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            color: var(--gray);
+        }
+        .price-type-btn.selected { border-color: var(--primary); color: var(--primary); background: rgba(2,128,144,0.07); }
+
+        .modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .btn-save {
+            flex: 1;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(2,128,144,0.3); }
+        .btn-cancel {
+            padding: 0.9rem 1.5rem;
+            background: white;
+            color: var(--gray);
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-cancel:hover { border-color: var(--gray); }
+
+        /* Delete Confirm */
+        .delete-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 600;
+            align-items: center;
+            justify-content: center;
+        }
+        .delete-overlay.open { display: flex; }
+        .delete-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: modalIn 0.2s ease;
+        }
+        .delete-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .delete-modal h4 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .delete-modal p { color: var(--gray); margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .delete-actions { display: flex; gap: 1rem; }
+        .btn-confirm-delete {
+            flex: 1; padding: 0.8rem;
+            background: var(--error); color: white;
+            border: none; border-radius: 10px;
+            font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-confirm-delete:hover { background: #dc2626; }
+        .btn-cancel-delete {
+            flex: 1; padding: 0.8rem;
+            background: white; color: var(--gray);
+            border: 2px solid #e2e8f0; border-radius: 10px;
+            font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--dark); color: white;
+            padding: 0.9rem 1.8rem; border-radius: 12px;
+            font-weight: 600; opacity: 0; transition: all 0.3s;
+            z-index: 999; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .section-card, html.dark .stats-card, html.dark .service-card, html.dark .bank-card, html.dark .schedule-card, html.dark .avail-card, html.dark .request-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="number"], html.dark input[type="date"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; }
+        html.dark .table th, html.dark table th { background: #0f172a; color: #94a3b8; }
+        html.dark .table td, html.dark table td { border-color: #334155; }
+        html.dark .modal, html.dark .modal-content, html.dark .modal-box { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .modal-overlay, html.dark .overlay { background: rgba(0,0,0,0.6); }
+        html.dark .day-label, html.dark .time-label, html.dark .slot-label { color: #94a3b8; }
+        html.dark .slot-btn { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .slot-btn.available { background: rgba(2,195,154,0.15); color: #02C39A; border-color: #02C39A; }
+        html.dark .badge, html.dark .tag, html.dark .chip, html.dark .status-badge { background: #0f172a; }
+        html.dark .empty-state { background: #1e293b; color: #94a3b8; }
+        html.dark .bank-logo, html.dark .card-preview { background: #0f172a; }
+        html.dark .stars span, html.dark .star { color: #94a3b8; }
+        html.dark .stars span.selected, html.dark .star.active { color: #f59e0b; }
+
+        /* Manage services-specific dark overrides */
+        html.dark .stat-pill { background: #1e293b !important; }
+        html.dark .stat-pill .lbl { color: #94a3b8; }
+        html.dark .service-name { color: #e2e8f0; }
+        html.dark .service-category { color: #94a3b8; }
+        html.dark .service-duration { color: #94a3b8; }
+        html.dark .service-desc-text { color: #94a3b8; }
+        html.dark .toggle-label { color: #94a3b8; }
+        html.dark .service-card.inactive { opacity: 0.7; }
+        html.dark .modal-overlay { background: rgba(0,0,0,0.7) !important; }
+        html.dark .modal { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .modal-close { background: #0f172a; color: #e2e8f0; }
+        html.dark .modal-close:hover { background: #334155; }
+        html.dark .form-group label { color: #cbd5e1; }
+        html.dark .form-group select,
+        html.dark .form-group input,
+        html.dark .form-group textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .price-type-btn { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        html.dark .price-type-btn.selected { border-color: var(--primary); color: var(--primary); background: rgba(2,128,144,0.1); }
+        html.dark .btn-cancel { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .btn-cancel:hover { border-color: #94a3b8; }
+        html.dark .delete-overlay { background: rgba(0,0,0,0.7) !important; }
+        html.dark .delete-modal { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .delete-modal p { color: #94a3b8; }
+        html.dark .btn-cancel-delete { background: #0f172a; color: #94a3b8; border-color: #334155; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'provider') window.location.href = 'customer-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="INDEX.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="provider-dashboard.html">لوحة التحكم</a>
+            <a href="provider-manage-services.html" class="active">خدماتي</a>
+            <a href="provider-availability.html">التوفر</a>
+            <a href="provider-bank-settings.html">الحساب البنكي</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <span class="provider-badge">مزود خدمة</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1>خدماتي</h1>
+            <p>أدر الخدمات التي تقدمها وحدد أسعارها</p>
+        </div>
+        <button class="btn-add" onclick="openModal()">+ إضافة خدمة جديدة</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-pill">
+            <div class="num" id="totalCount">4</div>
+            <div class="lbl">خدمة مسجلة</div>
+        </div>
+        <div class="stat-pill">
+            <div class="num" id="activeCount">3</div>
+            <div class="lbl">نشطة</div>
+        </div>
+        <div class="stat-pill">
+            <div class="num" id="inactiveCount">1</div>
+            <div class="lbl">موقوفة</div>
+        </div>
+    </div>
+
+    <!-- Services Grid -->
+    <div class="services-grid" id="servicesGrid">
+
+        <div class="service-card" data-id="1">
+            <div class="inactive-badge">موقوفة</div>
+            <div class="card-top">
+                <div class="service-icon-box">🔧</div>
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-1">نشط</span>
+                    <label class="toggle">
+                        <input type="checkbox" checked onchange="toggleService(1, this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="service-name">إصلاح السباكة</div>
+            <div class="service-category">السباكة والتمديدات</div>
+            <div class="service-price">
+                <span class="price-amount">150</span>
+                <span class="price-unit">ريال / ساعة</span>
+            </div>
+            <div class="service-duration">⏱️ مدة الخدمة المتوقعة: 1-3 ساعات</div>
+            <div class="service-desc-text">إصلاح تسريبات المياه وتبديل الخراطيم والصنابير وأعمال السباكة العامة</div>
+            <div class="card-actions">
+                <button class="btn-edit" onclick="openEditModal(1)">✏️ تعديل</button>
+                <button class="btn-delete" onclick="openDeleteConfirm(1)">🗑️ حذف</button>
+            </div>
+        </div>
+
+        <div class="service-card" data-id="2">
+            <div class="inactive-badge">موقوفة</div>
+            <div class="card-top">
+                <div class="service-icon-box">🚿</div>
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-2">نشط</span>
+                    <label class="toggle">
+                        <input type="checkbox" checked onchange="toggleService(2, this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="service-name">تركيب سخانات</div>
+            <div class="service-category">السباكة والتمديدات</div>
+            <div class="service-price">
+                <span class="price-amount">200</span>
+                <span class="price-unit">ريال / زيارة</span>
+            </div>
+            <div class="service-duration">⏱️ مدة الخدمة المتوقعة: 2-4 ساعات</div>
+            <div class="service-desc-text">تركيب وصيانة سخانات المياه الكهربائية والغازية بجميع أنواعها</div>
+            <div class="card-actions">
+                <button class="btn-edit" onclick="openEditModal(2)">✏️ تعديل</button>
+                <button class="btn-delete" onclick="openDeleteConfirm(2)">🗑️ حذف</button>
+            </div>
+        </div>
+
+        <div class="service-card" data-id="3">
+            <div class="inactive-badge">موقوفة</div>
+            <div class="card-top">
+                <div class="service-icon-box">🪠</div>
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-3">نشط</span>
+                    <label class="toggle">
+                        <input type="checkbox" checked onchange="toggleService(3, this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="service-name">تسليك المجاري</div>
+            <div class="service-category">السباكة والتمديدات</div>
+            <div class="service-price">
+                <span class="price-amount">حسب الاتفاق</span>
+                <span class="price-unit"></span>
+            </div>
+            <div class="service-duration">⏱️ مدة الخدمة المتوقعة: 1-2 ساعات</div>
+            <div class="service-desc-text">تسليك وتنظيف المجاري والأحواض والمراحيض باستخدام أحدث المعدات</div>
+            <div class="card-actions">
+                <button class="btn-edit" onclick="openEditModal(3)">✏️ تعديل</button>
+                <button class="btn-delete" onclick="openDeleteConfirm(3)">🗑️ حذف</button>
+            </div>
+        </div>
+
+        <div class="service-card inactive" data-id="4">
+            <div class="inactive-badge">موقوفة</div>
+            <div class="card-top">
+                <div class="service-icon-box">🏗️</div>
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-4">موقوف</span>
+                    <label class="toggle">
+                        <input type="checkbox" onchange="toggleService(4, this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="service-name">تمديد شبكات المياه</div>
+            <div class="service-category">السباكة والتمديدات</div>
+            <div class="service-price">
+                <span class="price-amount">حسب الاتفاق</span>
+                <span class="price-unit"></span>
+            </div>
+            <div class="service-duration">⏱️ مدة الخدمة المتوقعة: يوم كامل+</div>
+            <div class="service-desc-text">تمديد وتركيب شبكات المياه الباردة والساخنة للمشاريع السكنية والتجارية</div>
+            <div class="card-actions">
+                <button class="btn-edit" onclick="openEditModal(4)">✏️ تعديل</button>
+                <button class="btn-delete" onclick="openDeleteConfirm(4)">🗑️ حذف</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">إضافة خدمة جديدة</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+
+        <div class="form-group">
+            <label>تصنيف الخدمة</label>
+            <select id="categorySelect">
+                <option value="">-- اختر التصنيف --</option>
+                <option>السباكة والتمديدات</option>
+                <option>الكهرباء والإضاءة</option>
+                <option>تكييف وتبريد</option>
+                <option>نجارة وأثاث</option>
+                <option>دهانات وديكور</option>
+                <option>تنظيف المنازل</option>
+                <option>تنظيف السجاد والمفروشات</option>
+                <option>صيانة الأجهزة المنزلية</option>
+                <option>حراسة وأمن</option>
+                <option>مكافحة الحشرات</option>
+                <option>حدائق ومسابح</option>
+                <option>نقل الأثاث</option>
+                <option>صيانة المصاعد</option>
+                <option>تركيب الأبواب والنوافذ</option>
+                <option>خدمات الطبخ</option>
+                <option>رعاية الأطفال</option>
+                <option>رعاية المسنين</option>
+                <option>تعليم خصوصي</option>
+                <option>خياطة وتفصيل</option>
+                <option>تصوير فوتوغرافي</option>
+                <option>برمجة وتقنية</option>
+                <option>تصميم جرافيك</option>
+                <option>خدمات بيطرية</option>
+                <option>أخرى</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>اسم الخدمة</label>
+            <input type="text" id="serviceNameInput" placeholder="مثال: إصلاح تسريب مياه">
+        </div>
+
+        <div class="form-group">
+            <label>نوع السعر</label>
+            <div class="price-type-grid" id="priceTypeGrid">
+                <button class="price-type-btn selected" onclick="selectPriceType('hour', this)">بالساعة</button>
+                <button class="price-type-btn" onclick="selectPriceType('visit', this)">بالزيارة</button>
+                <button class="price-type-btn" onclick="selectPriceType('agree', this)">حسب الاتفاق</button>
+            </div>
+        </div>
+
+        <div class="form-group" id="priceInputGroup">
+            <label>السعر (ريال)</label>
+            <input type="number" id="priceInput" placeholder="مثال: 150" min="0">
+        </div>
+
+        <div class="form-group">
+            <label>وصف الخدمة</label>
+            <textarea id="serviceDesc" placeholder="اشرح ما تشمله هذه الخدمة..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>المدة المتوقعة</label>
+            <select id="durationSelect">
+                <option>أقل من ساعة</option>
+                <option>1-2 ساعات</option>
+                <option>2-4 ساعات</option>
+                <option>نصف يوم (4-6 ساعات)</option>
+                <option>يوم كامل</option>
+                <option>أكثر من يوم</option>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-save" onclick="saveService()">💾 حفظ الخدمة</button>
+            <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="delete-overlay" id="deleteOverlay">
+    <div class="delete-modal">
+        <div class="delete-icon">🗑️</div>
+        <h4>حذف الخدمة</h4>
+        <p>هل أنت متأكد من حذف هذه الخدمة؟ لا يمكن التراجع عن هذا الإجراء.</p>
+        <div class="delete-actions">
+            <button class="btn-confirm-delete" onclick="confirmDelete()">نعم، احذف</button>
+            <button class="btn-cancel-delete" onclick="closeDeleteConfirm()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let selectedPriceType = 'hour';
+    let deleteTargetId = null;
+    let editingId = null;
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function toggleService(id, checkbox) {
+        const card = document.querySelector(`[data-id="${id}"]`);
+        const lbl = document.getElementById(`lbl-${id}`);
+        if (checkbox.checked) {
+            card.classList.remove('inactive');
+            lbl.textContent = 'نشط';
+            showToast('✓ تم تفعيل الخدمة');
+        } else {
+            card.classList.add('inactive');
+            lbl.textContent = 'موقوف';
+            showToast('⏸ تم إيقاف الخدمة');
+        }
+        updateStats();
+    }
+
+    function updateStats() {
+        const total = document.querySelectorAll('.service-card').length;
+        const inactive = document.querySelectorAll('.service-card.inactive').length;
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('activeCount').textContent = total - inactive;
+        document.getElementById('inactiveCount').textContent = inactive;
+    }
+
+    function openModal() {
+        editingId = null;
+        document.getElementById('modalTitle').textContent = 'إضافة خدمة جديدة';
+        document.getElementById('categorySelect').value = '';
+        document.getElementById('serviceNameInput').value = '';
+        document.getElementById('priceInput').value = '';
+        document.getElementById('serviceDesc').value = '';
+        document.getElementById('durationSelect').selectedIndex = 0;
+        selectPriceType('hour', document.querySelector('.price-type-btn'));
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function openEditModal(id) {
+        editingId = id;
+        document.getElementById('modalTitle').textContent = 'تعديل الخدمة';
+
+        const card = document.querySelector(`[data-id="${id}"]`);
+        if (card) {
+            const name = card.querySelector('.service-name')?.textContent?.trim() || '';
+            const category = card.querySelector('.service-category')?.textContent?.trim() || '';
+            const priceAmountEl = card.querySelector('.price-amount');
+            const priceUnitEl = card.querySelector('.price-unit');
+            const desc = card.querySelector('.service-desc-text')?.textContent?.trim() || '';
+            const durationText = card.querySelector('.service-duration')?.textContent?.replace('⏱️ مدة الخدمة المتوقعة:', '').trim() || '';
+
+            document.getElementById('serviceNameInput').value = name;
+            document.getElementById('categorySelect').value = category;
+            document.getElementById('serviceDesc').value = desc;
+
+            // Set duration dropdown
+            const durationSel = document.getElementById('durationSelect');
+            for (let i = 0; i < durationSel.options.length; i++) {
+                if (durationText.includes(durationSel.options[i].value) ||
+                    durationSel.options[i].value.includes(durationText) ||
+                    durationText === durationSel.options[i].text) {
+                    durationSel.selectedIndex = i;
+                    break;
+                }
+            }
+
+            // Determine price type from unit text
+            const priceUnit = priceUnitEl?.textContent?.trim() || '';
+            const priceAmount = priceAmountEl?.textContent?.trim() || '';
+            if (priceAmount === 'حسب الاتفاق') {
+                const agreeBtn = document.querySelector('.price-type-btn:nth-child(3)');
+                selectPriceType('agree', agreeBtn);
+            } else if (priceUnit.includes('ساعة')) {
+                const hourBtn = document.querySelector('.price-type-btn:nth-child(1)');
+                selectPriceType('hour', hourBtn);
+                document.getElementById('priceInput').value = priceAmount;
+            } else {
+                const visitBtn = document.querySelector('.price-type-btn:nth-child(2)');
+                selectPriceType('visit', visitBtn);
+                document.getElementById('priceInput').value = priceAmount;
+            }
+        }
+
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    function selectPriceType(type, btn) {
+        selectedPriceType = type;
+        document.querySelectorAll('.price-type-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('priceInputGroup').style.display = (type === 'agree') ? 'none' : 'block';
+    }
+
+    async function saveService() {
+        const name = document.getElementById('serviceNameInput').value.trim();
+        const category = document.getElementById('categorySelect').value;
+        const desc = document.getElementById('serviceDesc').value.trim();
+        const durationSel = document.getElementById('durationSelect');
+        const durationText = durationSel.options[durationSel.selectedIndex].text;
+
+        if (!name || !category) {
+            showToast('⚠️ يرجى ملء الحقول الإلزامية');
+            return;
+        }
+
+        // Determine price display
+        let priceAmountText, priceUnitText;
+        if (selectedPriceType === 'agree') {
+            priceAmountText = 'حسب الاتفاق';
+            priceUnitText = '';
+        } else {
+            const rawPrice = document.getElementById('priceInput').value.trim();
+            priceAmountText = rawPrice || '0';
+            priceUnitText = selectedPriceType === 'hour' ? 'ريال / ساعة' : 'ريال / زيارة';
+        }
+
+        if (editingId === null) {
+            // Create new card
+            const newId = Date.now();
+            const newCard = document.createElement('div');
+            newCard.className = 'service-card';
+            newCard.setAttribute('data-id', newId);
+            newCard.innerHTML = `
+                <div class="inactive-badge">موقوفة</div>
+                <div class="card-top">
+                    <div class="service-icon-box">🔧</div>
+                    <div class="toggle-wrapper">
+                        <span class="toggle-label" id="lbl-${newId}">نشط</span>
+                        <label class="toggle">
+                            <input type="checkbox" checked onchange="toggleService(${newId}, this)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="service-name">${name}</div>
+                <div class="service-category">${category}</div>
+                <div class="service-price">
+                    <span class="price-amount">${priceAmountText}</span>
+                    <span class="price-unit">${priceUnitText}</span>
+                </div>
+                <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${durationText}</div>
+                <div class="service-desc-text">${desc}</div>
+                <div class="card-actions">
+                    <button class="btn-edit" onclick="openEditModal(${newId})">✏️ تعديل</button>
+                    <button class="btn-delete" onclick="openDeleteConfirm(${newId})">🗑️ حذف</button>
+                </div>`;
+            document.getElementById('servicesGrid').appendChild(newCard);
+            updateStats();
+        } else {
+            // Update existing card
+            const card = document.querySelector(`[data-id="${editingId}"]`);
+            if (card) {
+                card.querySelector('.service-name').textContent = name;
+                card.querySelector('.service-category').textContent = category;
+                card.querySelector('.price-amount').textContent = priceAmountText;
+                card.querySelector('.price-unit').textContent = priceUnitText;
+                card.querySelector('.service-desc-text').textContent = desc;
+                card.querySelector('.service-duration').textContent = `⏱️ مدة الخدمة المتوقعة: ${durationText}`;
+            }
+        }
+
+        closeModal();
+        showToast(editingId ? '✓ تم تحديث الخدمة بنجاح' : '✓ تمت إضافة الخدمة بنجاح');
+        // Fire API call in background (demo IDs won't match real UUIDs but real adds create new services)
+        if (!editingId) {
+            const rawPrice = selectedPriceType !== 'agree' ? parseFloat(document.getElementById('priceInput')?.value || '0') : null;
+            API.providers.addService({ name, category, description: desc, priceType: selectedPriceType, price: rawPrice }).catch(() => {});
+        }
+        editingId = null;
+    }
+
+    function openDeleteConfirm(id) {
+        deleteTargetId = id;
+        document.getElementById('deleteOverlay').classList.add('open');
+    }
+
+    function closeDeleteConfirm() {
+        deleteTargetId = null;
+        document.getElementById('deleteOverlay').classList.remove('open');
+    }
+
+    function confirmDelete() {
+        if (deleteTargetId) {
+            const card = document.querySelector(`[data-id="${deleteTargetId}"]`);
+            if (card) {
+                card.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => { card.remove(); updateStats(); }, 300);
+            }
+            API.providers.removeService(deleteTargetId).catch(() => {});
+        }
+        closeDeleteConfirm();
+        showToast('🗑️ تم حذف الخدمة');
+    }
+
+    // Add fadeOut keyframe
+    const style = document.createElement('style');
+    style.textContent = '@keyframes fadeOut { to { opacity:0; transform: scale(0.9); } }';
+    document.head.appendChild(style);
+
+    // Close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    document.getElementById('deleteOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteConfirm();
+    });
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+</script>
+</body>
+</html>

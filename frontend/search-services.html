@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>البحث عن خدمات - Khedmah</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --secondary: #00A896; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* Nav */
+        nav { background: white; padding: 1rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; flex-shrink: 0; }
+        .nav-search {
+            flex: 1; max-width: 500px;
+            display: flex; align-items: center; gap: 0;
+            background: var(--light); border: 1.5px solid #e2e8f0;
+            border-radius: 12px; overflow: hidden;
+        }
+        .nav-search input {
+            flex: 1; border: none; background: transparent;
+            padding: 0.55rem 1rem;
+            font-family: 'Tajawal', sans-serif; font-size: 0.9rem;
+            outline: none;
+        }
+        .nav-search button {
+            background: var(--primary); border: none; color: white;
+            padding: 0.55rem 1rem; cursor: pointer; font-size: 1rem;
+        }
+        .nav-links { display: flex; gap: 1rem; align-items: center; flex-shrink: 0; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; font-size: 0.9rem; }
+        .nav-links a:hover { color: var(--primary); }
+        .avatar-btn { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
+
+        /* ── Page Wrapper ── */
+        .page-wrap { max-width: 1200px; margin: 0 auto; padding: 1.5rem 5%; display: flex; gap: 1.5rem; }
+
+        /* ── Filter FAB (mobile only) ── */
+        .filter-fab {
+            position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; border: none; border-radius: 28px;
+            padding: 0.85rem 2rem; font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer; z-index: 500;
+            box-shadow: 0 4px 20px rgba(2,128,144,0.4); display: flex; align-items: center; gap: 0.6rem;
+        }
+        .filter-fab:active { transform: translateX(-50%) scale(0.96); }
+        .filter-badge {
+            background: white; color: var(--primary); border-radius: 50%;
+            width: 22px; height: 22px; font-size: 0.75rem; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+        }
+        @media (min-width: 769px) { .filter-fab { display: none; } }
+
+        /* ── Drawer Overlay ── */
+        .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; }
+        .drawer-overlay.open { display: block; }
+
+        /* ── Filters Sidebar / Drawer ── */
+        .filters-sidebar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; border-radius: 24px 24px 0 0;
+            padding: 0 1.25rem 2rem; z-index: 700;
+            max-height: 80vh; overflow-y: auto;
+            transform: translateY(100%); transition: transform 0.3s ease;
+            scrollbar-width: thin;
+        }
+        .filters-sidebar.open { transform: translateY(0); }
+
+        .drawer-handle { width: 40px; height: 5px; background: #cbd5e1; border-radius: 3px; margin: 0.85rem auto 0.5rem; }
+        .drawer-top {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.5rem 0 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1rem;
+            position: sticky; top: 0; background: white; z-index: 1; padding-top: 0;
+        }
+        .drawer-title { font-size: 1.05rem; font-weight: 800; color: var(--dark); }
+        .drawer-close {
+            background: var(--light); border: none; border-radius: 8px;
+            padding: 0.4rem 0.85rem; color: var(--gray); cursor: pointer;
+            font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+        }
+        .btn-apply-filters {
+            width: 100%; background: var(--primary); color: white; border: none;
+            border-radius: 14px; padding: 0.9rem; font-family: 'Tajawal', sans-serif;
+            font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 1.25rem;
+        }
+
+        @media (min-width: 769px) {
+            .drawer-overlay { display: none !important; }
+            .filters-sidebar {
+                position: static; transform: none; border-radius: 16px; max-height: none;
+                width: 240px; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+                padding: 1.25rem; background: white;
+            }
+            .drawer-handle, .drawer-close, .btn-apply-filters { display: none; }
+            .drawer-top { position: static; border-bottom: none; padding: 0 0 0.5rem; }
+        }
+
+        /* ── Filter Panel Internals ── */
+        .filter-panel { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        @media (min-width: 769px) {
+            .filter-panel { box-shadow: none; padding: 0; margin-bottom: 1.25rem; }
+            .filter-panel + .filter-panel { border-top: 1px solid #f1f5f9; padding-top: 1.25rem; }
+        }
+        .filter-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .filter-clear { font-size: 0.75rem; color: var(--primary); cursor: pointer; font-weight: 500; }
+        .filter-option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; cursor: pointer; }
+        .filter-option input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+        .filter-option label { font-size: 0.85rem; cursor: pointer; flex: 1; }
+        .filter-option .count { font-size: 0.72rem; color: var(--gray); margin-right: auto; }
+        .range-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .range-input { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.4rem 0.6rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; outline: none; width: 0; }
+        .range-input:focus { border-color: var(--primary); }
+
+        /* ── Results Area ── */
+        .results-area { flex: 1; min-width: 0; }
+        .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .results-count { font-size: 0.9rem; color: var(--gray); }
+        .results-count strong { color: var(--dark); }
+        .sort-select {
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            padding: 0.45rem 0.85rem;
+            font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+            outline: none; background: white; cursor: pointer;
+        }
+
+        /* ── Category Chips ── */
+        .cat-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+        .cat-chip {
+            background: white; border: 1.5px solid #e2e8f0;
+            border-radius: 20px; padding: 0.3rem 0.85rem;
+            font-size: 0.82rem; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .cat-chip:hover { border-color: var(--primary); color: var(--primary); }
+        .cat-chip.active { background: var(--primary); border-color: var(--primary); color: white; font-weight: 600; }
+
+        /* ── Provider Cards (mobile-first 2-row) ── */
+        .providers-grid { display: flex; flex-direction: column; gap: 0.875rem; }
+
+        .provider-card {
+            background: white; border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .provider-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .provider-card.hidden { display: none; }
+
+        .card-top { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; }
+        .card-bottom {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.875rem 1.25rem; border-top: 1px solid #f1f5f9; background: #fafafa;
+        }
+        .card-avail-price { display: flex; flex-direction: column; gap: 0.3rem; }
+        .card-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+        /* Avatar */
+        .prov-avatar {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 800; font-size: 1.3rem;
+            flex-shrink: 0; position: relative;
+        }
+        .verified-tick {
+            position: absolute; bottom: 0; left: 0;
+            width: 20px; height: 20px;
+            background: var(--success); border-radius: 50%;
+            border: 2px solid white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: white;
+        }
+
+        .prov-info { flex: 1; min-width: 0; }
+        .prov-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.2rem; }
+        .prov-service { color: var(--gray); font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .prov-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--gray); }
+        .prov-meta span { display: flex; align-items: center; gap: 0.25rem; }
+        .rating { color: #f59e0b; font-weight: 600; }
+        .prov-tags { display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; }
+        .tag { background: var(--light); border-radius: 6px; padding: 0.15rem 0.5rem; font-size: 0.72rem; color: var(--gray); }
+
+        .prov-price { font-size: 1.05rem; font-weight: 800; color: var(--primary); }
+        .prov-price small { font-size: 0.72rem; font-weight: 400; color: var(--gray); }
+
+        /* Touch-friendly buttons */
+        .btn-profile {
+            background: var(--primary); color: white; border-radius: 10px;
+            padding: 0.55rem 1.1rem; font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem; font-weight: 600; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; min-height: 44px;
+            white-space: nowrap;
+        }
+        .btn-profile:hover { background: #026f7e; color: white; }
+        .btn-chat {
+            background: transparent; color: var(--primary);
+            border: 1.5px solid var(--primary); border-radius: 10px;
+            padding: 0.55rem 0.85rem; font-size: 1rem; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; min-height: 44px;
+        }
+        .btn-chat:hover { background: rgba(2,128,144,0.08); }
+
+        /* Desktop card layout override */
+        @media (min-width: 769px) {
+            .provider-card { display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem; overflow: visible; }
+            .card-top { flex: 1; padding: 0; }
+            .card-bottom {
+                flex-direction: column; align-items: center; padding: 0;
+                border-top: none; background: transparent;
+                min-width: 160px; gap: 0.5rem; flex-shrink: 0;
+            }
+            .card-avail-price { align-items: center; }
+            .card-actions { flex-direction: column; width: 100%; }
+            .btn-profile, .btn-chat { width: 100%; }
+        }
+
+        /* Available badge */
+        .available-badge {
+            font-size: 0.72rem; font-weight: 600;
+            padding: 0.2rem 0.6rem; border-radius: 8px;
+            display: inline-flex; align-items: center; gap: 0.25rem;
+        }
+        .available-badge.yes { background: rgba(16,185,129,0.12); color: #065f46; }
+        .available-badge.no { background: rgba(239,68,68,0.1); color: #991b1b; }
+
+        /* ── Pagination ── */
+        .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; padding-bottom: 5rem; }
+        @media (min-width: 769px) { .pagination { padding-bottom: 0; } }
+        .page-btn {
+            width: 38px; height: 38px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            background: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Tajawal', sans-serif; font-size: 0.88rem;
+            transition: all 0.2s;
+        }
+        .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .page-btn.active { background: var(--primary); border-color: var(--primary); color: white; font-weight: 700; }
+
+        /* Mobile page-wrap stacking */
+        @media (max-width: 768px) {
+            .page-wrap { flex-direction: column; padding-bottom: 5rem; }
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .navbar, html.dark header, html.dark .topbar, html.dark .admin-nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .stats-card, html.dark .data-card, html.dark .section-card, html.dark .tracking-card, html.dark .step-card, html.dark .referral-card, html.dark .gantt-card, html.dark .provider-card, html.dark .filter-panel { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link, html.dark .admin-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active, html.dark .nav-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="password"], html.dark input[type="search"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; border-color: #334155; }
+        html.dark .table th, html.dark table th, html.dark thead th { background: #0f172a !important; color: #94a3b8; border-color: #334155; }
+        html.dark .table td, html.dark table td, html.dark tbody td { border-color: #334155; }
+        html.dark .table tbody tr:hover, html.dark tbody tr:hover { background: rgba(255,255,255,0.03); }
+        html.dark .badge, html.dark .tag, html.dark .status-badge { border: 1px solid #334155; }
+        html.dark .modal, html.dark .modal-content { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .map-placeholder, html.dark #liveMap { filter: invert(0.85) hue-rotate(180deg); }
+        html.dark .stepper-line { background: #334155; }
+        html.dark .gantt-row { background: #1e293b; border-color: #334155; }
+        html.dark .gantt-header { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .gantt-bar { opacity: 0.9; }
+        html.dark .filter-option label { color: #cbd5e1; }
+        html.dark .filter-option input[type="checkbox"] { accent-color: #02C39A; }
+        html.dark .tag { background: #0f172a; color: #94a3b8; }
+        html.dark .nav-search { background: #0f172a; border-color: #334155; }
+        html.dark .nav-search input { color: #e2e8f0; background: transparent; }
+        html.dark .sort-select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark .cat-chip { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark .cat-chip:hover { border-color: #02C39A; color: #02C39A; }
+        html.dark .cat-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+        html.dark .results-count { color: #94a3b8; }
+        html.dark .results-count strong { color: #e2e8f0; }
+        html.dark .range-input { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .filter-title { color: #e2e8f0; }
+        html.dark .page-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark .page-btn:hover { border-color: #02C39A; color: #02C39A; }
+        html.dark .page-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        html.dark .prov-name { color: #e2e8f0; }
+        html.dark .prov-service { color: #94a3b8; }
+        html.dark .prov-meta { color: #94a3b8; }
+        /* New dark overrides for mobile-first components */
+        html.dark .filters-sidebar { background: #1e293b; }
+        html.dark .drawer-top { background: #1e293b; border-color: #334155; }
+        html.dark .drawer-handle { background: #475569; }
+        html.dark .drawer-close { background: #0f172a; color: #94a3b8; }
+        html.dark .btn-apply-filters { background: var(--primary); }
+        html.dark .drawer-overlay { background: rgba(0,0,0,0.65); }
+        html.dark .card-bottom { background: #0f172a; border-color: #334155; }
+        html.dark .btn-chat { border-color: var(--primary); color: var(--accent); }
+        html.dark .filter-fab { background: var(--primary); }
+        html.dark .filter-badge { background: #0f172a; color: var(--accent); }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="🔍 ابحث عن خدمة (كهرباء، سباكة، دهانات...)" value="كهرباء">
+                <button onclick="doSearch()">بحث</button>
+            </div>
+            <div class="nav-links">
+                <a href="customer-dashboard.html">لوحة التحكم</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="customer-dashboard.html" class="avatar-btn">م</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-wrap" x-data="{ drawerOpen: false }">
+
+        <!-- Filter FAB (mobile only) -->
+        <button class="filter-fab" @click="drawerOpen = true" id="filterFab">
+            <i class="fa fa-sliders-h"></i> فلترة
+            <span class="filter-badge" id="filterBadge" style="display:none">0</span>
+        </button>
+
+        <!-- Overlay -->
+        <div class="drawer-overlay" :class="{ open: drawerOpen }" @click="drawerOpen = false"></div>
+
+        <!-- Sidebar / Drawer -->
+        <aside class="filters-sidebar" :class="{ open: drawerOpen }">
+            <div class="drawer-handle"></div>
+            <div class="drawer-top">
+                <strong class="drawer-title">الفلاتر</strong>
+                <button class="drawer-close" @click="drawerOpen = false">✕ إغلاق</button>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">
+                    التصنيف
+                    <span class="filter-clear" onclick="clearCat()">مسح</span>
+                </div>
+                <div class="filter-option"><input type="checkbox" id="c1" data-filter="cat" checked><label for="c1">🔌 كهرباء</label><span class="count">48</span></div>
+                <div class="filter-option"><input type="checkbox" id="c2" data-filter="cat"><label for="c2">🚿 سباكة</label><span class="count">35</span></div>
+                <div class="filter-option"><input type="checkbox" id="c3" data-filter="cat"><label for="c3">🎨 دهانات</label><span class="count">29</span></div>
+                <div class="filter-option"><input type="checkbox" id="c4" data-filter="cat"><label for="c4">❄️ تكييف</label><span class="count">41</span></div>
+                <div class="filter-option"><input type="checkbox" id="c5" data-filter="cat"><label for="c5">🔧 صيانة عامة</label><span class="count">63</span></div>
+                <div class="filter-option"><input type="checkbox" id="c6" data-filter="cat"><label for="c6">🏠 نجارة</label><span class="count">18</span></div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">التقييم</div>
+                <div class="filter-option"><input type="checkbox" id="r5" data-filter="rating" checked><label for="r5">⭐⭐⭐⭐⭐ فأعلى</label></div>
+                <div class="filter-option"><input type="checkbox" id="r4" data-filter="rating"><label for="r4">⭐⭐⭐⭐ فأعلى</label></div>
+                <div class="filter-option"><input type="checkbox" id="r3" data-filter="rating"><label for="r3">⭐⭐⭐ فأعلى</label></div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">نطاق السعر (ر.س)</div>
+                <div class="range-row">
+                    <input type="number" id="priceMin" class="range-input" placeholder="من" value="0" oninput="applyFilters()">
+                    <span style="color:var(--gray)">—</span>
+                    <input type="number" id="priceMax" class="range-input" placeholder="إلى" value="1000" oninput="applyFilters()">
+                </div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">التوفر</div>
+                <div class="filter-option"><input type="checkbox" id="av1" data-filter="avail" checked><label for="av1">متاح الآن</label></div>
+                <div class="filter-option"><input type="checkbox" id="av2" data-filter="avail"><label for="av2">متاح اليوم</label></div>
+                <div class="filter-option"><input type="checkbox" id="av3" data-filter="avail"><label for="av3">متاح هذا الأسبوع</label></div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">المدينة</div>
+                <div class="filter-option"><input type="checkbox" id="ci1" data-filter="city" checked><label for="ci1">الرياض</label><span class="count">127</span></div>
+                <div class="filter-option"><input type="checkbox" id="ci2" data-filter="city"><label for="ci2">جدة</label><span class="count">84</span></div>
+                <div class="filter-option"><input type="checkbox" id="ci3" data-filter="city"><label for="ci3">الدمام</label><span class="count">46</span></div>
+                <div class="filter-option"><input type="checkbox" id="ci4" data-filter="city"><label for="ci4">مكة المكرمة</label><span class="count">38</span></div>
+            </div>
+
+            <!-- Apply button (mobile only) -->
+            <button class="btn-apply-filters" @click="drawerOpen = false; applyFilters()">
+                تطبيق الفلاتر ✓
+            </button>
+        </aside>
+
+        <!-- Results -->
+        <main class="results-area">
+            <!-- Category chips -->
+            <div class="cat-chips" id="catChips">
+                <button class="cat-chip active" onclick="toggleCat(this)">الكل</button>
+                <button class="cat-chip active" onclick="toggleCat(this)">🔌 كهرباء</button>
+                <button class="cat-chip" onclick="toggleCat(this)">🚿 سباكة</button>
+                <button class="cat-chip" onclick="toggleCat(this)">🎨 دهانات</button>
+                <button class="cat-chip" onclick="toggleCat(this)">❄️ تكييف</button>
+                <button class="cat-chip" onclick="toggleCat(this)">🔧 صيانة</button>
+                <button class="cat-chip" onclick="toggleCat(this)">🏠 نجارة</button>
+                <button class="cat-chip" onclick="toggleCat(this)">🧹 تنظيف</button>
+                <button class="cat-chip" onclick="toggleCat(this)">🌿 حدائق</button>
+            </div>
+
+            <div class="results-header">
+                <div class="results-count">عرض <strong>48</strong> مزود في <strong>الرياض</strong></div>
+                <select class="sort-select" onchange="sortResults(this.value)">
+                    <option value="rating">الأعلى تقييماً</option>
+                    <option value="price">الأقل سعراً</option>
+                    <option value="nearest">الأقرب</option>
+                    <option value="jobs">الأكثر تجربة</option>
+                </select>
+            </div>
+
+            <div class="providers-grid" id="providersGrid">
+
+                <!-- Card 1: خالد العمري -->
+                <div class="provider-card" data-cat="كهرباء" data-rating="4.9" data-price="80" data-city="الرياض" data-available="1" data-jobs="127" data-name="خالد العمري">
+                    <div class="card-top">
+                        <div class="prov-avatar">خ
+                            <div class="verified-tick">✓</div>
+                        </div>
+                        <div class="prov-info">
+                            <div class="prov-name">خالد العمري</div>
+                            <div class="prov-service">🔌 كهرباء وصيانة كهربائية عامة</div>
+                            <div class="prov-meta">
+                                <span class="rating">⭐ 4.9</span>
+                                <span>(47 تقييم)</span>
+                                <span>📍 حي النزهة، الرياض</span>
+                                <span>✅ 127 خدمة مكتملة</span>
+                            </div>
+                            <div class="prov-tags">
+                                <span class="tag">تمديدات كهربائية</span>
+                                <span class="tag">لوحات توزيع</span>
+                                <span class="tag">استجابة سريعة</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-avail-price">
+                            <div class="available-badge yes">● متاح الآن</div>
+                            <div class="prov-price">80 ر.س <small>/ ساعة</small></div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="provider-profile.html?id=khalid" class="btn-profile">عرض الملف</a>
+                            <a href="chat.html?type=service&id=1" class="btn-chat">💬</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: سالم القحطاني -->
+                <div class="provider-card" data-cat="كهرباء" data-rating="4.8" data-price="70" data-city="الرياض" data-available="1" data-jobs="98" data-name="سالم القحطاني">
+                    <div class="card-top">
+                        <div class="prov-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">س
+                            <div class="verified-tick">✓</div>
+                        </div>
+                        <div class="prov-info">
+                            <div class="prov-name">سالم القحطاني</div>
+                            <div class="prov-service">🔌 كهرباء صناعية وسكنية</div>
+                            <div class="prov-meta">
+                                <span class="rating">⭐ 4.8</span>
+                                <span>(39 تقييم)</span>
+                                <span>📍 حي الملقا، الرياض</span>
+                                <span>✅ 98 خدمة مكتملة</span>
+                            </div>
+                            <div class="prov-tags">
+                                <span class="tag">إضاءة LED</span>
+                                <span class="tag">طاقة شمسية</span>
+                                <span class="tag">مرخص</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-avail-price">
+                            <div class="available-badge yes">● متاح الآن</div>
+                            <div class="prov-price">70 ر.س <small>/ ساعة</small></div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="provider-profile.html?id=salem" class="btn-profile">عرض الملف</a>
+                            <a href="chat.html?type=service&id=2" class="btn-chat">💬</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: فهد الدوسري -->
+                <div class="provider-card" data-cat="كهرباء" data-rating="4.7" data-price="65" data-city="الرياض" data-available="0" data-jobs="74" data-name="فهد الدوسري">
+                    <div class="card-top">
+                        <div class="prov-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)">ف
+                            <div class="verified-tick">✓</div>
+                        </div>
+                        <div class="prov-info">
+                            <div class="prov-name">فهد الدوسري</div>
+                            <div class="prov-service">🔌 كهرباء منزلية متخصص</div>
+                            <div class="prov-meta">
+                                <span class="rating">⭐ 4.7</span>
+                                <span>(29 تقييم)</span>
+                                <span>📍 حي العليا، الرياض</span>
+                                <span>✅ 74 خدمة مكتملة</span>
+                            </div>
+                            <div class="prov-tags">
+                                <span class="tag">أتمتة منزلية</span>
+                                <span class="tag">كاميرات مراقبة</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-avail-price">
+                            <div class="available-badge no">○ غير متاح اليوم</div>
+                            <div class="prov-price">65 ر.س <small>/ ساعة</small></div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="provider-profile.html?id=fahad" class="btn-profile">عرض الملف</a>
+                            <a href="chat.html?type=service&id=3" class="btn-chat">💬</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: عبدالرحمن الشهري -->
+                <div class="provider-card" data-cat="كهرباء تكييف" data-rating="4.6" data-price="60" data-city="الرياض" data-available="1" data-jobs="61" data-name="عبدالرحمن الشهري">
+                    <div class="card-top">
+                        <div class="prov-avatar" style="background:linear-gradient(135deg,#059669,#34d399)">ع
+                            <div class="verified-tick">✓</div>
+                        </div>
+                        <div class="prov-info">
+                            <div class="prov-name">عبدالرحمن الشهري</div>
+                            <div class="prov-service">🔌 كهربائي عام + تكييف</div>
+                            <div class="prov-meta">
+                                <span class="rating">⭐ 4.6</span>
+                                <span>(22 تقييم)</span>
+                                <span>📍 حي الروضة، الرياض</span>
+                                <span>✅ 61 خدمة مكتملة</span>
+                            </div>
+                            <div class="prov-tags">
+                                <span class="tag">كهرباء</span>
+                                <span class="tag">تكييف</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-avail-price">
+                            <div class="available-badge yes">● متاح الآن</div>
+                            <div class="prov-price">60 ر.س <small>/ ساعة</small></div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="provider-profile.html?id=abdulrahman" class="btn-profile">عرض الملف</a>
+                            <a href="chat.html?type=service&id=4" class="btn-chat">💬</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: محمد الغامدي -->
+                <div class="provider-card" data-cat="كهرباء صيانة" data-rating="4.5" data-price="55" data-city="الرياض" data-available="1" data-jobs="43" data-name="محمد الغامدي">
+                    <div class="card-top">
+                        <div class="prov-avatar" style="background:linear-gradient(135deg,#dc2626,#f87171)">م
+                            <div class="verified-tick">✓</div>
+                        </div>
+                        <div class="prov-info">
+                            <div class="prov-name">محمد الغامدي</div>
+                            <div class="prov-service">🔌 كهرباء وتركيب أجهزة</div>
+                            <div class="prov-meta">
+                                <span class="rating">⭐ 4.5</span>
+                                <span>(18 تقييم)</span>
+                                <span>📍 حي الورود، الرياض</span>
+                                <span>✅ 43 خدمة مكتملة</span>
+                            </div>
+                            <div class="prov-tags">
+                                <span class="tag">تركيب أجهزة</span>
+                                <span class="tag">صيانة</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-avail-price">
+                            <div class="available-badge yes">● متاح الآن</div>
+                            <div class="prov-price">55 ر.س <small>/ ساعة</small></div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="provider-profile.html?id=mohammad" class="btn-profile">عرض الملف</a>
+                            <a href="chat.html?type=service&id=5" class="btn-chat">💬</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="pagination">
+                <button class="page-btn active">1</button>
+                <button class="page-btn" onclick="this.parentNode.querySelectorAll('.page-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">2</button>
+                <button class="page-btn" onclick="this.parentNode.querySelectorAll('.page-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">3</button>
+                <button class="page-btn" onclick="this.parentNode.querySelectorAll('.page-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">4</button>
+                <button class="page-btn">→</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Read URL params and pre-fill search
+        (function() {
+            const params = new URLSearchParams(location.search);
+            const q = params.get('q');
+            const city = params.get('city');
+            if (q) document.getElementById('searchInput').value = q;
+            if (city) {
+                document.querySelectorAll('[id^="ci"]').forEach(i => {
+                    i.checked = i.nextElementSibling?.textContent?.includes(city);
+                });
+            }
+            if (q || city) applyFilters();
+        })();
+
+        let currentSort = 'rating';
+
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            // Gather checked categories from sidebar checkboxes
+            const catChecked = [...document.querySelectorAll('#c1,#c2,#c3,#c4,#c5,#c6')]
+                .filter(i => i.checked)
+                .map(i => i.nextElementSibling.textContent.trim().replace(/[🔌🚿🎨❄️🔧🏠]/gu, '').trim());
+
+            // Gather active category chips (exclude "الكل" chip)
+            const activeChips = [...document.querySelectorAll('.cat-chip.active')]
+                .map(c => c.textContent.trim().replace(/[🔌🚿🎨❄️🔧🏠🧹🌿]/gu, '').trim())
+                .filter(c => c !== 'الكل');
+
+            // Merge both chip and sidebar category signals — if "الكل" chip is active alone, treat as no category filter
+            const allActiveCats = [...new Set([...catChecked, ...activeChips])];
+
+            // Min rating from radio-like checkboxes (pick lowest checked)
+            const ratingMap = { r5: 5, r4: 4, r3: 3 };
+            const minRating = Math.min(...[...document.querySelectorAll('#r3,#r4,#r5')]
+                .filter(i => i.checked)
+                .map(i => ratingMap[i.id]), 5);
+
+            // Price range
+            const minP = parseFloat(document.getElementById('priceMin')?.value || 0) || 0;
+            const maxP = parseFloat(document.getElementById('priceMax')?.value || 9999) || 9999;
+
+            // Availability
+            const availNow = document.getElementById('av1')?.checked;
+
+            // Cities checked
+            const citiesChecked = [...document.querySelectorAll('[id^="ci"]')]
+                .filter(i => i.checked)
+                .map(i => i.nextElementSibling.textContent.trim().replace(/\(\d+\)/, '').trim());
+
+            const cards = [...document.querySelectorAll('#providersGrid .provider-card')];
+            let visible = 0;
+
+            cards.forEach(card => {
+                const name    = card.dataset.name || '';
+                const catData = card.dataset.cat || '';
+                const rating  = parseFloat(card.dataset.rating) || 0;
+                const price   = parseFloat(card.dataset.price) || 0;
+                const city    = card.dataset.city || '';
+                const avail   = card.dataset.available === '1';
+
+                // Text search
+                const matchQ = !q || name.includes(q) || catData.includes(q) ||
+                    card.querySelector('.prov-service')?.textContent?.toLowerCase().includes(q);
+
+                // Category filter (sidebar checkboxes + chip bar; if none active = show all)
+                const matchCat = allActiveCats.length === 0 ||
+                    allActiveCats.some(c => catData.includes(c));
+
+                // Rating filter
+                const matchRating = rating >= minRating;
+
+                // Price filter
+                const matchPrice = price >= minP && price <= maxP;
+
+                // Availability filter
+                const matchAvail = !availNow || avail;
+
+                // City filter (if none checked = show all)
+                const matchCity = citiesChecked.length === 0 ||
+                    citiesChecked.some(c => city.includes(c));
+
+                const show = matchQ && matchCat && matchRating && matchPrice && matchAvail && matchCity;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            // Update results count
+            const countEl = document.querySelector('.results-count strong');
+            if (countEl) countEl.textContent = visible;
+
+            // Re-apply current sort
+            sortResultsBy(currentSort, false);
+
+            // Update filter badge
+            updateFilterBadge();
+        }
+
+        function updateFilterBadge() {
+            const cats = [...document.querySelectorAll('[data-filter="cat"]:checked')];
+            const ratings = [...document.querySelectorAll('[data-filter="rating"]:checked')];
+            const avails = [...document.querySelectorAll('[data-filter="avail"]:checked')];
+            const cities = [...document.querySelectorAll('[data-filter="city"]:checked')];
+            const count = cats.length + ratings.length + avails.length + cities.length;
+            const badge = document.getElementById('filterBadge');
+            if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+        }
+
+        function sortResultsBy(val, updateToast = true) {
+            currentSort = val;
+            const grid = document.getElementById('providersGrid');
+            const cards = [...grid.querySelectorAll('.provider-card')];
+
+            cards.sort((a, b) => {
+                if (val === 'rating') return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
+                if (val === 'price')  return parseFloat(a.dataset.price)  - parseFloat(b.dataset.price);
+                if (val === 'jobs')   return parseFloat(b.dataset.jobs)   - parseFloat(a.dataset.jobs);
+                return 0;
+            });
+
+            cards.forEach(c => grid.appendChild(c));
+
+            if (updateToast) {
+                const labels = { rating: 'الأعلى تقييماً', price: 'الأقل سعراً', nearest: 'الأقرب', jobs: 'الأكثر تجربة' };
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:.6rem 1.25rem;border-radius:12px;font-family:Tajawal,sans-serif;font-size:.85rem;z-index:9999;';
+                toast.textContent = `تم الترتيب: ${labels[val] || val}`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }
+        }
+
+        function toggleCat(btn) {
+            btn.classList.toggle('active');
+            applyFilters();
+        }
+        function clearCat() {
+            document.querySelectorAll('.filter-option input').forEach(i => i.checked = false);
+            applyFilters();
+        }
+        function doSearch() {
+            applyFilters();
+            // Also fetch real providers from API
+            const q = document.getElementById('searchInput').value.trim();
+            const cityChips = [...document.querySelectorAll('[id^="ci"]')].filter(i => i.checked)
+                .map(i => i.nextElementSibling.textContent.trim().replace(/\(\d+\)/, '').trim());
+            if (!q && cityChips.length === 0) return;
+            const params = {};
+            if (q) params.q = q;
+            if (cityChips.length > 0) params.city = cityChips[0];
+            API.search.providers(params).then(res => {
+                const items = res.data || res.items || (Array.isArray(res) ? res : []);
+                if (!items.length) return;
+                const grid = document.getElementById('providersGrid');
+                items.forEach(p => {
+                    const id = p.id || '';
+                    if (grid.querySelector(`[data-api-id="${id}"]`)) return;
+                    const card = document.createElement('div');
+                    card.className = 'provider-card';
+                    card.dataset.apiId = id;
+                    card.dataset.name = (p.user?.name || p.name || '').toLowerCase();
+                    card.dataset.cat = p.category || '';
+                    card.dataset.rating = p.ratingAvg || p.rating || 0;
+                    card.dataset.price = p.startingPrice || 0;
+                    card.dataset.city = p.city || '';
+                    card.dataset.available = p.available ? '1' : '0';
+                    card.dataset.jobs = p.jobsCompleted || 0;
+                    const name = p.user?.name || p.name || 'مزود خدمة';
+                    const initial = name.charAt(0);
+                    const rating = parseFloat(p.ratingAvg || p.rating || 0).toFixed(1);
+                    card.innerHTML = `
+                        <div class="card-top">
+                            <div class="prov-avatar">${initial}</div>
+                            <div style="flex:1">
+                                <div style="font-weight:700">${name}</div>
+                                <div class="prov-service">${p.category || ''}</div>
+                                <div style="font-size:0.82rem;color:var(--gray)">📍 ${p.city || ''}</div>
+                            </div>
+                        </div>
+                        <div class="card-bottom">
+                            <div class="card-avail-price">
+                                <span style="color:var(--success);font-size:0.8rem">${p.available ? '🟢 متاح' : '🔴 غير متاح'}</span>
+                                <span style="font-weight:700;color:var(--primary)">${p.startingPrice ? p.startingPrice + ' ر.س' : 'حسب الاتفاق'}</span>
+                            </div>
+                            <div class="card-actions">
+                                <span style="font-size:0.85rem">⭐ ${rating}</span>
+                                <a href="provider-profile.html?id=${id}" style="background:var(--primary);color:white;padding:0.4rem 1rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض الملف</a>
+                            </div>
+                        </div>`;
+                    grid.appendChild(card);
+                });
+                // Update count
+                const countEl = document.querySelector('.results-count strong');
+                if (countEl) countEl.textContent = grid.querySelectorAll('.provider-card:not([style*="none"])').length;
+            }).catch(() => {});
+        }
+        function sortResults(val) { sortResultsBy(val); }
+
+        // Live filter on any checkbox change
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.filter-option input').forEach(i => {
+                i.addEventListener('change', applyFilters);
+            });
+            // Initialize badge on load
+            updateFilterBadge();
+        });
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+    </script>
+</body>
+</html>

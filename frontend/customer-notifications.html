@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإشعارات - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+            --pink: #EC4899;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            min-height: 100vh;
+        }
+
+        input, select, textarea { font-size: 16px; }
+
+        /* Nav */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .nav-badge {
+            background: var(--error);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-right: 2px;
+            vertical-align: middle;
+        }
+        .avatar-btn {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 5%;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .page-header h1 { font-size: 1.8rem; font-weight: 800; }
+        .page-header h1 span {
+            background: var(--error);
+            color: white;
+            font-size: 1rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+        .mark-all-btn {
+            padding: 0.6rem 1.4rem;
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mark-all-btn:hover { background: var(--primary); color: white; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0.4rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            width: fit-content;
+        }
+        .tab-btn {
+            padding: 0.6rem 1.4rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Notification Card */
+        .notif-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: all 0.2s;
+            border-right: 4px solid transparent;
+            position: relative;
+        }
+        .notif-card.unread { border-right-color: var(--primary); background: rgba(2, 128, 144, 0.02); }
+        .notif-card:hover { transform: translateX(-3px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+        .notif-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .notif-icon.quote  { background: rgba(2, 128, 144, 0.12); }
+        .notif-icon.remind { background: rgba(245, 158, 11, 0.12); }
+        .notif-icon.payment{ background: rgba(16, 185, 129, 0.12); }
+        .notif-icon.rating { background: rgba(236, 72, 153, 0.12); }
+        .notif-icon.chat   { background: rgba(59, 130, 246, 0.12); }
+
+        .notif-body { flex: 1; }
+        .notif-title { font-weight: 700; margin-bottom: 0.25rem; font-size: 1rem; }
+        .notif-desc { color: var(--gray); font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.5rem; }
+        .notif-meta { display: flex; align-items: center; gap: 1rem; }
+        .notif-time { font-size: 0.8rem; color: var(--gray); }
+        .notif-link {
+            font-size: 0.82rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .notif-link:hover { text-decoration: underline; }
+
+        .notif-actions { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; flex-shrink: 0; }
+        .unread-dot {
+            width: 10px; height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-bottom: 4px;
+        }
+        .read-btn {
+            font-size: 0.78rem;
+            color: var(--gray);
+            background: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .read-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            display: none;
+        }
+        .empty-state.show { display: block; }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .empty-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .empty-desc { color: var(--gray); }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav { background: #1e293b !important; border-color: #334155; }
+        html.dark .notif-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .notif-card.unread { background: rgba(2,128,144,0.07) !important; border-right-color: #02C39A; }
+        html.dark .tabs { background: #1e293b; }
+        html.dark .tab-btn { color: #94a3b8; }
+        html.dark .tab-btn.active { background: var(--primary); color: white; }
+        html.dark .mark-all-btn { background: #1e293b; border-color: #02C39A; color: #02C39A; }
+        html.dark .mark-all-btn:hover { background: var(--primary); color: white; }
+        html.dark .notif-title { color: #e2e8f0; }
+        html.dark .notif-desc, html.dark .notif-time { color: #94a3b8; }
+        html.dark .notif-link { color: #02C39A; }
+        html.dark .read-btn { border-color: #334155; color: #94a3b8; }
+        html.dark .read-btn:hover { border-color: #02C39A; color: #02C39A; }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a:hover, html.dark .nav-links a.active { color: #02C39A; }
+        html.dark .empty-desc { color: #94a3b8; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--dark);
+            color: white;
+            padding: 0.9rem 1.8rem;
+            border-radius: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="INDEX.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="customer-dashboard.html">لوحة التحكم</a>
+            <a href="customer-notifications.html" class="active">
+                الإشعارات <span class="nav-badge" id="navBadge">3</span>
+            </a>
+            <a href="chat.html">المحادثات</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <a href="customer-dashboard.html" class="avatar-btn">م</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>الإشعارات <span id="unreadCount">3</span></h1>
+        <button class="mark-all-btn" onclick="markAllRead()">تحديد الكل كمقروء</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('all', this)">الكل</button>
+        <button class="tab-btn" onclick="switchTab('unread', this)">غير مقروء</button>
+        <button class="tab-btn" onclick="switchTab('archive', this)">الأرشيف</button>
+    </div>
+
+    <!-- All Notifications -->
+    <div id="tab-all">
+
+        <div class="notif-card unread" data-status="unread" data-id="1">
+            <div class="notif-icon quote">🔔</div>
+            <div class="notif-body">
+                <div class="notif-title">عرض سعر جديد</div>
+                <div class="notif-desc">أحمد السباك المحترف أرسل عرض سعر لطلب إصلاح تسريب المياه بقيمة 180 ريال</div>
+                <div class="notif-meta">
+                    <span class="notif-time">منذ 5 دقائق</span>
+                    <a href="payment-escrow.html?requestId=REQ-N001&service=%D8%A5%D8%B5%D9%84%D8%A7%D8%AD+%D8%AA%D8%B3%D8%B1%D9%8A%D8%A8&hasMaterials=false&materialsEst=0" class="notif-link">عرض التفاصيل ←</a>
+                </div>
+            </div>
+            <div class="notif-actions">
+                <div class="unread-dot" id="dot-1"></div>
+                <button class="read-btn" onclick="markRead(1)">تحديد كمقروء</button>
+            </div>
+        </div>
+
+        <div class="notif-card unread" data-status="unread" data-id="2">
+            <div class="notif-icon remind">⏰</div>
+            <div class="notif-body">
+                <div class="notif-title">تذكير تأكيد الخدمة</div>
+                <div class="notif-desc">تذكير: لديك 24 ساعة لتأكيد إتمام خدمة تركيب المكيف. بعدها سيتم إطلاق المبلغ تلقائياً</div>
+                <div class="notif-meta">
+                    <span class="notif-time">منذ 2 ساعة</span>
+                    <a href="order-tracking.html?requestId=REQ-001001&service=%D8%AA%D9%83%D9%8A%D9%8A%D9%81" class="notif-link">تتبع الطلب ←</a>
+                </div>
+            </div>
+            <div class="notif-actions">
+                <div class="unread-dot" id="dot-2"></div>
+                <button class="read-btn" onclick="markRead(2)">تحديد كمقروء</button>
+            </div>
+        </div>
+
+        <div class="notif-card unread" data-status="unread" data-id="3">
+            <div class="notif-icon payment">💸</div>
+            <div class="notif-body">
+                <div class="notif-title">تحرير مبلغ</div>
+                <div class="notif-desc">تم تحرير مبلغ 350 ريال لمزود خدمة تنظيف المنازل بعد تأكيدك إتمام الخدمة</div>
+                <div class="notif-meta">
+                    <span class="notif-time">منذ 5 ساعات</span>
+                    <a href="customer-invoice.html" class="notif-link">عرض الفاتورة ←</a>
+                </div>
+            </div>
+            <div class="notif-actions">
+                <div class="unread-dot" id="dot-3"></div>
+                <button class="read-btn" onclick="markRead(3)">تحديد كمقروء</button>
+            </div>
+        </div>
+
+        <div class="notif-card" data-status="read" data-id="4">
+            <div class="notif-icon rating">⭐</div>
+            <div class="notif-body">
+                <div class="notif-title">تقييم مطلوب</div>
+                <div class="notif-desc">يرجى تقييم خدمة التنظيف التي حصلت عليها من فاطمة لخدمات التنظيف. رأيك يساعد المجتمع</div>
+                <div class="notif-meta">
+                    <span class="notif-time">أمس</span>
+                    <a href="rate-service.html?requestId=REQ-003" class="notif-link">تقييم الآن ←</a>
+                </div>
+            </div>
+            <div class="notif-actions">
+                <div class="unread-dot" id="dot-4" style="display:none;"></div>
+                <button class="read-btn" style="opacity:0.4; cursor:default;">مقروء</button>
+            </div>
+        </div>
+
+        <div class="notif-card" data-status="read" data-id="5">
+            <div class="notif-icon chat">💬</div>
+            <div class="notif-body">
+                <div class="notif-title">رسالة جديدة</div>
+                <div class="notif-desc">محمد كهربائي الرياض: "سأكون في موقعك الساعة 10 صباحاً إن شاء الله"</div>
+                <div class="notif-meta">
+                    <span class="notif-time">منذ يومين</span>
+                    <a href="chat.html?type=service&requestId=REQ-001001" class="notif-link">فتح المحادثة ←</a>
+                </div>
+            </div>
+            <div class="notif-actions">
+                <div class="unread-dot" id="dot-5" style="display:none;"></div>
+                <button class="read-btn" style="opacity:0.4; cursor:default;">مقروء</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Unread Tab -->
+    <div id="tab-unread" style="display:none;"></div>
+
+    <!-- Archive Tab -->
+    <div id="tab-archive" style="display:none;">
+        <div class="notif-card" data-status="archive" data-id="6">
+            <div class="notif-icon quote">🔔</div>
+            <div class="notif-body">
+                <div class="notif-title">عرض سعر - منتهي الصلاحية</div>
+                <div class="notif-desc">انتهت صلاحية عرض السعر المقدم من خالد الكهربائي لخدمة تمديد الأسلاك</div>
+                <div class="notif-meta">
+                    <span class="notif-time">منذ أسبوع</span>
+                </div>
+            </div>
+            <div class="notif-actions">
+                <div class="unread-dot" style="display:none;"></div>
+                <button class="read-btn" style="opacity:0.4; cursor:default;">مؤرشف</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" id="emptyUnread">
+        <div class="empty-icon">🎉</div>
+        <div class="empty-title">لا توجد إشعارات غير مقروءة</div>
+        <div class="empty-desc">أنت على اطلاع بكل شيء!</div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+
+    let unreadIds = new Set([1, 2, 3]);
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function updateBadge() {
+        const count = unreadIds.size;
+        document.getElementById('unreadCount').textContent = count;
+        const badge = document.getElementById('navBadge');
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'inline';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    async function markRead(id) {
+        if (!unreadIds.has(id)) return;
+        unreadIds.delete(id);
+
+        const card = document.querySelector(`[data-id="${id}"]`);
+        if (card) {
+            card.classList.remove('unread');
+            card.dataset.status = 'read';
+            const dot = document.getElementById(`dot-${id}`);
+            if (dot) dot.style.display = 'none';
+            const btn = card.querySelector('.read-btn');
+            if (btn) { btn.textContent = 'مقروء'; btn.style.opacity = '0.4'; btn.style.cursor = 'default'; btn.onclick = null; }
+        }
+
+        updateBadge();
+        showToast('✓ تم تحديده كمقروء');
+        refreshUnreadTab();
+        API.notifications.markRead(id).catch(() => {});
+    }
+
+    async function markAllRead() {
+        unreadIds.clear();
+        document.querySelectorAll('.notif-card.unread').forEach(card => {
+            card.classList.remove('unread');
+            card.dataset.status = 'read';
+        });
+        document.querySelectorAll('.unread-dot').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.read-btn').forEach(btn => {
+            btn.textContent = 'مقروء';
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'default';
+            btn.onclick = null;
+        });
+        updateBadge();
+        showToast('✓ تم تحديد الكل كمقروء');
+        refreshUnreadTab();
+        API.notifications.markAllRead().catch(() => {});
+    }
+
+    function refreshUnreadTab() {
+        const container = document.getElementById('tab-unread');
+        container.innerHTML = '';
+        const unreadCards = document.querySelectorAll('#tab-all .notif-card.unread');
+        if (unreadCards.length === 0) {
+            document.getElementById('emptyUnread').classList.add('show');
+        } else {
+            document.getElementById('emptyUnread').classList.remove('show');
+            unreadCards.forEach(c => {
+                container.appendChild(c.cloneNode(true));
+            });
+        }
+    }
+
+    function switchTab(tab, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.getElementById('tab-all').style.display = 'none';
+        document.getElementById('tab-unread').style.display = 'none';
+        document.getElementById('tab-archive').style.display = 'none';
+        document.getElementById('emptyUnread').classList.remove('show');
+
+        if (tab === 'unread') {
+            refreshUnreadTab();
+            document.getElementById('tab-unread').style.display = 'block';
+            if (unreadIds.size === 0) document.getElementById('emptyUnread').classList.add('show');
+        } else {
+            document.getElementById(`tab-${tab}`).style.display = 'block';
+        }
+    }
+</script>
+</body>
+</html>

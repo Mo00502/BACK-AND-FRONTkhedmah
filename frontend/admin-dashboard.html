@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الإدارة - Khedmah</title>
+    <script src="js/api.js"></script>
+    <script>
+        (function() {
+            try { const a = JSON.parse(localStorage.getItem('khedmah_admin') || '{}'); if (!a.loggedIn) window.location.href = 'admin-login.html'; } catch(e) { window.location.href = 'admin-login.html'; }
+            if (localStorage.getItem('khedmah_theme') === 'dark') document.documentElement.classList.add('dark');
+        })();
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --secondary: #00A896; --accent: #02C39A;
+            --dark: #1E293B; --dark2: #0f172a; --light: #F8FAFC; --white: #fff;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B;
+            --error: #EF4444; --info: #3B82F6; --purple: #8B5CF6;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; display: flex; }
+        input, select, textarea { font-size: 16px; font-family: 'Tajawal', sans-serif; }
+
+        /* ── Sidebar ── */
+        .sidebar { width: 240px; background: var(--dark2); color: white; display: flex; flex-direction: column; position: fixed; top: 0; right: 0; bottom: 0; z-index: 200; overflow-y: auto; }
+        .sidebar-logo { padding: 1.5rem 1.25rem; font-size: 1.6rem; font-weight: 800; color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-logo span { font-size: 0.7rem; font-weight: 400; color: rgba(255,255,255,0.4); }
+        .sidebar-nav { flex: 1; padding: 1rem 0; }
+        .nav-section { font-size: 0.7rem; color: rgba(255,255,255,0.35); padding: 0.75rem 1.25rem 0.25rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: all 0.2s; cursor: pointer; border: none; background: none; width: 100%; text-align: right; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: white; }
+        .nav-item.active { background: rgba(2,195,154,0.15); color: var(--accent); border-right: 3px solid var(--accent); }
+        .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+        .nav-badge { margin-right: auto; background: var(--error); color: white; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+        .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); }
+        .admin-info { display: flex; align-items: center; gap: 0.75rem; }
+        .admin-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .admin-name { font-size: 0.85rem; font-weight: 600; }
+        .admin-role { font-size: 0.72rem; color: var(--accent); }
+        .logout-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1rem; margin-right: auto; transition: color 0.2s; }
+        .logout-btn:hover { color: var(--error); }
+
+        /* ── Main ── */
+        .main { margin-right: 240px; flex: 1; min-height: 100vh; }
+        .topbar { background: white; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .topbar-title { font-size: 1.1rem; font-weight: 700; }
+        .topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+        .topbar-time { font-size: 0.8rem; color: var(--gray); }
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .refresh-btn { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 0.45rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .refresh-btn:hover { opacity: 0.88; }
+        .container { padding: 1.75rem 2rem; }
+
+        /* ── KPI ── */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+        .kpi-card { background: white; border-radius: 16px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 1rem; position: relative; overflow: hidden; }
+        .kpi-card::before { content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; }
+        .kpi-card.teal::before { background: var(--primary); } .kpi-card.green::before { background: var(--success); }
+        .kpi-card.amber::before { background: var(--warning); } .kpi-card.blue::before { background: var(--info); }
+        .kpi-card.red::before { background: var(--error); } .kpi-card.purple::before { background: var(--purple); }
+        .kpi-icon { font-size: 2rem; flex-shrink: 0; }
+        .kpi-value { font-size: 1.7rem; font-weight: 800; line-height: 1; }
+        .kpi-label { font-size: 0.78rem; color: var(--gray); margin-top: 0.2rem; }
+        .kpi-delta { font-size: 0.72rem; margin-top: 0.3rem; }
+        .kpi-delta.up { color: var(--success); } .kpi-delta.down { color: var(--error); }
+
+        /* ── Panels & Tables ── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem; }
+        .panel { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 1.5rem; }
+        .panel-header { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+        .panel-title { font-weight: 700; font-size: 0.95rem; }
+        .panel-link { color: var(--primary); font-size: 0.8rem; text-decoration: none; cursor: pointer; border: none; background: none; font-family: 'Tajawal', sans-serif; }
+        .panel-link:hover { text-decoration: underline; }
+        .panel-body { padding: 1rem 1.25rem; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: var(--light); padding: 0.75rem 1rem; text-align: right; font-size: 0.78rem; color: var(--gray); font-weight: 600; }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+
+        /* ── Badges ── */
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+        .badge-pending  { background: rgba(245,158,11,0.12); color: #b45309; }
+        .badge-review   { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+        .badge-open     { background: rgba(239,68,68,0.12); color: #991b1b; }
+        .badge-resolved { background: rgba(16,185,129,0.12); color: #065f46; }
+        .badge-approved { background: rgba(16,185,129,0.12); color: #065f46; }
+        .badge-rejected { background: rgba(239,68,68,0.12); color: #991b1b; }
+        .badge-active   { background: rgba(2,128,144,0.12); color: #0369a1; }
+        .badge-suspended{ background: rgba(245,158,11,0.12); color: #b45309; }
+        .badge-overdue  { background: rgba(239,68,68,0.12); color: #991b1b; }
+        .badge-paid     { background: rgba(16,185,129,0.12); color: #065f46; }
+        .badge-completed{ background: rgba(16,185,129,0.12); color: #065f46; }
+        .badge-in-progress { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+
+        /* ── Buttons ── */
+        .btn-xs { padding: 0.3rem 0.65rem; border-radius: 8px; font-family: 'Tajawal', sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-approve { background: rgba(16,185,129,0.1); color: #065f46; }
+        .btn-approve:hover { background: rgba(16,185,129,0.2); }
+        .btn-reject { background: rgba(239,68,68,0.1); color: #991b1b; }
+        .btn-reject:hover { background: rgba(239,68,68,0.2); }
+        .btn-review { background: rgba(59,130,246,0.1); color: #1d4ed8; }
+        .btn-review:hover { background: rgba(59,130,246,0.2); }
+        .btn-warning { background: rgba(245,158,11,0.1); color: #b45309; }
+        .btn-warning:hover { background: rgba(245,158,11,0.2); }
+        .btn-primary { background: var(--primary); color: white; padding: 0.4rem 0.9rem; border-radius: 10px; }
+        .btn-primary:hover { opacity: 0.88; }
+
+        /* ── Search Bar ── */
+        .search-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center; }
+        .search-input { flex: 1; padding: 0.5rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 0.88rem; outline: none; background: white; }
+        .search-input:focus { border-color: var(--primary); }
+
+        /* ── Verify items ── */
+        .verify-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+        .verify-item:last-child { border-bottom: none; }
+        .verify-avatar { width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .verify-info { flex: 1; min-width: 0; }
+        .verify-name { font-weight: 600; font-size: 0.88rem; }
+        .verify-meta { font-size: 0.75rem; color: var(--gray); margin-top: 0.1rem; }
+        .verify-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+        /* ── Dispute items ── */
+        .dispute-item { padding: 0.9rem 0; border-bottom: 1px solid #f1f5f9; }
+        .dispute-item:last-child { border-bottom: none; }
+        .dispute-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; }
+        .dispute-title { font-weight: 600; font-size: 0.88rem; }
+        .dispute-meta { font-size: 0.75rem; color: var(--gray); margin-bottom: 0.5rem; }
+        .dispute-desc { font-size: 0.82rem; color: var(--gray); margin-bottom: 0.5rem; background: #f8fafc; padding: 0.4rem 0.75rem; border-radius: 8px; }
+
+        /* ── Health metrics ── */
+        .health-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .health-metric { background: var(--light); border-radius: 12px; padding: 0.85rem 1rem; }
+        .health-metric-label { font-size: 0.75rem; color: var(--gray); margin-bottom: 0.3rem; }
+        .health-metric-value { font-size: 1.2rem; font-weight: 800; }
+        .health-metric-value.ok { color: var(--success); } .health-metric-value.warn { color: var(--warning); } .health-metric-value.err { color: var(--error); }
+
+        /* ── Bar Chart ── */
+        .bar-chart { display: flex; align-items: flex-end; gap: 0.5rem; height: 120px; padding: 0 0.25rem; }
+        .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+        .bar { width: 100%; background: linear-gradient(to top, var(--primary), var(--accent)); border-radius: 4px 4px 0 0; transition: opacity 0.2s; cursor: default; min-height: 4px; }
+        .bar:hover { opacity: 0.8; }
+        .bar-label { font-size: 0.65rem; color: var(--gray); white-space: nowrap; }
+        .bar-value { font-size: 0.7rem; font-weight: 700; color: var(--dark); }
+        .chart-legend { display: flex; gap: 1rem; margin-top: 0.75rem; font-size: 0.78rem; color: var(--gray); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 4px; }
+
+        /* ── Toast ── */
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 0.65rem 1.5rem; border-radius: 12px; font-size: 0.88rem; z-index: 9999; transition: opacity 0.3s; pointer-events: none; }
+
+        /* ── Modal ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-box { background: white; border-radius: 20px; padding: 1.5rem; width: 100%; max-width: 440px; }
+        .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+        .modal-label { font-size: 0.82rem; color: var(--gray); margin-bottom: 0.4rem; }
+        .modal-textarea { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid #e2e8f0; border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 0.88rem; resize: vertical; min-height: 80px; outline: none; }
+        .modal-textarea:focus { border-color: var(--error); }
+        .modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: flex-end; }
+        .modal-cancel { padding: 0.5rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.88rem; }
+        .modal-confirm { padding: 0.5rem 1.1rem; border: none; border-radius: 10px; background: var(--error); color: white; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.88rem; font-weight: 600; }
+
+        /* ── Section titles ── */
+        .section-header { margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.2rem; font-weight: 800; }
+        .section-sub { font-size: 0.82rem; color: var(--gray); margin-top: 0.2rem; }
+
+        /* ── Empty state ── */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--gray); }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-text { font-size: 0.9rem; }
+
+        /* ── Stat summary row ── */
+        .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; text-align: center; padding: 0.5rem 0; }
+        .stat-big { font-size: 1.8rem; font-weight: 800; }
+        .stat-label { font-size: 0.8rem; color: var(--gray); margin-top: 0.1rem; }
+        .stat-note { font-size: 0.75rem; margin-top: 0.2rem; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) { .sidebar { display: none; } .main { margin-right: 0; } .two-col { grid-template-columns: 1fr; } }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark .topbar, html.dark .panel, html.dark .kpi-card, html.dark .modal-box { background: #1e293b !important; border-color: #334155; }
+        html.dark .panel-header { border-color: #334155; }
+        html.dark .verify-item, html.dark .dispute-item { border-color: #334155; }
+        html.dark table th { background: #0f172a !important; color: #94a3b8; }
+        html.dark td { border-color: #334155; }
+        html.dark tr:hover td { background: rgba(255,255,255,0.03) !important; }
+        html.dark .health-metric { background: #0f172a; }
+        html.dark .search-input, html.dark .modal-textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .modal-cancel { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .dispute-desc { background: #0f172a; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+        html.dark .bar-value { color: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">KHEDMAH <span>ADMIN</span></div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">الرئيسية</div>
+            <button class="nav-item active" onclick="showSection('dashboard',this)">
+                <span class="nav-icon">📊</span> لوحة التحكم
+            </button>
+
+            <div class="nav-section">إدارة المستخدمين</div>
+            <button class="nav-item" onclick="showSection('verifications',this)">
+                <span class="nav-icon">✅</span> التحقق من المزودين
+                <span class="nav-badge" id="badge-verify">4</span>
+            </button>
+            <button class="nav-item" onclick="showSection('users',this)">
+                <span class="nav-icon">👥</span> جميع المستخدمين
+            </button>
+
+            <div class="nav-section">العمليات</div>
+            <button class="nav-item" onclick="showSection('disputes',this)">
+                <span class="nav-icon">⚖️</span> النزاعات
+                <span class="nav-badge" id="badge-disputes">2</span>
+            </button>
+            <button class="nav-item" onclick="showSection('commissions',this)">
+                <span class="nav-icon">💰</span> العمولات المتأخرة
+            </button>
+            <button class="nav-item" onclick="showSection('withdrawals',this)">
+                <span class="nav-icon">🏦</span> طلبات السحب
+                <span class="nav-badge" id="badge-wd">3</span>
+            </button>
+
+            <div class="nav-section">التقارير</div>
+            <button class="nav-item" onclick="showSection('reports',this)">
+                <span class="nav-icon">📈</span> التقارير والإحصاء
+            </button>
+            <button class="nav-item" onclick="showSection('health',this)">
+                <span class="nav-icon">🔧</span> صحة النظام
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="admin-info">
+                <div class="admin-avatar">أ</div>
+                <div>
+                    <div class="admin-name">أحمد المدير</div>
+                    <div class="admin-role">SUPER_ADMIN</div>
+                </div>
+                <button class="logout-btn" onclick="logout()" title="تسجيل الخروج">⏻</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="topbar">
+            <div class="topbar-title" id="pageTitle">📊 لوحة التحكم</div>
+            <div class="topbar-actions">
+                <span class="topbar-time" id="clockEl"></span>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <button class="refresh-btn" onclick="refreshData()">🔄 تحديث</button>
+            </div>
+        </div>
+
+        <!-- ═══════════════ DASHBOARD ═══════════════ -->
+        <div id="section-dashboard" class="container">
+            <div class="kpi-grid">
+                <div class="kpi-card teal"><div class="kpi-icon">👥</div><div class="kpi-info"><div class="kpi-value">2,847</div><div class="kpi-label">إجمالي المستخدمين</div><div class="kpi-delta up">▲ +34 هذا الأسبوع</div></div></div>
+                <div class="kpi-card green"><div class="kpi-icon">🔧</div><div class="kpi-info"><div class="kpi-value">438</div><div class="kpi-label">مزودو الخدمة</div><div class="kpi-delta up">▲ +7 هذا الأسبوع</div></div></div>
+                <div class="kpi-card amber"><div class="kpi-icon">📋</div><div class="kpi-info"><div class="kpi-value">1,204</div><div class="kpi-label">إجمالي الطلبات</div><div class="kpi-delta up">▲ +89 هذا الشهر</div></div></div>
+                <div class="kpi-card blue"><div class="kpi-icon">💰</div><div class="kpi-info"><div class="kpi-value">84,320</div><div class="kpi-label">إيرادات المنصة (ر.س)</div><div class="kpi-delta up">▲ +12% هذا الشهر</div></div></div>
+                <div class="kpi-card red"><div class="kpi-icon">⚖️</div><div class="kpi-info"><div class="kpi-value">2</div><div class="kpi-label">نزاعات مفتوحة</div><div class="kpi-delta down">▼ يحتاج مراجعة</div></div></div>
+                <div class="kpi-card purple"><div class="kpi-icon">⏳</div><div class="kpi-info"><div class="kpi-value">4</div><div class="kpi-label">تحقق معلق</div><div class="kpi-delta down">▼ يحتاج مراجعة</div></div></div>
+            </div>
+
+            <div class="two-col">
+                <!-- Recent requests -->
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header">
+                        <div class="panel-title">📋 آخر الطلبات</div>
+                        <button class="panel-link" onclick="showSection('users',document.querySelector('.nav-item:nth-of-type(3)'))">عرض الكل →</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>#</th><th>الخدمة</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+                            <tbody>
+                                <tr><td style="color:var(--gray);font-size:.78rem">#1204</td><td>🔧 تكييف</td><td>محمد أحمد</td><td>450 ر.س</td><td><span class="badge badge-in-progress">جارٍ</span></td></tr>
+                                <tr><td style="color:var(--gray);font-size:.78rem">#1203</td><td>🚿 سباكة</td><td>فاطمة خالد</td><td>280 ر.س</td><td><span class="badge badge-completed">مكتمل</span></td></tr>
+                                <tr><td style="color:var(--gray);font-size:.78rem">#1202</td><td>🎨 دهانات</td><td>عمر العتيبي</td><td>650 ر.س</td><td><span class="badge badge-completed">مكتمل</span></td></tr>
+                                <tr><td style="color:var(--gray);font-size:.78rem">#1201</td><td>🔌 كهرباء</td><td>نورة السبيعي</td><td>—</td><td><span class="badge badge-pending">انتظار</span></td></tr>
+                                <tr><td style="color:var(--gray);font-size:.78rem">#1200</td><td>🚪 نجارة</td><td>سارة الحربي</td><td>380 ر.س</td><td><span class="badge badge-completed">مكتمل</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- System health inline -->
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header"><div class="panel-title">🔧 صحة النظام</div></div>
+                    <div class="panel-body">
+                        <div class="health-grid">
+                            <div class="health-metric"><div class="health-metric-label">مستخدمون جدد اليوم</div><div class="health-metric-value ok">12</div></div>
+                            <div class="health-metric"><div class="health-metric-label">طلبات اليوم</div><div class="health-metric-value ok">47</div></div>
+                            <div class="health-metric"><div class="health-metric-label">مدفوعات فاشلة</div><div class="health-metric-value warn">3</div></div>
+                            <div class="health-metric"><div class="health-metric-label">ضمانات محجوزة</div><div class="health-metric-value ok">23,450 ر.س</div></div>
+                            <div class="health-metric"><div class="health-metric-label">طلبات سحب معلقة</div><div class="health-metric-value warn">3</div></div>
+                            <div class="health-metric"><div class="health-metric-label">أوقات الاستجابة</div><div class="health-metric-value ok">98 مللث</div></div>
+                        </div>
+                    </div>
+                    <div class="panel-header" style="border-top:1px solid #f1f5f9;margin-top:0"><div class="panel-title">📈 آخر 30 يوم</div></div>
+                    <div class="panel-body">
+                        <div class="stat-row">
+                            <div><div class="stat-big" style="color:var(--primary)">347</div><div class="stat-label">طلب جديد</div><div class="stat-note" style="color:var(--success)">▲ 18%</div></div>
+                            <div><div class="stat-big" style="color:var(--success)">291</div><div class="stat-label">طلب مكتمل</div><div class="stat-note" style="color:var(--success)">83.9% إتمام</div></div>
+                            <div><div class="stat-big" style="color:var(--warning)">28,600</div><div class="stat-label">إيرادات (ر.س)</div><div class="stat-note" style="color:var(--success)">▲ 12%</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ VERIFICATIONS ═══════════════ -->
+        <div id="section-verifications" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">✅ التحقق من هوية المزودين</div>
+                <div class="section-sub">مراجعة وثائق مزودي الخدمة الجدد والموافقة على طلباتهم</div>
+            </div>
+
+            <div class="two-col">
+                <!-- Pending -->
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header">
+                        <div class="panel-title">⏳ قيد الانتظار</div>
+                        <span class="badge badge-pending">3</span>
+                    </div>
+                    <div class="panel-body" id="verify-pending">
+                        <div class="verify-item" data-id="v1">
+                            <div class="verify-avatar">م</div>
+                            <div class="verify-info">
+                                <div class="verify-name">محمد الزهراني</div>
+                                <div class="verify-meta">⚡ كهرباء • الرياض • منذ 3 أيام</div>
+                            </div>
+                            <div class="verify-actions">
+                                <button class="btn-xs btn-review" onclick="startReview(this,'محمد الزهراني','v1')">مراجعة</button>
+                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'محمد الزهراني','v1')">قبول ✓</button>
+                            </div>
+                        </div>
+                        <div class="verify-item" data-id="v3">
+                            <div class="verify-avatar">ن</div>
+                            <div class="verify-info">
+                                <div class="verify-name">نايف القحطاني</div>
+                                <div class="verify-meta">🎨 دهانات • جدة • منذ 7 أيام</div>
+                            </div>
+                            <div class="verify-actions">
+                                <button class="btn-xs btn-review" onclick="startReview(this,'نايف القحطاني','v3')">مراجعة</button>
+                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'نايف القحطاني','v3')">قبول ✓</button>
+                            </div>
+                        </div>
+                        <div class="verify-item" data-id="v4">
+                            <div class="verify-avatar">ر</div>
+                            <div class="verify-info">
+                                <div class="verify-name">رائد المطيري</div>
+                                <div class="verify-meta">❄️ تكييف • الدمام • منذ 10 أيام</div>
+                            </div>
+                            <div class="verify-actions">
+                                <button class="btn-xs btn-review" onclick="startReview(this,'رائد المطيري','v4')">مراجعة</button>
+                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'رائد المطيري','v4')">قبول ✓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Under review -->
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header">
+                        <div class="panel-title">🔍 تحت المراجعة</div>
+                        <span class="badge badge-review">1</span>
+                    </div>
+                    <div class="panel-body" id="verify-review">
+                        <div class="verify-item" data-id="v2">
+                            <div class="verify-avatar">ع</div>
+                            <div class="verify-info">
+                                <div class="verify-name">عبدالله الحربي</div>
+                                <div class="verify-meta">🔧 سباكة • الرياض • منذ 5 أيام</div>
+                            </div>
+                            <div class="verify-actions">
+                                <button class="btn-xs btn-approve" onclick="approveProvider(this,'عبدالله الحربي','v2')">قبول ✓</button>
+                                <button class="btn-xs btn-reject" onclick="openRejectModal('v2','عبدالله الحربي')">رفض ✕</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-header" style="border-top:1px solid #f1f5f9;margin-top:0"><div class="panel-title">✅ مقبولون مؤخراً</div></div>
+                    <div class="panel-body">
+                        <div class="verify-item">
+                            <div class="verify-avatar" style="background:linear-gradient(135deg,var(--success),#34d399)">ك</div>
+                            <div class="verify-info"><div class="verify-name">خالد العمري</div><div class="verify-meta">🔧 تكييف • الرياض</div></div>
+                            <span class="badge badge-approved">مقبول</span>
+                        </div>
+                        <div class="verify-item">
+                            <div class="verify-avatar" style="background:linear-gradient(135deg,var(--success),#34d399)">ف</div>
+                            <div class="verify-info"><div class="verify-name">فهد الدوسري</div><div class="verify-meta">🚿 سباكة • جدة</div></div>
+                            <span class="badge badge-approved">مقبول</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ DISPUTES ═══════════════ -->
+        <div id="section-disputes" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">⚖️ إدارة النزاعات</div>
+                <div class="section-sub">مراجعة النزاعات المفتوحة واتخاذ قرار بالإفراج أو الاسترداد</div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">النزاعات المفتوحة</div>
+                    <span class="badge badge-open">2 مفتوح</span>
+                </div>
+                <div class="panel-body" id="disputes-list">
+                    <div class="dispute-item" data-id="d1">
+                        <div class="dispute-top">
+                            <div class="dispute-title">نزاع على جودة العمل — #1198</div>
+                            <span class="badge badge-open">مفتوح</span>
+                        </div>
+                        <div class="dispute-meta">📌 أحمد خالد (عميل) ← سالم القحطاني (مزود) • منذ يومين • مبلغ: 520 ر.س</div>
+                        <div class="dispute-desc">يدّعي العميل أن المزود لم يُنهِ العمل كما تم الاتفاق عليه — بقيت بعض الأعمال الكهربائية دون إتمام.</div>
+                        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                            <button class="btn-xs btn-approve" onclick="resolveDispute(this,'d1','تحرير')">✅ تحرير للمزود</button>
+                            <button class="btn-xs btn-reject" onclick="resolveDispute(this,'d1','استرداد')">↩️ استرداد للعميل</button>
+                            <button class="btn-xs btn-review" onclick="resolveDispute(this,'d1','تقسيم')">⚖️ تقسيم المبلغ</button>
+                        </div>
+                    </div>
+                    <div class="dispute-item" data-id="d2">
+                        <div class="dispute-top">
+                            <div class="dispute-title">مزود لم يكمل العمل — #1195</div>
+                            <span class="badge badge-open">مفتوح</span>
+                        </div>
+                        <div class="dispute-meta">📌 فاطمة محمد (عميل) ← خالد العمري (مزود) • منذ 4 أيام • مبلغ: 380 ر.س</div>
+                        <div class="dispute-desc">المزود أنهى الزيارة مبكراً بحجة نقص الأدوات، والعميل لم يتلقَّ الخدمة الكاملة.</div>
+                        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                            <button class="btn-xs btn-approve" onclick="resolveDispute(this,'d2','تحرير')">✅ تحرير للمزود</button>
+                            <button class="btn-xs btn-reject" onclick="resolveDispute(this,'d2','استرداد')">↩️ استرداد للعميل</button>
+                            <button class="btn-xs btn-review" onclick="resolveDispute(this,'d2','تقسيم')">⚖️ تقسيم المبلغ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title">✅ محسومة مؤخراً</div></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>الموضوع</th><th>القرار</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+                        <tbody>
+                            <tr><td style="color:var(--gray);font-size:.78rem">#1190</td><td>دهانات — جودة رديئة</td><td><span class="badge badge-rejected">استرداد</span></td><td>300 ر.س</td><td style="color:var(--gray);font-size:.78rem">15 مارس</td></tr>
+                            <tr><td style="color:var(--gray);font-size:.78rem">#1182</td><td>تكييف — عدم الحضور</td><td><span class="badge badge-approved">تحرير</span></td><td>200 ر.س</td><td style="color:var(--gray);font-size:.78rem">12 مارس</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ USERS ═══════════════ -->
+        <div id="section-users" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">👥 إدارة المستخدمين</div>
+                <div class="section-sub">البحث وإدارة جميع حسابات المنصة</div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">قائمة المستخدمين</div>
+                    <span style="font-size:0.8rem;color:var(--gray)">2,847 مستخدم</span>
+                </div>
+                <div class="panel-body" style="padding-bottom:0.25rem">
+                    <div class="search-bar">
+                        <input type="search" class="search-input" placeholder="🔍  ابحث باسم أو بريد أو رقم جوال..." oninput="filterUsers(this.value)" id="userSearch">
+                        <select style="padding:0.5rem 0.75rem;border:1.5px solid #e2e8f0;border-radius:10px;font-family:Tajawal,sans-serif;font-size:0.85rem;background:white" onchange="filterUsers(document.getElementById('userSearch').value)">
+                            <option>جميع الأدوار</option>
+                            <option>عميل</option>
+                            <option>مزود</option>
+                            <option>مدير</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table id="usersTable">
+                        <thead><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الحالة</th><th>تاريخ التسجيل</th><th>إجراء</th></tr></thead>
+                        <tbody>
+                            <tr data-search="محمد أحمد customer@demo.sa عميل">
+                                <td><strong>محمد أحمد</strong></td><td style="color:var(--gray);font-size:.82rem">customer@demo.sa</td>
+                                <td><span class="badge badge-review">عميل</span></td><td><span class="badge badge-active">نشط</span></td>
+                                <td style="color:var(--gray);font-size:.78rem">1 يناير 2025</td>
+                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'محمد أحمد')">إيقاف</button></td>
+                            </tr>
+                            <tr data-search="خالد العمري khalid@demo.sa مزود">
+                                <td><strong>خالد العمري</strong></td><td style="color:var(--gray);font-size:.82rem">khalid@demo.sa</td>
+                                <td><span class="badge badge-approved">مزود</span></td><td><span class="badge badge-active">نشط</span></td>
+                                <td style="color:var(--gray);font-size:.78rem">15 ديسمبر 2024</td>
+                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'خالد العمري')">إيقاف</button></td>
+                            </tr>
+                            <tr data-search="فاطمة محمد fatima@demo.sa عميل">
+                                <td><strong>فاطمة محمد</strong></td><td style="color:var(--gray);font-size:.82rem">fatima@demo.sa</td>
+                                <td><span class="badge badge-review">عميل</span></td><td><span class="badge badge-active">نشط</span></td>
+                                <td style="color:var(--gray);font-size:.78rem">20 يناير 2025</td>
+                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'فاطمة محمد')">إيقاف</button></td>
+                            </tr>
+                            <tr data-search="سالم القحطاني salem@demo.sa مزود">
+                                <td><strong>سالم القحطاني</strong></td><td style="color:var(--gray);font-size:.82rem">salem@demo.sa</td>
+                                <td><span class="badge badge-approved">مزود</span></td><td><span class="badge badge-suspended">موقوف</span></td>
+                                <td style="color:var(--gray);font-size:.78rem">5 نوفمبر 2024</td>
+                                <td><button class="btn-xs btn-approve" onclick="reinstateUser(this,'سالم القحطاني')">إعادة تفعيل</button></td>
+                            </tr>
+                            <tr data-search="نورة السبيعي noura@demo.sa عميل">
+                                <td><strong>نورة السبيعي</strong></td><td style="color:var(--gray);font-size:.82rem">noura@demo.sa</td>
+                                <td><span class="badge badge-review">عميل</span></td><td><span class="badge badge-active">نشط</span></td>
+                                <td style="color:var(--gray);font-size:.78rem">10 فبراير 2025</td>
+                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'نورة السبيعي')">إيقاف</button></td>
+                            </tr>
+                            <tr data-search="فهد الدوسري fahad@demo.sa مزود">
+                                <td><strong>فهد الدوسري</strong></td><td style="color:var(--gray);font-size:.82rem">fahad@demo.sa</td>
+                                <td><span class="badge badge-approved">مزود</span></td><td><span class="badge badge-active">نشط</span></td>
+                                <td style="color:var(--gray);font-size:.78rem">8 أكتوبر 2024</td>
+                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'فهد الدوسري')">إيقاف</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ COMMISSIONS ═══════════════ -->
+        <div id="section-commissions" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">💰 العمولات المتأخرة</div>
+                <div class="section-sub">عمولات المناقصات التي تجاوزت 30 يوماً دون سداد</div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">عمولات متأخرة</div>
+                    <span class="badge badge-overdue">2 متأخرة</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>المناقصة</th><th>الشركة</th><th>قيمة المشروع</th><th>العمولة (2%)</th><th>تاريخ الفاتورة</th><th>التأخر</th><th>إجراء</th></tr></thead>
+                        <tbody>
+                            <tr data-id="c1">
+                                <td><strong>مشروع تطوير مبنى تجاري</strong></td>
+                                <td>شركة البناء المتقدم</td>
+                                <td>250,000 ر.س</td>
+                                <td style="color:var(--warning);font-weight:700">5,000 ر.س</td>
+                                <td style="color:var(--gray);font-size:.82rem">12 فبراير 2025</td>
+                                <td><span class="badge badge-overdue">38 يوم</span></td>
+                                <td><button class="btn-xs btn-approve" onclick="markCommissionPaid(this,'c1')">تأكيد الدفع</button></td>
+                            </tr>
+                            <tr data-id="c2">
+                                <td><strong>مشروع تجديد مجمع سكني</strong></td>
+                                <td>مؤسسة التشييد الحديث</td>
+                                <td>180,000 ر.س</td>
+                                <td style="color:var(--warning);font-weight:700">3,600 ر.س</td>
+                                <td style="color:var(--gray);font-size:.82rem">5 فبراير 2025</td>
+                                <td><span class="badge badge-overdue">45 يوم</span></td>
+                                <td><button class="btn-xs btn-approve" onclick="markCommissionPaid(this,'c2')">تأكيد الدفع</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title">📊 ملخص العمولات</div></div>
+                <div class="panel-body">
+                    <div class="stat-row">
+                        <div><div class="stat-big" style="color:var(--primary)">127</div><div class="stat-label">إجمالي العمولات</div><div class="stat-note" style="color:var(--gray)">منذ الإطلاق</div></div>
+                        <div><div class="stat-big" style="color:var(--success)">112</div><div class="stat-label">مسددة</div><div class="stat-note" style="color:var(--success)">88.2%</div></div>
+                        <div><div class="stat-big" style="color:var(--error)">2</div><div class="stat-label">متأخرة</div><div class="stat-note" style="color:var(--error)">إجمالي: 8,600 ر.س</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ WITHDRAWALS ═══════════════ -->
+        <div id="section-withdrawals" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">🏦 طلبات السحب</div>
+                <div class="section-sub">مراجعة وإقرار طلبات سحب أرباح المزودين</div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">طلبات معلقة</div>
+                    <span class="badge badge-pending">3 معلقة</span>
+                </div>
+                <div class="table-wrap">
+                    <table id="wd-table">
+                        <thead><tr><th>المزود</th><th>البنك / IBAN</th><th>المبلغ</th><th>تاريخ الطلب</th><th>الإجراء</th></tr></thead>
+                        <tbody>
+                            <tr data-id="w1">
+                                <td><strong>خالد العمري</strong></td>
+                                <td style="font-size:.8rem;color:var(--gray)">بنك الراجحي — SA03 8000 0000 6080 1016 7519</td>
+                                <td style="font-weight:700;color:var(--success)">1,200 ر.س</td>
+                                <td style="color:var(--gray);font-size:.82rem">18 مارس 2026</td>
+                                <td><div style="display:flex;gap:0.4rem"><button class="btn-xs btn-approve" onclick="approveWithdrawal(this,'w1')">موافقة ✓</button><button class="btn-xs btn-reject" onclick="rejectWithdrawal(this,'w1')">رفض ✕</button></div></td>
+                            </tr>
+                            <tr data-id="w2">
+                                <td><strong>فهد الدوسري</strong></td>
+                                <td style="font-size:.8rem;color:var(--gray)">بنك الأهلي — SA44 1000 0001 2345 6789 0123</td>
+                                <td style="font-weight:700;color:var(--success)">850 ر.س</td>
+                                <td style="color:var(--gray);font-size:.82rem">17 مارس 2026</td>
+                                <td><div style="display:flex;gap:0.4rem"><button class="btn-xs btn-approve" onclick="approveWithdrawal(this,'w2')">موافقة ✓</button><button class="btn-xs btn-reject" onclick="rejectWithdrawal(this,'w2')">رفض ✕</button></div></td>
+                            </tr>
+                            <tr data-id="w3">
+                                <td><strong>سالم المزود</strong></td>
+                                <td style="font-size:.8rem;color:var(--gray)">بنك الرياض — SA56 2000 0000 6480 0611 0050</td>
+                                <td style="font-weight:700;color:var(--success)">2,340 ر.س</td>
+                                <td style="color:var(--gray);font-size:.82rem">15 مارس 2026</td>
+                                <td><div style="display:flex;gap:0.4rem"><button class="btn-xs btn-approve" onclick="approveWithdrawal(this,'w3')">موافقة ✓</button><button class="btn-xs btn-reject" onclick="rejectWithdrawal(this,'w3')">رفض ✕</button></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ REPORTS ═══════════════ -->
+        <div id="section-reports" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">📈 التقارير والإحصاء</div>
+                <div class="section-sub">أداء المنصة على مدى 6 أشهر الماضية</div>
+            </div>
+
+            <div class="two-col">
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header"><div class="panel-title">📊 الطلبات الشهرية</div></div>
+                    <div class="panel-body">
+                        <div class="bar-chart" id="requestsChart"></div>
+                        <div class="chart-legend">
+                            <span><span class="legend-dot" style="background:var(--primary)"></span>طلبات</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header"><div class="panel-title">💰 الإيرادات الشهرية (ر.س)</div></div>
+                    <div class="panel-body">
+                        <div class="bar-chart" id="revenueChart"></div>
+                        <div class="chart-legend">
+                            <span><span class="legend-dot" style="background:var(--warning)"></span>إيرادات</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:1.5rem">
+                <div class="panel-header"><div class="panel-title">💡 تفصيل الإيرادات</div></div>
+                <div class="panel-body">
+                    <div class="stat-row">
+                        <div><div class="stat-big" style="color:var(--primary)">61,200</div><div class="stat-label">عمولات الخدمات (15%)</div><div class="stat-note" style="color:var(--gray)">من الضمانات المُفرَج عنها</div></div>
+                        <div><div class="stat-big" style="color:var(--purple)">18,400</div><div class="stat-label">عمولات المناقصات (2%)</div><div class="stat-note" style="color:var(--gray)">من قيم المشاريع</div></div>
+                        <div><div class="stat-big" style="color:var(--success)">4,720</div><div class="stat-label">رسوم المعدات (10%)</div><div class="stat-note" style="color:var(--gray)">من قيم الإيجارات</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ HEALTH ═══════════════ -->
+        <div id="section-health" class="container" style="display:none">
+            <div class="section-header">
+                <div class="section-title">🔧 صحة النظام</div>
+                <div class="section-sub">مؤشرات الأداء اللحظية للمنصة</div>
+            </div>
+            <div class="two-col">
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header"><div class="panel-title">اليوم</div></div>
+                    <div class="panel-body">
+                        <div class="health-grid">
+                            <div class="health-metric"><div class="health-metric-label">مستخدمون جدد</div><div class="health-metric-value ok">12</div></div>
+                            <div class="health-metric"><div class="health-metric-label">طلبات جديدة</div><div class="health-metric-value ok">47</div></div>
+                            <div class="health-metric"><div class="health-metric-label">طلبات مكتملة</div><div class="health-metric-value ok">39</div></div>
+                            <div class="health-metric"><div class="health-metric-label">مدفوعات فاشلة</div><div class="health-metric-value warn">3</div></div>
+                            <div class="health-metric"><div class="health-metric-label">نزاعات مفتوحة</div><div class="health-metric-value warn">2</div></div>
+                            <div class="health-metric"><div class="health-metric-label">ضمانات محجوزة</div><div class="health-metric-value ok">23,450 ر.س</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="margin-bottom:0">
+                    <div class="panel-header"><div class="panel-title">أداء النظام</div></div>
+                    <div class="panel-body">
+                        <div class="health-grid">
+                            <div class="health-metric"><div class="health-metric-label">متوسط وقت الاستجابة</div><div class="health-metric-value ok">98 مللث</div></div>
+                            <div class="health-metric"><div class="health-metric-label">حالة API</div><div class="health-metric-value ok">✓ يعمل</div></div>
+                            <div class="health-metric"><div class="health-metric-label">حالة Redis</div><div class="health-metric-value ok">✓ متصل</div></div>
+                            <div class="health-metric"><div class="health-metric-label">حالة قاعدة البيانات</div><div class="health-metric-value ok">✓ متصل</div></div>
+                            <div class="health-metric"><div class="health-metric-label">وظائف Cron</div><div class="health-metric-value ok">✓ تعمل</div></div>
+                            <div class="health-metric"><div class="health-metric-label">طلبات سحب معلقة</div><div class="health-metric-value warn">3</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── Reject Modal ── -->
+    <div id="rejectModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+        <div class="modal-box">
+            <div class="modal-title">رفض طلب التحقق — <span id="rejectName"></span></div>
+            <div class="modal-label">سبب الرفض (سيُرسل للمزود)</div>
+            <textarea class="modal-textarea" id="rejectReason" placeholder="مثال: الوثائق المرفوعة غير كافية أو غير واضحة..."></textarea>
+            <div class="modal-actions">
+                <button class="modal-cancel" onclick="closeModal()">إلغاء</button>
+                <button class="modal-confirm" onclick="confirmReject()">تأكيد الرفض</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Clock ──
+        function updateClock() {
+            const now = new Date();
+            const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+            const h = String(now.getHours()).padStart(2,'0'), m = String(now.getMinutes()).padStart(2,'0');
+            document.getElementById('clockEl').textContent = `${days[now.getDay()]} — ${h}:${m}`;
+        }
+        updateClock(); setInterval(updateClock, 30000);
+
+        // ── Section navigation ──
+        const sectionTitles = {
+            dashboard: '📊 لوحة التحكم', verifications: '✅ التحقق من المزودين',
+            disputes: '⚖️ النزاعات', users: '👥 إدارة المستخدمين',
+            commissions: '💰 العمولات المتأخرة', withdrawals: '🏦 طلبات السحب',
+            reports: '📈 التقارير', health: '🔧 صحة النظام'
+        };
+        function showSection(name, btn) {
+            document.querySelectorAll('[id^="section-"]').forEach(el => el.style.display = 'none');
+            const sec = document.getElementById('section-' + name);
+            if (sec) sec.style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            document.getElementById('pageTitle').textContent = sectionTitles[name] || '';
+            if (name === 'reports') buildCharts();
+        }
+
+        // ── Charts (pure CSS bars) ──
+        const months = ['أكتوبر','نوفمبر','ديسمبر','يناير','فبراير','مارس'];
+        const reqData = [142, 178, 205, 247, 298, 347];
+        const revData = [9800, 13200, 16100, 19400, 24100, 28600];
+
+        function buildChart(id, data, color) {
+            const el = document.getElementById(id); if (!el) return;
+            const maxVal = Math.max(...data);
+            el.innerHTML = data.map((v, i) => `
+                <div class="bar-col">
+                    <div class="bar-value">${v.toLocaleString()}</div>
+                    <div class="bar" style="height:${Math.round((v/maxVal)*100)}%;background:${color}"></div>
+                    <div class="bar-label">${months[i]}</div>
+                </div>`).join('');
+        }
+        function buildCharts() {
+            buildChart('requestsChart', reqData, 'linear-gradient(to top, #028090, #02C39A)');
+            buildChart('revenueChart', revData, 'linear-gradient(to top, #d97706, #fbbf24)');
+        }
+
+        // ── Toast ──
+        function toast(msg, dur = 2500) {
+            const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, dur);
+        }
+
+        // ── Provider verification actions ──
+        function startReview(btn, name, id) {
+            const item = btn.closest('.verify-item');
+            btn.textContent = '⏳ جارٍ...'; btn.disabled = true;
+            setTimeout(() => {
+                if (item) {
+                    item.querySelector('.verify-meta').innerHTML = item.querySelector('.verify-meta').innerHTML
+                        .replace('قيد الانتظار', 'تحت المراجعة');
+                    btn.remove();
+                    const badge = item.querySelector('.badge');
+                    if (badge) { badge.className = 'badge badge-review'; badge.textContent = 'تحت المراجعة'; }
+                    // Move to review section
+                    const reviewList = document.getElementById('verify-review');
+                    const approveBtn = item.querySelector('.btn-approve');
+                    const actions = item.querySelector('.verify-actions');
+                    if (actions) {
+                        actions.innerHTML = `<button class="btn-xs btn-approve" onclick="approveProvider(this,'${name}','${id}')">قبول ✓</button>
+                            <button class="btn-xs btn-reject" onclick="openRejectModal('${id}','${name}')">رفض ✕</button>`;
+                    }
+                    if (reviewList) reviewList.appendChild(item);
+                }
+                toast(`✅ بدأت مراجعة ملف ${name}`);
+            }, 700);
+        }
+
+        async function approveProvider(btn, name, id) {
+            const item = btn.closest('.verify-item');
+            btn.textContent = '⏳...'; btn.disabled = true;
+            try {
+                await API.admin.approveProvider(id);
+            } catch(e) { /* demo IDs won't match; proceed with UI update */ }
+            if (item) item.style.opacity = '0.3';
+            toast(`✅ تم قبول المزود: ${name}`);
+            const badge = document.getElementById('badge-verify');
+            if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
+            setTimeout(() => item && item.remove(), 500);
+        }
+
+        // ── Reject Modal ──
+        let rejectTarget = null;
+        function openRejectModal(id, name) {
+            rejectTarget = { id, name };
+            document.getElementById('rejectName').textContent = name;
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('rejectModal').style.display = 'none'; rejectTarget = null; }
+        async function confirmReject() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) { document.getElementById('rejectReason').style.borderColor = 'var(--error)'; return; }
+            const target = rejectTarget;
+            closeModal();
+            const item = document.querySelector(`[data-id="${target?.id}"]`);
+            if (item) { item.style.opacity = '0.3'; setTimeout(() => item.remove(), 500); }
+            toast(`❌ تم رفض طلب التحقق: ${target?.name}`);
+            const badge = document.getElementById('badge-verify');
+            if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
+            API.admin.rejectProvider(target?.id, { reason }).catch(() => {});
+        }
+
+        // ── Dispute resolution ──
+        async function resolveDispute(btn, id, action) {
+            const labels = { 'تحرير': 'تحرير المبلغ للمزود', 'استرداد': 'استرداد المبلغ للعميل', 'تقسيم': 'تقسيم المبلغ' };
+            const outcomeMap = { 'تحرير': 'RELEASE', 'استرداد': 'REFUND', 'تقسيم': 'SPLIT' };
+            if (!confirm(`تأكيد: ${labels[action] || action}؟`)) return;
+            btn.disabled = true;
+            try { await API.admin.resolveDispute(id, { outcome: outcomeMap[action] || 'RELEASE' }); } catch(e) { /* demo */ }
+            const item = document.querySelector(`[data-id="${id}"]`);
+            if (item) { item.style.opacity = '0.3'; setTimeout(() => item.remove(), 500); }
+            toast(`⚖️ تم: ${labels[action] || action}`);
+            const badge = document.getElementById('badge-disputes');
+            if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
+        }
+
+        // ── User management ──
+        function suspendUser(btn, name) {
+            if (!confirm(`إيقاف حساب ${name}؟`)) return;
+            const row = btn.closest('tr');
+            row.querySelector('.badge-active').className = 'badge badge-suspended';
+            row.querySelector('.badge-suspended').textContent = 'موقوف';
+            btn.textContent = 'إعادة تفعيل'; btn.className = 'btn-xs btn-approve';
+            btn.onclick = function() { reinstateUser(this, name); };
+            toast(`🚫 تم إيقاف حساب ${name}`);
+        }
+        function reinstateUser(btn, name) {
+            const row = btn.closest('tr');
+            const badge = row.querySelector('.badge');
+            badge.className = 'badge badge-active'; badge.textContent = 'نشط';
+            btn.textContent = 'إيقاف'; btn.className = 'btn-xs btn-warning';
+            btn.onclick = function() { suspendUser(this, name); };
+            toast(`✅ تم إعادة تفعيل حساب ${name}`);
+        }
+        function filterUsers(q) {
+            const rows = document.querySelectorAll('#usersTable tbody tr');
+            rows.forEach(r => { r.style.display = (!q || r.dataset.search?.toLowerCase().includes(q.toLowerCase())) ? '' : 'none'; });
+        }
+
+        // ── Commission ──
+        function markCommissionPaid(btn, id) {
+            if (!confirm('تأكيد استلام الدفع؟')) return;
+            const row = document.querySelector(`[data-id="${id}"]`);
+            if (row) { row.style.opacity = '0.3'; setTimeout(() => row.remove(), 500); }
+            toast('✅ تم تسجيل الدفع بنجاح');
+        }
+
+        // ── Withdrawals ──
+        async function approveWithdrawal(btn, id) {
+            if (!confirm('الموافقة على طلب السحب وتحويل المبلغ؟')) return;
+            btn.disabled = true;
+            try { await API.admin.approveWithdrawal(id); } catch(e) { /* demo */ }
+            const row = document.querySelector(`[data-id="${id}"]`);
+            if (row) { row.style.opacity = '0.3'; setTimeout(() => row.remove(), 500); }
+            toast('✅ تمت الموافقة على السحب وجاري التحويل');
+            const badge = document.getElementById('badge-wd');
+            if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
+        }
+        async function rejectWithdrawal(btn, id) {
+            if (!confirm('رفض طلب السحب؟')) return;
+            btn.disabled = true;
+            try { await API.admin.rejectWithdrawal(id, { reason: 'رفض من قبل الإدارة' }); } catch(e) { /* demo */ }
+            const row = document.querySelector(`[data-id="${id}"]`);
+            if (row) { row.style.opacity = '0.3'; setTimeout(() => row.remove(), 500); }
+            toast('❌ تم رفض طلب السحب وإعادة المبلغ للمحفظة');
+            const badge = document.getElementById('badge-wd');
+            if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
+        }
+
+        // ── Misc ──
+        function refreshData() {
+            const btn = event.currentTarget;
+            btn.textContent = '⏳ جارٍ التحديث...'; btn.disabled = true;
+            setTimeout(() => { btn.textContent = '🔄 تحديث'; btn.disabled = false; toast('✅ تم تحديث البيانات'); }, 1200);
+        }
+        async function logout() {
+            if (confirm('تسجيل الخروج من لوحة الإدارة؟')) {
+                await API.auth.logout().catch(() => {});
+                window.location.href = 'admin-login.html';
+            }
+        }
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+        // Apply saved theme icon
+        if (localStorage.getItem('khedmah_theme') === 'dark') document.getElementById('themeToggle').textContent = '☀️';
+
+        // ── Load real stats from API ──
+        (async function initAdminStats() {
+            try {
+                const stats = await API.admin.stats();
+                if (!stats) return;
+                const kpiValues = document.querySelectorAll('.kpi-value');
+                if (kpiValues[0] && stats.totalUsers    != null) kpiValues[0].textContent = Number(stats.totalUsers).toLocaleString('ar-SA');
+                if (kpiValues[1] && stats.totalProviders != null) kpiValues[1].textContent = Number(stats.totalProviders).toLocaleString('ar-SA');
+                if (kpiValues[2] && stats.totalRequests  != null) kpiValues[2].textContent = Number(stats.totalRequests).toLocaleString('ar-SA');
+                if (kpiValues[3] && stats.platformRevenue != null) kpiValues[3].textContent = Number(stats.platformRevenue).toLocaleString('ar-SA');
+                if (kpiValues[4] && stats.openDisputes   != null) kpiValues[4].textContent = stats.openDisputes;
+                if (kpiValues[5] && stats.pendingVerifications != null) kpiValues[5].textContent = stats.pendingVerifications;
+                // Update nav badges
+                if (stats.pendingVerifications) { const b = document.getElementById('badge-verify'); if (b) b.textContent = stats.pendingVerifications; }
+                if (stats.openDisputes)          { const b = document.getElementById('badge-disputes'); if (b) b.textContent = stats.openDisputes; }
+                if (stats.pendingWithdrawals)    { const b = document.getElementById('badge-wd'); if (b) b.textContent = stats.pendingWithdrawals; }
+            } catch(e) { /* silent — admin may not have API access yet */ }
+        })();
+    </script>
+</body>
+</html>

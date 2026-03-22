@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء مناقصة جديدة - Khedmah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --primary: #028090; --accent: #02C39A; --dark: #1E293B; --light: #F8FAFC; --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); }
+
+        /* Wizard wrap */
+        .wizard-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Sticky header */
+        .wizard-header {
+            position: sticky; top: 0; background: white; z-index: 100;
+            padding: 0.875rem 5% 0.75rem; border-bottom: 1px solid #f1f5f9;
+        }
+        .wiz-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+        .wizard-logo { font-weight: 900; font-size: 1.1rem; color: var(--primary); text-decoration: none; }
+        .wizard-actions { display: flex; gap: 0.5rem; align-items: center; }
+        .btn-draft { background: none; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.35rem 0.75rem; font-family: 'Tajawal', sans-serif; font-size: 0.8rem; color: var(--gray); cursor: pointer; }
+        .theme-toggle { width: 34px; height: 34px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: transparent; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+        .progress-bar-wrap { height: 5px; background: #e2e8f0; border-radius: 3px; margin-bottom: 0.45rem; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; }
+        .step-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--gray); }
+
+        /* Body */
+        .wizard-body { flex: 1; padding: 1.5rem 5% 6rem; max-width: 600px; margin: 0 auto; width: 100%; }
+        .step-heading { margin-bottom: 1.75rem; }
+        .step-heading h2 { font-size: 1.3rem; font-weight: 800; color: var(--dark); margin-bottom: 0.3rem; }
+        .step-heading p { color: var(--gray); font-size: 0.88rem; }
+
+        /* Fields */
+        .field-group { margin-bottom: 1.25rem; }
+        .field-label { font-size: 0.85rem; font-weight: 700; color: var(--dark); display: block; margin-bottom: 0.4rem; }
+        .req { color: var(--error); }
+        .opt { color: var(--gray); font-weight: 400; font-size: 0.75rem; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+            padding: 0.875rem 1rem; font-family: 'Tajawal', sans-serif;
+            font-size: 16px; outline: none; color: var(--dark); background: white;
+            transition: border-color 0.15s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(2,128,144,0.1); }
+        .form-textarea { resize: vertical; min-height: 110px; }
+        .field-error { color: var(--error); font-size: 0.78rem; margin-top: 0.3rem; font-weight: 600; }
+        .field-hint { color: var(--gray); font-size: 0.75rem; margin-top: 0.3rem; line-height: 1.4; }
+
+        /* Category cards */
+        .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .cat-card { border: 2px solid #e2e8f0; border-radius: 16px; padding: 1.1rem; text-align: center; cursor: pointer; transition: all 0.15s; background: white; }
+        .cat-card.selected { border-color: var(--primary); background: rgba(2,128,144,0.07); }
+        .cat-ico { font-size: 2rem; margin-bottom: 0.4rem; }
+        .cat-lbl { font-size: 0.88rem; font-weight: 700; color: var(--dark); }
+
+        /* Sub-category chips */
+        .subcat-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .subcat-chip { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.5rem 0.875rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; background: white; color: var(--dark); transition: all 0.15s; }
+        .subcat-chip.selected { border-color: var(--primary); background: rgba(2,128,144,0.08); color: var(--primary); }
+
+        /* Service mode tabs */
+        .mode-tabs { display: flex; gap: 0.5rem; }
+        .mode-tab { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.65rem; text-align: center; cursor: pointer; font-size: 0.85rem; font-weight: 600; background: white; color: var(--dark); transition: all 0.15s; }
+        .mode-tab.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* Attach toggles */
+        .attach-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .attach-btn { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.55rem 0.875rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; background: white; color: var(--gray); transition: all 0.15s; display: flex; align-items: center; gap: 0.4rem; }
+        .attach-btn.active { border-color: var(--primary); background: rgba(2,128,144,0.08); color: var(--primary); }
+
+        /* Date row */
+        .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        /* Budget type cards */
+        .budget-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+        .budget-card { border: 2px solid #e2e8f0; border-radius: 14px; padding: 1rem 0.75rem; text-align: center; cursor: pointer; background: white; transition: all 0.15s; }
+        .budget-card.selected { border-color: var(--primary); background: rgba(2,128,144,0.07); }
+        .budget-ico { font-size: 1.75rem; margin-bottom: 0.35rem; }
+        .budget-lbl { font-size: 0.82rem; font-weight: 700; color: var(--dark); }
+        .budget-sub { font-size: 0.7rem; color: var(--gray); }
+        .budget-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.875rem; }
+
+        /* Visibility toggle */
+        .visibility-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .vis-card { border: 2px solid #e2e8f0; border-radius: 14px; padding: 1.1rem; text-align: center; cursor: pointer; background: white; transition: all 0.15s; }
+        .vis-card.selected { border-color: var(--primary); background: rgba(2,128,144,0.07); }
+        .vis-ico { font-size: 1.75rem; margin-bottom: 0.4rem; }
+        .vis-lbl { font-size: 0.85rem; font-weight: 700; color: var(--dark); }
+        .vis-sub { font-size: 0.72rem; color: var(--gray); }
+
+        /* Review card (Step 6 summary) */
+        .review-block { background: white; border-radius: 16px; padding: 1.1rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .review-block-title { font-size: 0.72rem; font-weight: 800; color: var(--gray); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 0.75rem; display: flex; justify-content: space-between; }
+        .review-block-title button { background: none; border: none; color: var(--primary); font-family: 'Tajawal', sans-serif; font-size: 0.78rem; cursor: pointer; }
+        .rev-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        .rev-row:last-child { border-bottom: none; }
+        .rev-key { color: var(--gray); }
+        .rev-val { font-weight: 700; color: var(--dark); text-align: left; max-width: 60%; }
+
+        /* Info box */
+        .info-box { background: rgba(2,128,144,0.07); border-right: 3px solid var(--primary); border-radius: 10px; padding: 0.875rem 1rem; font-size: 0.85rem; color: var(--dark); line-height: 1.6; margin: 1rem 0; }
+        .warn-box { background: rgba(245,158,11,0.08); border-right: 3px solid var(--warning); border-radius: 10px; padding: 0.875rem 1rem; font-size: 0.85rem; color: #92400e; line-height: 1.6; margin: 1rem 0; }
+
+        /* Bottom nav */
+        .wizard-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background: white;
+            border-top: 1px solid #f1f5f9; padding: 0.875rem 5%;
+            padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+            display: flex; justify-content: space-between; align-items: center; gap: 0.875rem; z-index: 100;
+        }
+        .btn-prev { background: var(--light); color: var(--dark); border: none; border-radius: 12px; padding: 0.85rem 1.5rem; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+        .btn-next { background: var(--primary); color: white; border: none; border-radius: 12px; padding: 0.85rem 0; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1; }
+        .btn-skip5 { background: none; border: none; color: var(--gray); font-family: 'Tajawal', sans-serif; font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
+        .btn-publish { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0.85rem 0; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1; }
+
+        /* Success */
+        .success-wrap { text-align: center; padding: 3rem 1rem; }
+        .success-ico { font-size: 4rem; margin-bottom: 1.25rem; }
+        .success-wrap h2 { font-size: 1.6rem; font-weight: 900; color: var(--dark); margin-bottom: 0.5rem; }
+        .success-wrap p { color: var(--gray); font-size: 0.9rem; margin-bottom: 0.4rem; }
+        .success-id { background: var(--light); border-radius: 10px; padding: 0.75rem 1.25rem; display: inline-block; font-weight: 800; color: var(--primary); font-size: 1.1rem; margin: 0.75rem 0; }
+        .success-actions { display: flex; flex-direction: column; gap: 0.75rem; max-width: 280px; margin: 1.5rem auto 0; }
+        .btn-primary-action { background: var(--primary); color: white; padding: 0.95rem; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 1rem; display: block; text-align: center; }
+        .btn-secondary-action { background: var(--light); color: var(--dark); padding: 0.875rem; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 0.95rem; display: block; text-align: center; }
+
+        /* Toast */
+        #pageToast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 0.65rem 1.25rem; border-radius: 10px; font-size: 0.88rem; z-index: 2000; white-space: nowrap; display: none; }
+
+        /* Dark mode */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark .wizard-header { background: #1e293b; border-color: #334155; }
+        html.dark .wizard-nav { background: #1e293b; border-color: #334155; }
+        html.dark .btn-prev { background: #0f172a; color: #e2e8f0; }
+        html.dark .cat-card, html.dark .budget-card, html.dark .vis-card { background: #1e293b; border-color: #334155; }
+        html.dark .cat-card.selected, html.dark .budget-card.selected, html.dark .vis-card.selected { background: rgba(2,128,144,0.15); }
+        html.dark .cat-lbl, html.dark .budget-lbl, html.dark .vis-lbl { color: #e2e8f0; }
+        html.dark .subcat-chip, html.dark .mode-tab, html.dark .attach-btn { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .subcat-chip.selected { background: rgba(2,128,144,0.15); color: var(--accent); }
+        html.dark .mode-tab.selected { background: var(--primary); color: white; }
+        html.dark .attach-btn.active { background: rgba(2,128,144,0.15); color: var(--accent); }
+        html.dark .form-input, html.dark .form-select, html.dark .form-textarea { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .form-input::placeholder, html.dark .form-textarea::placeholder { color: #64748b; }
+        html.dark .field-label { color: #cbd5e1; }
+        html.dark .review-block { background: #1e293b; }
+        html.dark .rev-row { border-color: #334155; }
+        html.dark .rev-val { color: #e2e8f0; }
+        html.dark .info-box { background: rgba(2,128,144,0.12); color: #e2e8f0; }
+        html.dark .step-heading h2 { color: #e2e8f0; }
+        html.dark .success-wrap h2 { color: #e2e8f0; }
+        html.dark .btn-secondary-action { background: #1e293b; color: #e2e8f0; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+        html.dark .btn-draft { border-color: #334155; color: #94a3b8; }
+        html.dark .warn-box { background: rgba(245,158,11,0.1); }
+        html.dark .success-id { background: #1e293b; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+    <!-- Auth Guard -->
+    <script>
+        (function() {
+            const user = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (!localStorage.getItem('khedmah_demo')) { location.href = 'login.html'; return; }
+        })();
+    </script>
+
+    <!-- Theme init (before Alpine loads to prevent flash) -->
+    <script>
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+    <div class="wizard-wrap" x-data="{
+        step: 1,
+        totalSteps: 6,
+        submitted: false,
+        tenderId: '',
+
+        // Step 1
+        title: '',
+        category: '',
+        subcategory: '',
+        description: '',
+
+        // Step 2
+        city: 'الرياض',
+        locationDetail: '',
+        serviceMode: 'onsite',
+        multiCity: false,
+        extraCities: [],
+
+        // Step 3
+        scopeOfWork: '',
+        hasBOQ: false,
+        hasDrawings: false,
+        hasSpecs: false,
+        estimatedDuration: '',
+        startDate: '',
+        endDate: '',
+
+        // Step 4
+        budgetType: 'range',
+        budgetFixed: '',
+        budgetMin: '',
+        budgetMax: '',
+
+        // Step 5 (optional)
+        requiredExp: '',
+        requiredCerts: '',
+        requiredManpower: '',
+        specialRequirements: '',
+        step5Skipped: false,
+
+        // Step 6
+        deadline: '',
+        visibility: 'public',
+        isDraft: false,
+
+        errors: {},
+
+        get progressPct() { return ((this.step - 1) / (this.totalSteps - 1)) * 100; },
+        get stepLabel() {
+            return ['المعلومات الأساسية','الموقع والنطاق','تفاصيل المشروع','الميزانية','المتطلبات','الموعد والنشر'][this.step - 1];
+        },
+        get categorySubcats() {
+            const map = {
+                'إنشاء': ['بناء هياكل','خرسانة','حديد تسليح','هدم وردم'],
+                'صيانة': ['صيانة مدنية','صيانة كهربائية','صيانة ميكانيكية','صيانة عامة'],
+                'تشطيبات': ['دهانات','ديكور داخلي','أرضيات','واجهات'],
+                'عمالة': ['عمالة ماهرة','عمالة نصف ماهرة','عمالة عامة','عمالة متخصصة'],
+                'معدات': ['حفر وتجريف','رفع ونقل','مولدات','معدات تشطيب'],
+                'استشارات': ['هندسية','قانونية','إدارة مشاريع','تصميم'],
+            };
+            return map[this.category] || [];
+        },
+
+        validate() {
+            this.errors = {};
+            if (this.step === 1) {
+                if (!this.title.trim()) this.errors.title = 'عنوان المناقصة مطلوب';
+                if (!this.category) this.errors.category = 'يرجى اختيار الفئة';
+                if (this.description.trim().length < 20) this.errors.description = 'يرجى كتابة وصف أوضح';
+            }
+            if (this.step === 2 && !this.locationDetail.trim()) this.errors.location = 'يرجى تحديد الموقع';
+            if (this.step === 3 && this.scopeOfWork.trim().length < 20) this.errors.scope = 'يرجى وصف نطاق العمل بالتفصيل';
+            if (this.step === 4) {
+                if (this.budgetType === 'fixed' && !this.budgetFixed) this.errors.budget = 'يرجى إدخال الميزانية';
+                if (this.budgetType === 'range' && (!this.budgetMin || !this.budgetMax)) this.errors.budget = 'يرجى إدخال نطاق الميزانية';
+                if (this.budgetType === 'range' && this.budgetMin && this.budgetMax) {
+                    if (Number(this.budgetMin) >= Number(this.budgetMax)) {
+                        this.errors.budgetRange = 'الحد الأدنى يجب أن يكون أقل من الحد الأقصى';
+                    }
+                }
+            }
+            if (this.step === 6) {
+                if (!this.deadline) {
+                    this.errors.deadline = 'يرجى تحديد آخر موعد للتقديم';
+                } else {
+                    const deadlineDate = new Date(this.deadline);
+                    const now = new Date();
+                    if (deadlineDate <= now) {
+                        this.errors.deadline = 'يجب أن يكون الموعد النهائي في المستقبل';
+                    }
+                }
+            }
+            return Object.keys(this.errors).length === 0;
+        },
+        goNext() {
+            if (!this.validate()) return;
+            if (this.step < this.totalSteps) { this.step++; window.scrollTo(0, 0); }
+        },
+        goPrev() { if (this.step > 1) { this.step--; window.scrollTo(0, 0); } },
+        skipStep5() { this.step5Skipped = true; this.step++; window.scrollTo(0, 0); },
+
+        async publish() {
+            if (!this.validate()) return;
+            this.submitted = true;
+            window.scrollTo(0, 0);
+            try {
+                const res = await API.tenders.create({
+                    title: this.title,
+                    description: this.description,
+                    category: this.category,
+                    budget: this.budget,
+                    deadline: this.deadline,
+                    location: this.location,
+                    city: this.city,
+                });
+                this.tenderId = res?.id ? ('#TND-' + res.id.slice(-6)) : ('#TND-' + Date.now().toString().slice(-6));
+            } catch(e) {
+                this.tenderId = '#TND-' + Date.now().toString().slice(-6);
+            }
+        },
+        saveDraft() {
+            const draft = {
+                title: this.title,
+                category: this.category,
+                subcategory: this.subcategory,
+                description: this.description,
+                city: this.city,
+                budgetType: this.budgetType,
+                budgetMin: this.budgetMin,
+                budgetMax: this.budgetMax,
+                budgetFixed: this.budgetFixed,
+                deadline: this.deadline,
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem('khedmah_tender_draft', JSON.stringify(draft));
+            this.isDraft = true;
+            showToast('💾 تم حفظ المسودة');
+        }
+    }"
+    x-init="
+        const draft = localStorage.getItem('khedmah_tender_draft');
+        if (draft) {
+            try {
+                const d = JSON.parse(draft);
+                Object.keys(d).forEach(k => { if (k !== 'savedAt' && k in $data) $data[k] = d[k]; });
+            } catch(e) {}
+        }
+    "
+    >
+
+        <!-- ====== STICKY HEADER ====== -->
+        <header class="wizard-header" x-show="!submitted">
+            <div class="wiz-top">
+                <a href="tenders.html" class="wizard-logo">KHEDMAH</a>
+                <div class="wizard-actions">
+                    <button class="btn-draft" @click="saveDraft()">حفظ مسودة</button>
+                    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                </div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" :style="'width:' + progressPct + '%'"></div>
+            </div>
+            <div class="step-meta">
+                <span x-text="stepLabel"></span>
+                <span x-text="step + ' / ' + totalSteps"></span>
+            </div>
+        </header>
+
+        <!-- ====== WIZARD BODY ====== -->
+        <main class="wizard-body">
+
+            <!-- ========== SUCCESS STATE ========== -->
+            <div class="success-wrap" x-show="submitted">
+                <div class="success-ico">🎉</div>
+                <h2>تم نشر مناقصتك!</h2>
+                <div class="success-id" x-text="tenderId"></div>
+                <p>ستصلك إشعارات عند تقديم عروض جديدة</p>
+                <p style="font-size:0.82rem;margin-top:0.5rem">يتم إخطار المزودين المتطابقين تلقائياً</p>
+                <div class="success-actions">
+                    <a :href="'tender-bids.html?tenderId='+tenderId.replace('#','')" class="btn-primary-action">متابعة العروض</a>
+                    <a href="tenders.html" class="btn-secondary-action">تصفح المناقصات</a>
+                </div>
+            </div>
+
+            <!-- ========== STEP 1 — Basic Info ========== -->
+            <div class="step-panel" x-show="step === 1 && !submitted">
+                <div class="step-heading">
+                    <h2>📋 معلومات المناقصة</h2>
+                    <p>أخبرنا بالمشروع الذي تريد تنفيذه</p>
+                </div>
+
+                <!-- Title -->
+                <div class="field-group">
+                    <label class="field-label">عنوان المناقصة <span class="req">*</span></label>
+                    <input type="text" class="form-input" x-model="title" placeholder="مثال: إنشاء مبنى إداري طابقين في حي النزهة">
+                    <p class="field-error" x-show="errors.title" x-text="errors.title"></p>
+                    <p class="field-hint">اجعل العنوان واضحاً وموجزاً — يظهر لجميع المزودين</p>
+                </div>
+
+                <!-- Category -->
+                <div class="field-group">
+                    <label class="field-label">الفئة الرئيسية <span class="req">*</span></label>
+                    <div class="cat-grid">
+                        <div class="cat-card" :class="{selected: category==='إنشاء'}" @click="category='إنشاء'; subcategory=''">
+                            <div class="cat-ico">🏗️</div><div class="cat-lbl">إنشاء</div>
+                        </div>
+                        <div class="cat-card" :class="{selected: category==='صيانة'}" @click="category='صيانة'; subcategory=''">
+                            <div class="cat-ico">🔧</div><div class="cat-lbl">صيانة</div>
+                        </div>
+                        <div class="cat-card" :class="{selected: category==='تشطيبات'}" @click="category='تشطيبات'; subcategory=''">
+                            <div class="cat-ico">🎨</div><div class="cat-lbl">تشطيبات</div>
+                        </div>
+                        <div class="cat-card" :class="{selected: category==='عمالة'}" @click="category='عمالة'; subcategory=''">
+                            <div class="cat-ico">👷</div><div class="cat-lbl">عمالة</div>
+                        </div>
+                        <div class="cat-card" :class="{selected: category==='معدات'}" @click="category='معدات'; subcategory=''">
+                            <div class="cat-ico">🚜</div><div class="cat-lbl">معدات</div>
+                        </div>
+                        <div class="cat-card" :class="{selected: category==='استشارات'}" @click="category='استشارات'; subcategory=''">
+                            <div class="cat-ico">💼</div><div class="cat-lbl">استشارات</div>
+                        </div>
+                    </div>
+                    <p class="field-error" x-show="errors.category" x-text="errors.category"></p>
+                </div>
+
+                <!-- Sub-category (dynamic) -->
+                <div class="field-group" x-show="categorySubcats.length > 0">
+                    <label class="field-label">التخصص <span class="opt">(اختياري)</span></label>
+                    <div class="subcat-row">
+                        <template x-for="sc in categorySubcats" :key="sc">
+                            <div class="subcat-chip" :class="{selected: subcategory===sc}" @click="subcategory=sc" x-text="sc"></div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="field-group">
+                    <label class="field-label">وصف المشروع <span class="req">*</span></label>
+                    <textarea class="form-textarea" x-model="description" placeholder="اشرح المشروع: ما الذي تريد تنفيذه؟ ما الهدف؟ أي تفاصيل تساعد المزودين على فهم المتطلبات..."></textarea>
+                    <div style="display:flex;justify-content:flex-end;font-size:0.72rem;color:var(--gray);margin-top:0.25rem" x-text="description.length + '/500'"></div>
+                    <p class="field-error" x-show="errors.description" x-text="errors.description"></p>
+                </div>
+            </div>
+
+            <!-- ========== STEP 2 — Location & Scope ========== -->
+            <div class="step-panel" x-show="step === 2 && !submitted">
+                <div class="step-heading">
+                    <h2>📍 الموقع والنطاق</h2>
+                    <p>أين سيُنفَّذ المشروع؟</p>
+                </div>
+
+                <!-- City -->
+                <div class="field-group">
+                    <label class="field-label">المدينة <span class="req">*</span></label>
+                    <select class="form-select" x-model="city">
+                        <option>الرياض</option>
+                        <option>جدة</option>
+                        <option>الدمام</option>
+                        <option>مكة المكرمة</option>
+                        <option>المدينة المنورة</option>
+                        <option>الطائف</option>
+                        <option>أبها</option>
+                        <option>تبوك</option>
+                        <option>القصيم</option>
+                    </select>
+                </div>
+
+                <!-- Location detail -->
+                <div class="field-group">
+                    <label class="field-label">الموقع التفصيلي <span class="req">*</span></label>
+                    <input type="text" class="form-input" x-model="locationDetail" placeholder="مثال: حي العليا، شارع العروبة — قرب مركز التسوق">
+                    <p class="field-error" x-show="errors.location" x-text="errors.location"></p>
+                    <p class="field-hint">يساعد المزودين على تقدير تكاليف التنقل والوصول</p>
+                </div>
+
+                <!-- Service mode -->
+                <div class="field-group">
+                    <label class="field-label">طريقة تنفيذ العمل</label>
+                    <div class="mode-tabs">
+                        <div class="mode-tab" :class="{selected: serviceMode==='onsite'}" @click="serviceMode='onsite'">📍 في الموقع</div>
+                        <div class="mode-tab" :class="{selected: serviceMode==='remote'}" @click="serviceMode='remote'">💻 عن بُعد</div>
+                        <div class="mode-tab" :class="{selected: serviceMode==='both'}" @click="serviceMode='both'">🔄 كلاهما</div>
+                    </div>
+                </div>
+
+                <!-- Multi-city toggle -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 0;border-bottom:1px solid #f1f5f9">
+                    <div>
+                        <div style="font-size:0.9rem;font-weight:700">مشروع في مدن متعددة</div>
+                        <div style="font-size:0.75rem;color:var(--gray)">اختياري — للمشاريع الممتدة</div>
+                    </div>
+                    <label style="position:relative;width:48px;height:26px;flex-shrink:0">
+                        <input type="checkbox" x-model="multiCity" style="opacity:0;width:0;height:0">
+                        <span style="position:absolute;inset:0;background:#cbd5e1;border-radius:13px;cursor:pointer;transition:background 0.2s" :style="multiCity ? 'background:var(--primary)' : ''"></span>
+                        <span style="position:absolute;width:20px;height:20px;border-radius:50%;background:white;top:3px;right:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.15)" :style="multiCity ? 'transform:translateX(-22px)' : ''"></span>
+                    </label>
+                </div>
+
+                <div x-show="multiCity" style="margin-top:0.875rem">
+                    <div class="info-box">🏙️ يمكنك إضافة مدن أخرى بعد نشر المناقصة من لوحة التحكم</div>
+                </div>
+            </div>
+
+            <!-- ========== STEP 3 — Project Details ========== -->
+            <div class="step-panel" x-show="step === 3 && !submitted">
+                <div class="step-heading">
+                    <h2>📐 تفاصيل المشروع</h2>
+                    <p>وصف تفصيلي لنطاق العمل المطلوب</p>
+                </div>
+
+                <!-- Scope of work -->
+                <div class="field-group">
+                    <label class="field-label">نطاق العمل <span class="req">*</span></label>
+                    <textarea class="form-textarea" x-model="scopeOfWork" rows="6"
+                        placeholder="مثال:&#10;1. إنشاء هيكل خرساني مسلح طابقين&#10;2. أعمال الطابوق والمونة&#10;3. تمديد الكهرباء والسباكة&#10;4. أعمال التشطيب الخارجي"></textarea>
+                    <p class="field-error" x-show="errors.scope" x-text="errors.scope"></p>
+                    <p class="field-hint">كلما كانت تفاصيل نطاق العمل أوضح، كانت العروض أدق وأقل خلافاً</p>
+                </div>
+
+                <!-- File attachments (simulated) -->
+                <div class="field-group">
+                    <label class="field-label">الملفات المرفقة <span class="opt">(اختياري)</span></label>
+                    <div class="attach-row">
+                        <div class="attach-btn" :class="{active: hasBOQ}" @click="hasBOQ = !hasBOQ">
+                            📊 <span>جداول الكميات BOQ</span>
+                        </div>
+                        <div class="attach-btn" :class="{active: hasDrawings}" @click="hasDrawings = !hasDrawings">
+                            📐 <span>المخططات</span>
+                        </div>
+                        <div class="attach-btn" :class="{active: hasSpecs}" @click="hasSpecs = !hasSpecs">
+                            📄 <span>المواصفات</span>
+                        </div>
+                    </div>
+                    <p class="field-hint">الملفات تزيد جودة العروض المقدمة بشكل كبير</p>
+                </div>
+
+                <!-- Timeline -->
+                <div class="field-group">
+                    <label class="field-label">المدة الزمنية <span class="opt">(اختياري)</span></label>
+                    <input type="text" class="form-input" x-model="estimatedDuration" placeholder="مثال: 3 أشهر / 45 يوم عمل">
+                </div>
+
+                <div class="date-row">
+                    <div class="field-group">
+                        <label class="field-label">تاريخ البدء <span class="opt">(اختياري)</span></label>
+                        <input type="date" class="form-input" x-model="startDate">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">تاريخ الانتهاء <span class="opt">(اختياري)</span></label>
+                        <input type="date" class="form-input" x-model="endDate">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== STEP 4 — Budget ========== -->
+            <div class="step-panel" x-show="step === 4 && !submitted">
+                <div class="step-heading">
+                    <h2>💰 الميزانية</h2>
+                    <p>حدد ميزانيتك لمساعدة المزودين على تقديم عروض مناسبة</p>
+                </div>
+
+                <!-- Budget type -->
+                <div class="field-group">
+                    <label class="field-label">نوع الميزانية <span class="req">*</span></label>
+                    <div class="budget-grid">
+                        <div class="budget-card" :class="{selected: budgetType==='fixed'}" @click="budgetType='fixed'">
+                            <div class="budget-ico">🎯</div>
+                            <div class="budget-lbl">محددة</div>
+                            <div class="budget-sub">مبلغ ثابت</div>
+                        </div>
+                        <div class="budget-card" :class="{selected: budgetType==='range'}" @click="budgetType='range'">
+                            <div class="budget-ico">📊</div>
+                            <div class="budget-lbl">نطاق</div>
+                            <div class="budget-sub">من - إلى</div>
+                        </div>
+                        <div class="budget-card" :class="{selected: budgetType==='open'}" @click="budgetType='open'">
+                            <div class="budget-ico">🔓</div>
+                            <div class="budget-lbl">مفتوحة</div>
+                            <div class="budget-sub">حسب العروض</div>
+                        </div>
+                    </div>
+                    <p class="field-error" x-show="errors.budget" x-text="errors.budget"></p>
+                </div>
+
+                <!-- Fixed budget -->
+                <div class="field-group" x-show="budgetType === 'fixed'">
+                    <label class="field-label">الميزانية (ر.س) <span class="req">*</span></label>
+                    <input type="number" class="form-input" x-model="budgetFixed" placeholder="500000" min="0">
+                </div>
+
+                <!-- Range budget -->
+                <div x-show="budgetType === 'range'">
+                    <div class="budget-range-row">
+                        <div class="field-group">
+                            <label class="field-label">من (ر.س) <span class="req">*</span></label>
+                            <input type="number" class="form-input" x-model="budgetMin" placeholder="300000" min="0">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">إلى (ر.س) <span class="req">*</span></label>
+                            <input type="number" class="form-input" x-model="budgetMax" placeholder="600000" min="0">
+                        </div>
+                    </div>
+                    <div class="field-error" x-show="errors.budgetRange" x-text="errors.budgetRange"></div>
+                </div>
+
+                <!-- Open budget info -->
+                <div x-show="budgetType === 'open'">
+                    <div class="info-box">💡 الميزانية المفتوحة تجذب أكبر عدد من المزودين وتمنحك مرونة في المقارنة</div>
+                </div>
+
+                <!-- Privacy notice -->
+                <div class="warn-box">
+                    🔒 <strong>خصوصية الأسعار:</strong> لا يمكن لأي مزود رؤية سعر عروض المزودين الآخرين. فقط أنت من يرى جميع الأسعار.
+                </div>
+            </div>
+
+            <!-- ========== STEP 5 — Requirements (SKIPPABLE) ========== -->
+            <div class="step-panel" x-show="step === 5 && !submitted">
+                <div class="step-heading">
+                    <h2>✅ المتطلبات</h2>
+                    <p>حدد متطلباتك لتصفية المزودين المؤهلين <span style="color:var(--gray)">(اختياري)</span></p>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">الخبرة المطلوبة</label>
+                    <select class="form-select" x-model="requiredExp">
+                        <option value="">بدون اشتراط</option>
+                        <option>سنة أو أكثر</option>
+                        <option>3 سنوات فأكثر</option>
+                        <option>5 سنوات فأكثر</option>
+                        <option>10 سنوات فأكثر</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">الشهادات المطلوبة <span class="opt">(اختياري)</span></label>
+                    <input type="text" class="form-input" x-model="requiredCerts" placeholder="مثال: ISO 9001، شهادة سلامة OSHA">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">عدد العمالة المطلوب <span class="opt">(اختياري)</span></label>
+                    <input type="number" class="form-input" x-model="requiredManpower" placeholder="مثال: 10" min="1">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">اشتراطات خاصة <span class="opt">(اختياري)</span></label>
+                    <textarea class="form-textarea" x-model="specialRequirements" rows="3"
+                        placeholder="أي متطلبات أخرى مثل: معدات معينة، تصاريح خاصة، خبرة في مشاريع مشابهة..."></textarea>
+                </div>
+
+                <div class="info-box">💡 المتطلبات المحددة تساعد على استقطاب المزودين المؤهلين وتقليل العروض غير المناسبة</div>
+            </div>
+
+            <!-- ========== STEP 6 — Deadline + Visibility + Review ========== -->
+            <div class="step-panel" x-show="step === 6 && !submitted">
+                <div class="step-heading">
+                    <h2>📅 الموعد النهائي والنشر</h2>
+                    <p>آخر خطوة قبل نشر مناقصتك</p>
+                </div>
+
+                <!-- Deadline -->
+                <div class="field-group">
+                    <label class="field-label">آخر موعد لتقديم العروض <span class="req">*</span></label>
+                    <input type="datetime-local" class="form-input" x-model="deadline">
+                    <p class="field-error" x-show="errors.deadline" x-text="errors.deadline"></p>
+                    <p class="field-hint">يُنصح بمنح مدة لا تقل عن 5 أيام للمزودين لإعداد عروضهم</p>
+                </div>
+
+                <!-- Visibility -->
+                <div class="field-group">
+                    <label class="field-label">مستوى الظهور</label>
+                    <div class="visibility-grid">
+                        <div class="vis-card" :class="{selected: visibility==='public'}" @click="visibility='public'">
+                            <div class="vis-ico">🌐</div>
+                            <div class="vis-lbl">عامة</div>
+                            <div class="vis-sub">جميع المزودين يرونها</div>
+                        </div>
+                        <div class="vis-card" :class="{selected: visibility==='private'}" @click="visibility='private'">
+                            <div class="vis-ico">🔒</div>
+                            <div class="vis-lbl">خاصة</div>
+                            <div class="vis-sub">مزودون مدعوون فقط</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review summary -->
+                <div style="margin-top:1.5rem">
+                    <div style="font-size:0.78rem;font-weight:800;color:var(--gray);letter-spacing:0.5px;margin-bottom:0.875rem">مراجعة المناقصة</div>
+
+                    <div class="review-block">
+                        <div class="review-block-title">المعلومات الأساسية <button @click="step=1">تعديل</button></div>
+                        <div class="rev-row"><span class="rev-key">العنوان</span><span class="rev-val" x-text="title || '—'"></span></div>
+                        <div class="rev-row"><span class="rev-key">الفئة</span><span class="rev-val" x-text="category + (subcategory ? ' · ' + subcategory : '')"></span></div>
+                    </div>
+
+                    <div class="review-block">
+                        <div class="review-block-title">الموقع <button @click="step=2">تعديل</button></div>
+                        <div class="rev-row"><span class="rev-key">المدينة</span><span class="rev-val" x-text="city"></span></div>
+                        <div class="rev-row"><span class="rev-key">الموقع</span><span class="rev-val" x-text="locationDetail || '—'"></span></div>
+                    </div>
+
+                    <div class="review-block">
+                        <div class="review-block-title">الميزانية <button @click="step=4">تعديل</button></div>
+                        <div class="rev-row">
+                            <span class="rev-key">الميزانية</span>
+                            <span class="rev-val" x-text="budgetType==='fixed' ? budgetFixed+' ر.س' : budgetType==='range' ? budgetMin+' — '+budgetMax+' ر.س' : 'مفتوحة'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ====== WIZARD BOTTOM NAV ====== -->
+        <div class="wizard-nav" x-show="!submitted">
+            <button class="btn-prev" x-show="step > 1" @click="goPrev()">← رجوع</button>
+            <span x-show="step === 1"></span>
+            <button class="btn-skip5" x-show="step === 5" @click="skipStep5()">تخطي</button>
+            <button class="btn-next" x-show="step < 6" @click="goNext()">التالي ←</button>
+            <button class="btn-publish" x-show="step === 6" @click="publish()">نشر المناقصة ✓</button>
+        </div>
+
+    </div><!-- /.wizard-wrap -->
+
+    <!-- Toast -->
+    <div id="pageToast"></div>
+
+    <!-- Alpine.js v3 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+        function showToast(msg) {
+            let t = document.getElementById('pageToast');
+            if (!t) { t = document.createElement('div'); t.id = 'pageToast'; document.body.appendChild(t); }
+            t.textContent = msg; t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+
+        // Set theme toggle icon on load
+        (function() {
+            const btn = document.getElementById('themeToggle');
+            if (btn && localStorage.getItem('khedmah_theme') === 'dark') {
+                btn.textContent = '☀️';
+            }
+        })();
+    </script>
+</body>
+</html>

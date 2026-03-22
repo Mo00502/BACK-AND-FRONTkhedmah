@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>خدمة | مساعد ذكي</title>
+
+    <script>(function(){if(localStorage.getItem('khedmah_theme')==='dark')document.documentElement.classList.add('dark')})()</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #028090;
+            --accent:  #02C39A;
+            --dark:    #1E293B;
+            --light:   #F8FAFC;
+            --gray:    #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error:   #EF4444;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { height: 100%; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            color: var(--dark);
+            background: var(--light);
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Dark mode ── */
+        html.dark { color-scheme: dark; }
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark nav  { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark .messages-area { background: #0f172a; }
+        html.dark .ai .bubble-text  { background: rgba(2,128,144,0.18) !important; color: #e2e8f0; }
+        html.dark .user .bubble-text { background: var(--primary); color: white; }
+        html.dark .system-msg { background: rgba(245,158,11,0.12) !important; border-color: rgba(245,158,11,0.35) !important; color: #fcd34d !important; }
+        html.dark .done-msg   { background: rgba(16,185,129,0.12) !important; border-color: rgba(16,185,129,0.35) !important; color: #6ee7b7 !important; }
+        html.dark .input-bar  { background: #1e293b; border-color: #334155; }
+        html.dark .chat-input { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .chat-input:focus { border-color: var(--primary); }
+        html.dark .chip  { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .chip:hover { border-color: var(--accent); color: var(--accent); }
+        html.dark .ai-avatar { background: rgba(2,128,144,0.2); }
+        html.dark .typing-wrap { background: rgba(2,128,144,0.18); border-right-color: var(--primary); }
+        html.dark .timestamp  { color: #64748b; }
+        html.dark .reply-chip { background: #1e293b; }
+        html.dark .reply-chip:hover:not(:disabled) { background: var(--primary); color: white; }
+        html.dark .summary-box { background: #1e293b; border-color: #334155; }
+        html.dark .summary-row { border-color: #334155; }
+        html.dark .summary-key { color: #94a3b8; }
+        html.dark .summary-val { color: #e2e8f0; }
+        html.dark .date-sep::before, html.dark .date-sep::after { background: #334155; }
+        html.dark .nav-back  { border-color: #334155; color: #94a3b8; }
+        html.dark .nav-back:hover { background: #0f172a; color: var(--accent); border-color: var(--accent); }
+        html.dark .nav-theme-btn { border-color: #334155; color: #f59e0b; }
+        html.dark .nav-theme-btn:hover { background: #0f172a; }
+        html.dark .nav-title { color: #e2e8f0; }
+
+        /* ── Nav ── */
+        nav {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+            z-index: 10;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        }
+        .nav-back {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid #e2e8f0;
+            background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gray);
+            text-decoration: none;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .nav-back:hover { background: var(--light); color: var(--primary); border-color: var(--primary); }
+        .nav-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .nav-info { flex: 1; min-width: 0; }
+        .nav-title { font-size: 0.92rem; font-weight: 700; color: var(--dark); line-height: 1.2; }
+        .nav-status { font-size: 0.75rem; color: var(--success); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); display: inline-block; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+        .nav-theme-btn {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid #e2e8f0;
+            background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gray); cursor: pointer;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .nav-theme-btn:hover { background: var(--light); color: var(--primary); border-color: var(--primary); }
+
+        /* ── Messages area ── */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            padding-bottom: 0.5rem;
+            background: var(--light);
+            scroll-behavior: smooth;
+        }
+        .messages-area::-webkit-scrollbar { width: 4px; }
+        .messages-area::-webkit-scrollbar-track { background: transparent; }
+        .messages-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        html.dark .messages-area::-webkit-scrollbar-thumb { background: #334155; }
+
+        /* ── Message rows ── */
+        .message-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            animation: fadeInUp 0.3s ease;
+        }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        .message-row.ai   { flex-direction: row-reverse; }
+        .message-row.user { flex-direction: row; }
+
+        .message-bubble { max-width: 82%; }
+        .message-row.ai   .message-bubble { text-align: right; }
+        .message-row.user .message-bubble { text-align: left; }
+
+        /* ── Bubble text ── */
+        .bubble-text {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            line-height: 1.75;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .ai .bubble-text {
+            background: rgba(2,128,144,0.09);
+            border-right: 3px solid var(--primary);
+            border-radius: 16px 4px 16px 16px;
+            color: var(--dark);
+        }
+        .user .bubble-text {
+            background: var(--primary);
+            color: white;
+            border-radius: 4px 16px 16px 16px;
+        }
+
+        /* ── System / confirmation / done message variants ── */
+        .system-msg {
+            background: rgba(245,158,11,0.08);
+            border: 1.5px solid rgba(245,158,11,0.3);
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: #92400e;
+            white-space: pre-wrap;
+        }
+        .done-msg {
+            background: rgba(16,185,129,0.08);
+            border: 1.5px solid rgba(16,185,129,0.3);
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: #065f46;
+            white-space: pre-wrap;
+        }
+
+        /* ── Summary box ── */
+        .summary-box {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-top: 0.6rem;
+        }
+        .summary-title {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 0.5rem 0.875rem;
+            letter-spacing: 0.02em;
+        }
+        .summary-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.45rem 0.875rem;
+            border-top: 1px solid #f1f5f9;
+            gap: 0.5rem;
+        }
+        .summary-key {
+            font-size: 0.78rem;
+            color: var(--gray);
+            font-weight: 500;
+            min-width: 90px;
+            flex-shrink: 0;
+        }
+        .summary-val {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* ── AI avatar ── */
+        .ai-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: rgba(2,128,144,0.12);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            align-self: flex-end;
+        }
+
+        .timestamp { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; padding: 0 4px; }
+
+        /* ── Reply chips (inside AI messages) ── */
+        .reply-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.65rem;
+        }
+        .reply-chip {
+            padding: 0.38rem 0.8rem;
+            border-radius: 50px;
+            border: 1.5px solid var(--primary);
+            background: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: 'Tajawal', sans-serif;
+            color: var(--primary);
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .reply-chip:hover:not(:disabled) { background: var(--primary); color: white; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(2,128,144,0.25); }
+        .reply-chip:disabled { opacity: 0.45; cursor: default; border-color: #e2e8f0; color: #94a3b8; }
+        .reply-chip.confirm-chip { border-color: var(--success); color: var(--success); }
+        .reply-chip.confirm-chip:hover:not(:disabled) { background: var(--success); color: white; }
+        .reply-chip.cancel-chip  { border-color: var(--error);  color: var(--error);  }
+        .reply-chip.cancel-chip:hover:not(:disabled) { background: var(--error); color: white; }
+
+        /* ── Action cards ── */
+        .action-cards {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0 0.25rem;
+            margin-top: 0.5rem;
+            scrollbar-width: none;
+        }
+        .action-cards::-webkit-scrollbar { display: none; }
+        .action-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.875rem;
+            background: white;
+            border: 1.5px solid var(--primary);
+            border-radius: 50px;
+            text-decoration: none;
+            color: var(--primary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .action-card:hover { background: var(--primary); color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(2,128,144,0.25); }
+        html.dark .action-card { background: #1e293b; color: var(--accent); border-color: var(--accent); }
+        html.dark .action-card:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ── Quick chips (bottom bar) ── */
+        .quick-chips {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.6rem;
+            scrollbar-width: none;
+        }
+        .quick-chips::-webkit-scrollbar { display: none; }
+        .chip {
+            padding: 0.35rem 0.8rem;
+            border-radius: 50px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            color: var(--dark);
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .chip:hover { border-color: var(--primary); color: var(--primary); background: rgba(2,128,144,0.06); }
+
+        /* ── Input bar ── */
+        .input-bar {
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 0.65rem 1rem;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            flex-shrink: 0;
+        }
+        .send-row { display: flex; gap: 0.5rem; align-items: center; }
+        .chat-input {
+            flex: 1;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 50px;
+            padding: 0.6rem 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: white;
+            color: var(--dark);
+            line-height: 1.4;
+        }
+        .chat-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(2,128,144,0.1); }
+        .chat-input::placeholder { color: #94a3b8; }
+        .send-btn {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .send-btn:hover { background: var(--accent); transform: scale(1.05); }
+        .send-btn:active { transform: scale(0.96); }
+        .send-btn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+
+        /* ── Typing indicator ── */
+        .typing-row {
+            display: flex; align-items: flex-end; gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-direction: row-reverse;
+            animation: fadeInUp 0.2s ease;
+        }
+        .typing-wrap {
+            background: rgba(2,128,144,0.09);
+            border-right: 3px solid var(--primary);
+            border-radius: 16px 4px 16px 16px;
+            padding: 0.75rem 1rem;
+            display: flex; align-items: center; gap: 4px;
+            min-width: 60px;
+        }
+        .typing-indicator { display: flex; align-items: center; gap: 4px; }
+        .typing-indicator span {
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.2s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
+        /* ── Date separator ── */
+        .date-sep {
+            text-align: center;
+            font-size: 0.72rem; color: #94a3b8;
+            margin: 0.5rem 0 1.25rem;
+            position: relative;
+        }
+        .date-sep::before, .date-sep::after {
+            content: ''; position: absolute; top: 50%;
+            width: 30%; height: 1px; background: #e2e8f0;
+        }
+        .date-sep::before { right: 0; }
+        .date-sep::after  { left:  0; }
+
+        /* ── Page wrap ── */
+        .page-wrap { display: flex; flex-direction: column; height: 100%; max-width: 680px; margin: 0 auto; width: 100%; }
+        .page-wrap .messages-area { flex: 1; overflow-y: auto; }
+    </style>
+</head>
+
+<body>
+<script src="js/api.js"></script>
+    <script>
+        (function() {
+            const demo = localStorage.getItem('khedmah_demo');
+            if (!demo) { window.location.href = 'login.html'; return; }
+            try {
+                const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                if (u.role && u.role !== 'customer') {
+                    window.location.href = u.role === 'provider' ? 'provider-dashboard.html' : 'login.html';
+                }
+            } catch(e) {}
+        })();
+    </script>
+
+<div class="page-wrap" x-data="chatApp()" x-init="init()">
+
+    <!-- ── NAV ── -->
+    <nav>
+        <a href="customer-dashboard.html" class="nav-back" title="رجوع">
+            <i class="fa fa-arrow-right fa-sm"></i>
+        </a>
+        <div class="nav-avatar">🤖</div>
+        <div class="nav-info">
+            <div class="nav-title">مساعد خدمة الذكي</div>
+            <div class="nav-status">
+                <span class="status-dot"></span>
+                متاح الآن
+            </div>
+        </div>
+        <button class="nav-theme-btn" @click="toggleTheme()" :title="isDark ? 'الوضع الفاتح' : 'الوضع الداكن'">
+            <i :class="isDark ? 'fa fa-sun' : 'fa fa-moon'" class="fa-sm"></i>
+        </button>
+    </nav>
+
+    <!-- ── MESSAGES AREA ── -->
+    <div class="messages-area" id="messagesArea">
+
+        <div class="date-sep" x-text="todayLabel"></div>
+
+        <template x-for="msg in messages" :key="msg.id">
+            <div>
+                <!-- AI message -->
+                <template x-if="msg.role === 'ai'">
+                    <div class="message-row ai">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="message-bubble">
+
+                            <!-- Bubble variant: normal / system / done -->
+                            <div :class="msg.variant === 'system' ? 'system-msg' : (msg.variant === 'done' ? 'done-msg' : 'bubble-text ai')"
+                                 x-text="msg.text"></div>
+
+                            <!-- Summary box (for confirmation stage) -->
+                            <template x-if="msg.summary && msg.summary.length > 0">
+                                <div class="summary-box">
+                                    <div class="summary-title" x-text="msg.summaryTitle || 'ملخص الطلب'"></div>
+                                    <template x-for="(row, ri) in msg.summary" :key="ri">
+                                        <div class="summary-row">
+                                            <span class="summary-key" x-text="row.key"></span>
+                                            <span class="summary-val" x-text="row.val"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Reply chips (quick answers to questions) -->
+                            <template x-if="msg.chips && msg.chips.length > 0">
+                                <div class="reply-chips">
+                                    <template x-for="(chip, ci) in msg.chips" :key="ci">
+                                        <button
+                                            :class="'reply-chip' + (chip.startsWith('✅') ? ' confirm-chip' : '') + (chip.startsWith('❌') ? ' cancel-chip' : '')"
+                                            :disabled="msg.chipsUsed || isTyping"
+                                            @click="useChip(msg, chip)">
+                                            <span x-text="chip"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Action cards (links) -->
+                            <template x-if="msg.cards && msg.cards.length > 0">
+                                <div class="action-cards">
+                                    <template x-for="(card, ci) in msg.cards" :key="ci">
+                                        <a :href="card.url" class="action-card">
+                                            <span x-text="card.icon"></span>
+                                            <span x-text="card.label"></span>
+                                            <i class="fa fa-arrow-left" style="font-size:0.7rem;opacity:0.7"></i>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <div class="timestamp" x-text="msg.time"></div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- User message -->
+                <template x-if="msg.role === 'user'">
+                    <div class="message-row user">
+                        <div class="message-bubble">
+                            <div class="bubble-text user" x-text="msg.text"></div>
+                            <div class="timestamp" style="text-align:right" x-text="msg.time"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Typing indicator -->
+        <div class="typing-row" x-show="isTyping" x-transition>
+            <div class="ai-avatar">🤖</div>
+            <div>
+                <div class="typing-wrap">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── INPUT BAR ── -->
+    <div class="input-bar">
+        <div class="quick-chips">
+            <button class="chip" @click="quickSend('عندي تسرب مياه')">🔧 سباكة</button>
+            <button class="chip" @click="quickSend('أحتاج كهربائي')">⚡ كهرباء</button>
+            <button class="chip" @click="quickSend('تكييف لا يعمل')">❄️ تكييف</button>
+            <button class="chip" @click="quickSend('أريد نشر مناقصة')">📋 مناقصة</button>
+            <button class="chip" @click="quickSend('أحتاج عمالة متخصصة')">👷 عمالة</button>
+            <button class="chip" @click="quickSend('أحتاج رافعة للإيجار')">🏗️ معدات</button>
+            <button class="chip" @click="quickSend('أريد استشارة معمارية')">👨‍💼 استشارة</button>
+            <button class="chip" @click="quickSend('عندي شكوى من مزود')">⚠️ شكوى</button>
+        </div>
+        <div class="send-row">
+            <input
+                type="text"
+                class="chat-input"
+                x-model="inputText"
+                placeholder="اكتب رسالتك..."
+                @keydown.enter.prevent="submitInput()"
+                :disabled="isTyping"
+                autocomplete="off"
+                id="chatInput">
+            <button
+                class="send-btn"
+                @click="submitInput()"
+                :disabled="isTyping || !inputText.trim()"
+                title="إرسال">
+                <i class="fa fa-paper-plane fa-sm"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ SCRIPTS -->
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════════════
+//  INTENT ENGINE
+// ══════════════════════════════════════════════════════════════════════
+
+const INTENTS = {
+    HOME_SERVICE: {
+        pattern: /كهرب|سباك|تسليك|تسرب|تكييف|مكيف|دهان|نجار|تنظيف|صيانة|إصلاح|حمام|مطبخ|غاز|سخان|بلاط|أرضية|ستائر|مكافح/,
+        required: ['serviceType', 'city', 'urgency'],
+    },
+    MANPOWER: {
+        pattern: /عمال|عمالة|فنيين|نجارين|سباكين|كهربائيين|لحامين|عامل|ريجر|موظفين|أيدي عاملة|توفير كوادر|أبحث عن عمال/,
+        required: ['workerType', 'quantity', 'duration', 'city'],
+    },
+    EQUIPMENT: {
+        pattern: /معدات|رافعة|كرين|حفار|مولد|فورك|شاحنة رفع|بوم|جرافة|لودر|خلاطة|ضاغط|آلة ثقيلة|أدوات بناء/,
+        required: ['equipmentType', 'city', 'duration', 'date'],
+    },
+    TENDER: {
+        pattern: /مناقصة|مقاول|إنشاء|انشاء|بناء|مشروع كبير|أبحث عن شركة|شركة مقاولات|مشروع بميزانية|نشر مشروع|عروض أسعار/,
+        required: ['projectType', 'budget', 'city', 'deadline'],
+    },
+    CONSULTING: {
+        pattern: /استشار|مهندس استشار|معماري|مصمم|تصميم|مخطط|ديكور داخلي|خبير|مستشار|رأي متخصص/,
+        required: ['consultationType', 'city', 'date'],
+    },
+    COMPLAINT: {
+        pattern: /شكوى|مشكلة مع|متأخر جداً|لم يصل|لم يكمل|سيء|رديء|احتجاج|أبلغ عن|تضرر|غير راضي|لم يلتزم/,
+        required: ['complaintType', 'orderId'],
+    },
+    MULTI_SERVICE: {
+        pattern: /فيلا|قصر|مجمع|مشروع شامل|كل شيء|بناء كامل|مبنى تجاري|عمارة سكنية|مول|مستودع|بنائه من الصفر/,
+        required: [],
+    },
+    PAYMENT: {
+        pattern: /دفع|فاتورة|ضمان|محجوز|إفراج|استرداد|رسوم|تكلفة|سعر|مبلغ|كم تكلف|بكم|طريقة الدفع|موي سار|moyasar/,
+        required: [],
+    },
+    TRACKING: {
+        pattern: /تتبع|متابعة|وين طلبي|أين طلبي|حالة الطلب|كيف سير الطلب|طلبي رقم|لوحة الطلبات/,
+        required: [],
+    },
+};
+
+const SPECIAL_INTENTS = {
+    GREETING: /مرحبا|مرحباً|السلام|هلا|اهلا|أهلا|صباح|مساء|hi\b|hello/,
+    THANKS:   /شكر|ممنون|مشكور|شكراً|بارك الله|الله يعطيك/,
+    HELP:     /ماذا تعمل|ما تقدر تسوي|كيف تساعد|ما خدماتك|وش تقدر/,
+    RESET:    /من البداية|ابدأ من جديد|إعادة|مسح المحادثة|reset/,
+};
+
+// ── Entity extractors ──────────────────────────────────────────────────
+
+const CITIES = {
+    'الرياض':  'الرياض',   'رياض':   'الرياض',
+    'جدة':     'جدة',      'جده':    'جدة',
+    'الدمام':  'الدمام',   'دمام':   'الدمام',
+    'الخبر':   'الخبر',    'خبر':    'الخبر',
+    'مكة':     'مكة المكرمة', 'مكه':  'مكة المكرمة',
+    'المدينة': 'المدينة المنورة',
+    'أبها':    'أبها',     'ابها':   'أبها',
+    'تبوك':    'تبوك',     'بريدة':  'بريدة',
+    'الجبيل':  'الجبيل',   'ينبع':   'ينبع',
+    'حائل':    'حائل',     'نجران':  'نجران',
+    'الطائف':  'الطائف',   'طائف':   'الطائف',
+    'القصيم':  'القصيم',   'جيزان':  'جيزان',
+};
+
+function extractCity(t) {
+    for (const [k, v] of Object.entries(CITIES)) {
+        if (t.includes(k)) return v;
+    }
+    return null;
+}
+
+function extractUrgency(t) {
+    if (/عاجل|الآن|الحين|فوراً|فورا|ضروري|مستعجل|سريع|اليوم/.test(t)) return '⚡ عاجل — اليوم';
+    if (/بكره|غداً|غدا/.test(t)) return '📅 غداً';
+    if (/هذا الأسبوع|هذه الأسبوع/.test(t)) return '📆 هذا الأسبوع';
+    return null;
+}
+
+function extractQuantity(t) {
+    const m = t.match(/(\d+)\s*(عامل|فني|شخص|موظف|نجار|كهربائي|سباك|رجل|فرد)/);
+    if (m) return m[1];
+    const w = {'واحد':'1','اثنين':'2','ثلاثة':'3','أربعة':'4','خمسة':'5',
+               'ستة':'6','سبعة':'7','ثمانية':'8','تسعة':'9','عشرة':'10',
+               'عشرين':'20','ثلاثين':'30','خمسين':'50'};
+    for (const [k, v] of Object.entries(w)) {
+        if (t.includes(k)) return v;
+    }
+    return null;
+}
+
+function extractServiceType(t) {
+    if (/كهرب/.test(t)) return 'كهرباء';
+    if (/سباك|تسليك|تسرب|مياه/.test(t)) return 'سباكة';
+    if (/تكييف|مكيف/.test(t)) return 'تكييف وتبريد';
+    if (/دهان|طلاء/.test(t)) return 'دهانات';
+    if (/تنظيف|نظاف/.test(t)) return 'تنظيف';
+    if (/نجار/.test(t)) return 'نجارة';
+    if (/غاز|سخان/.test(t)) return 'أعمال غاز';
+    if (/بلاط|أرضية/.test(t)) return 'تبليط';
+    if (/مكافح|حشرات/.test(t)) return 'مكافحة حشرات';
+    if (/ستائر/.test(t)) return 'تركيب ستائر';
+    if (/صيانة|إصلاح/.test(t)) return 'صيانة عامة';
+    return null;
+}
+
+function extractWorkerType(t) {
+    if (/كهربائي/.test(t)) return 'كهربائيون';
+    if (/سباك/.test(t)) return 'سباكون';
+    if (/نجار/.test(t)) return 'نجارون';
+    if (/لحام/.test(t)) return 'لحامون';
+    if (/دهان|مدهن/.test(t)) return 'مدهنون';
+    if (/بنا|بنائ/.test(t)) return 'بنائيون';
+    if (/حفار/.test(t)) return 'حفارون';
+    if (/مهندس/.test(t)) return 'مهندسون';
+    return null;
+}
+
+function extractEquipmentType(t) {
+    if (/رافعة|كرين|crane/.test(t)) return 'رافعة (كرين)';
+    if (/حفار|excavator/.test(t)) return 'حفارة';
+    if (/مولد|generator/.test(t)) return 'مولد كهرباء';
+    if (/فورك|forklift/.test(t)) return 'رافعة شوكية';
+    if (/جرافة/.test(t)) return 'جرافة';
+    if (/لودر/.test(t)) return 'لودر';
+    if (/خلاطة|خرسانة/.test(t)) return 'خلاطة خرسانة';
+    if (/ضاغط/.test(t)) return 'ضاغط هواء';
+    if (/شاحنة/.test(t)) return 'شاحنة';
+    return null;
+}
+
+function extractDuration(t) {
+    const m = t.match(/(\d+)\s*(يوم|أيام|أسبوع|أسابيع|شهر|أشهر)/);
+    if (m) return m[1] + ' ' + m[2];
+    if (/يوم واحد/.test(t)) return 'يوم واحد';
+    if (/أسبوع/.test(t)) return 'أسبوع واحد';
+    if (/شهر/.test(t)) return 'شهر واحد';
+    return null;
+}
+
+function extractBudget(t) {
+    // normalize Arabic digits
+    t = t.replace(/[٠١٢٣٤٥٦٧٨٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    const m = t.match(/(\d[\d,\.]*)\s*(مليون|ألف|الف|k|ريال|ر\.س)?/i);
+    if (m) {
+        let val = parseFloat(m[1].replace(/,/g, ''));
+        const unit = (m[2] || '').toLowerCase();
+        if (/مليون/.test(unit)) val *= 1000000;
+        else if (/ألف|الف|k/.test(unit)) val *= 1000;
+        return val >= 1000 ? (val/1000).toFixed(val % 1000 === 0 ? 0 : 1) + 'K ر.س' : val + ' ر.س';
+    }
+    return null;
+}
+
+function extractProjectType(t) {
+    if (/فيلا/.test(t)) return 'بناء فيلا سكنية';
+    if (/مستودع/.test(t)) return 'بناء مستودع';
+    if (/عمارة|مبنى/.test(t)) return 'بناء عمارة';
+    if (/مول|تجاري/.test(t)) return 'مشروع تجاري';
+    if (/مدرسة/.test(t)) return 'مبنى تعليمي';
+    if (/ترميم|تجديد/.test(t)) return 'ترميم وتجديد';
+    if (/مجمع/.test(t)) return 'مجمع سكني';
+    return null;
+}
+
+function extractConsultationType(t) {
+    if (/معماري|architect/.test(t)) return 'معمارية';
+    if (/مدني|هندسة/.test(t)) return 'هندسة مدنية';
+    if (/ديكور/.test(t)) return 'ديكور داخلي';
+    if (/قانون|محامي/.test(t)) return 'قانونية';
+    if (/مالي|مال/.test(t)) return 'مالية';
+    if (/إنشاء|بناء/.test(t)) return 'إنشاءات';
+    return null;
+}
+
+function extractComplaintType(t) {
+    if (/تأخير|متأخر/.test(t)) return 'تأخير في الخدمة';
+    if (/جودة|رديء|سيء/.test(t)) return 'جودة غير مقبولة';
+    if (/لم يكمل/.test(t)) return 'خدمة غير مكتملة';
+    if (/دفع|مبلغ/.test(t)) return 'مشكلة في الدفع';
+    return 'شكوى عامة';
+}
+
+// ── Master entity extractor ─────────────────────────────────────────────
+
+function extractAll(text, existing = {}) {
+    const t = text;
+    const upd = { ...existing };
+    if (!upd.city)            { const v = extractCity(t);          if (v) upd.city = v; }
+    if (!upd.urgency)         { const v = extractUrgency(t);       if (v) upd.urgency = v; }
+    if (!upd.quantity)        { const v = extractQuantity(t);      if (v) upd.quantity = v; }
+    if (!upd.serviceType)     { const v = extractServiceType(t);   if (v) upd.serviceType = v; }
+    if (!upd.workerType)      { const v = extractWorkerType(t);    if (v) upd.workerType = v; }
+    if (!upd.equipmentType)   { const v = extractEquipmentType(t); if (v) upd.equipmentType = v; }
+    if (!upd.duration)        { const v = extractDuration(t);      if (v) upd.duration = v; }
+    if (!upd.budget)          { const v = extractBudget(t);        if (v) upd.budget = v; }
+    if (!upd.projectType)     { const v = extractProjectType(t);   if (v) upd.projectType = v; }
+    if (!upd.consultationType){ const v = extractConsultationType(t); if (v) upd.consultationType = v; }
+    if (!upd.complaintType)   { const v = extractComplaintType(t); if (v) upd.complaintType = v; }
+    return upd;
+}
+
+// ── Questions for each missing entity ──────────────────────────────────
+
+const QUESTIONS = {
+    city:             { text: '📍 في أي مدينة تحتاج الخدمة؟', chips: ['الرياض','جدة','الدمام','الخبر','مكة','المدينة المنورة','أبها','مدينة أخرى'] },
+    urgency:          { text: '⏰ ما هي درجة الأولوية؟', chips: ['⚡ عاجل — اليوم','📅 غداً','📆 هذا الأسبوع','🗓️ تاريخ محدد'] },
+    serviceType:      { text: '🔧 ما نوع الخدمة المطلوبة؟', chips: ['كهرباء','سباكة','تكييف وتبريد','دهانات','تنظيف','نجارة','صيانة عامة'] },
+    workerType:       { text: '👷 ما تخصص العمال المطلوبين؟', chips: ['كهربائيون','سباكون','نجارون','بنائيون','لحامون','مدهنون','عمال عامة'] },
+    quantity:         { text: '🔢 كم عدد العمال المطلوبين؟', chips: ['1-5','6-10','11-20','21-50','أكثر من 50'] },
+    duration:         { text: '📅 ما المدة المطلوبة؟', chips: ['يوم واحد','3 أيام','أسبوع واحد','أسبوعان','شهر','أكثر من شهر'] },
+    equipmentType:    { text: '🏗️ ما نوع المعدات التي تحتاجها؟', chips: ['رافعة (كرين)','حفارة','مولد كهرباء','رافعة شوكية','جرافة','لودر','خلاطة خرسانة'] },
+    date:             { text: '📅 متى تريد البدء؟', chips: ['اليوم','غداً','هذا الأسبوع','الأسبوع القادم','تاريخ محدد'] },
+    budget:           { text: '💰 ما الميزانية التقريبية للمشروع؟', chips: ['أقل من 100K','100K - 500K','500K - 1M','1M - 5M','أكثر من 5M'] },
+    deadline:         { text: '⏳ ما الموعد النهائي المطلوب؟', chips: ['خلال شهر','خلال 3 أشهر','خلال 6 أشهر','خلال سنة','مرن'] },
+    projectType:      { text: '🏗️ ما نوع المشروع؟', chips: ['فيلا سكنية','عمارة','مستودع','مشروع تجاري','ترميم وتجديد','مجمع سكني'] },
+    consultationType: { text: '👨‍💼 ما نوع الاستشارة المطلوبة؟', chips: ['معمارية','هندسة مدنية','ديكور داخلي','قانونية','مالية','إنشاءات'] },
+    complaintType:    { text: '⚠️ ما نوع المشكلة؟', chips: ['تأخير في الخدمة','جودة غير مقبولة','خدمة غير مكتملة','مشكلة في الدفع','أخرى'] },
+    orderId:          { text: '🔢 هل تعرف رقم الطلب المرتبط بالمشكلة؟', chips: ['لا أعرف الرقم'] },
+};
+
+// ── First AI message for each detected intent ───────────────────────────
+
+const INTENT_OPENERS = {
+    HOME_SERVICE: [
+        'فهمت! تحتاج خدمة منزلية 🔧\nسأجمع منك بعض التفاصيل لأوجّهك للمزود المثالي.',
+        'تمام! دعني أساعدك في إيجاد أفضل مزود متاح 🔧\nبضع أسئلة سريعة وننتهي.',
+    ],
+    MANPOWER: [
+        'ممتاز! توفير العمالة المتخصصة من تخصصاتنا الأساسية 👷\nحدد لي بعض التفاصيل.',
+        'تمام! سأساعدك في طلب العدد والتخصص المناسب 👷',
+    ],
+    EQUIPMENT: [
+        'بالطبع! لدينا مجموعة واسعة من المعدات الثقيلة والخفيفة 🏗️\nبضع تفاصيل وسنُرتّب لك.',
+        'تمام! استئجار المعدات متاح مع ضمان الجودة 🏗️\nدعنا نبدأ.',
+    ],
+    TENDER: [
+        'رائع! المناقصة أفضل طريقة للحصول على أسعار تنافسية 📋\nسأساعدك في إنشاء مناقصتك خطوة بخطوة.',
+        'ممتاز! سنشر مناقصتك وتصلك عروض من مقاولين معتمدين 📋',
+    ],
+    CONSULTING: [
+        'ممتاز! لدينا مستشارون معتمدون في مختلف المجالات 👨‍💼\nأحتاج بعض التفاصيل لاختيار الأنسب.',
+        'رائع! الاستشارة المتخصصة هي الخطوة الأولى الصحيحة 👨‍💼',
+    ],
+    COMPLAINT: [
+        'آسف لسماع ذلك ⚠️ سأساعدك في رفع شكواك بأسرع وقت.\nدعني أجمع التفاصيل.',
+        'تفهّمت الموضوع ⚠️ سنحل هذه المشكلة معاً. بضعة أسئلة.',
+    ],
+};
+
+// ── Confirmation summary builder ────────────────────────────────────────
+
+function buildSummary(intent, entities) {
+    const summaryMap = {
+        HOME_SERVICE: [
+            { key: 'الخدمة',     val: entities.serviceType },
+            { key: 'المدينة',    val: entities.city },
+            { key: 'الأولوية',   val: entities.urgency },
+            entities.description && { key: 'التفاصيل', val: entities.description },
+        ],
+        MANPOWER: [
+            { key: 'التخصص',     val: entities.workerType },
+            { key: 'العدد',      val: entities.quantity + ' عامل' },
+            { key: 'المدة',      val: entities.duration },
+            { key: 'المدينة',    val: entities.city },
+        ],
+        EQUIPMENT: [
+            { key: 'المعدة',     val: entities.equipmentType },
+            { key: 'المدينة',    val: entities.city },
+            { key: 'المدة',      val: entities.duration },
+            { key: 'تاريخ البدء',val: entities.date },
+        ],
+        TENDER: [
+            { key: 'المشروع',    val: entities.projectType },
+            { key: 'الميزانية',  val: entities.budget },
+            { key: 'الموقع',     val: entities.city },
+            { key: 'الموعد',     val: entities.deadline },
+        ],
+        CONSULTING: [
+            { key: 'نوع الاستشارة', val: entities.consultationType },
+            { key: 'المدينة',       val: entities.city },
+            { key: 'الموعد المفضل', val: entities.date },
+        ],
+        COMPLAINT: [
+            { key: 'نوع المشكلة', val: entities.complaintType },
+            { key: 'رقم الطلب',   val: entities.orderId },
+        ],
+    };
+    return (summaryMap[intent] || []).filter(Boolean);
+}
+
+const INTENT_SUMMARY_TITLE = {
+    HOME_SERVICE: '🔧 طلب خدمة منزلية',
+    MANPOWER:     '👷 طلب عمالة',
+    EQUIPMENT:    '🏗️ طلب معدات',
+    TENDER:       '📋 إنشاء مناقصة',
+    CONSULTING:   '👨‍💼 حجز استشارة',
+    COMPLAINT:    '⚠️ رفع شكوى',
+};
+
+// ── Action execution: what to do after confirm ──────────────────────────
+
+function executeAction(intent, entities) {
+    const reqId = 'REQ-' + Date.now().toString().slice(-6);
+    const record = { intent, entities, reqId, createdAt: new Date().toISOString() };
+    localStorage.setItem('khedmah_ai_last_action', JSON.stringify(record));
+
+    // Fire real API call based on intent (fire-and-forget; UI proceeds regardless)
+    if (intent === 'HOME_SERVICE') {
+        API.requests.create({ serviceTitle: entities.serviceType, city: entities.city, description: entities.description || '' }).catch(() => {});
+    } else if (intent === 'TENDER') {
+        API.tenders.create({ title: entities.projectType, city: entities.city, budget: entities.budget, deadline: entities.deadline }).catch(() => {});
+    } else if (intent === 'CONSULTING') {
+        API.consultations.book({ consultationType: entities.consultationType, city: entities.city, scheduledDate: entities.date }).catch(() => {});
+    }
+
+    const msgs = {
+        HOME_SERVICE: `✅ تم إرسال طلبك بنجاح!\n\n🔢 رقم الطلب: #${reqId}\n🔧 الخدمة: ${entities.serviceType}\n📍 المدينة: ${entities.city}\n⚡ الأولوية: ${entities.urgency}\n\nسيتواصل معك أقرب مزود متاح في منطقتك خلال دقائق. يمكنك متابعة حالة الطلب من لوحة التحكم.`,
+        MANPOWER:     `✅ تم إرسال طلب العمالة!\n\n🔢 رقم الطلب: #${reqId}\n👷 التخصص: ${entities.workerType}\n🔢 العدد: ${entities.quantity} عامل\n📅 المدة: ${entities.duration}\n📍 المدينة: ${entities.city}\n\nستصلك عروض من المورّدين المعتمدين خلال ساعات.`,
+        EQUIPMENT:    `✅ تم إرسال طلب المعدات!\n\n🔢 رقم الطلب: #${reqId}\n🏗️ المعدة: ${entities.equipmentType}\n📅 تاريخ البدء: ${entities.date}\n⏱️ المدة: ${entities.duration}\n📍 المدينة: ${entities.city}\n\nستصلك عروض الإيجار من المورّدين القريبين.`,
+        TENDER:       `✅ تم إنشاء مناقصتك!\n\n🔢 رقم المناقصة: #TND-${reqId.slice(-4)}\n🏗️ المشروع: ${entities.projectType}\n💰 الميزانية: ${entities.budget}\n📍 الموقع: ${entities.city}\n⏳ الموعد: ${entities.deadline}\n\nتم نشر مناقصتك — ستبدأ العروض بالوصول من المقاولين المعتمدين.`,
+        CONSULTING:   `✅ تم حجز طلب الاستشارة!\n\n🔢 رقم الطلب: #${reqId}\n👨‍💼 نوع الاستشارة: ${entities.consultationType}\n📅 الموعد المفضل: ${entities.date}\n📍 المدينة: ${entities.city}\n\nسيتواصل معك المستشار المختص لتأكيد الموعد.`,
+        COMPLAINT:    `✅ تم رفع شكواك بنجاح!\n\n🔢 رقم الشكوى: #CMP-${reqId.slice(-4)}\n⚠️ المشكلة: ${entities.complaintType}\n📝 رقم الطلب: ${entities.orderId}\n\nسيراجع فريق الدعم شكواك خلال 24 ساعة. يمكنك متابعة حالتها من لوحة التحكم.`,
+    };
+
+    const cards = {
+        HOME_SERVICE: [
+            { icon: '📍', label: 'تتبع الطلب',     url: 'order-tracking.html' },
+            { icon: '📊', label: 'لوحة التحكم',    url: 'customer-dashboard.html' },
+        ],
+        MANPOWER:  [
+            { icon: '📊', label: 'لوحة التحكم',  url: 'customer-dashboard.html' },
+            { icon: '📋', label: 'إنشاء مناقصة', url: 'tender-create.html' },
+        ],
+        EQUIPMENT: [
+            { icon: '🏗️', label: 'تصفح المعدات', url: 'equipment.html' },
+            { icon: '📊', label: 'لوحة التحكم',  url: 'customer-dashboard.html' },
+        ],
+        TENDER: [
+            { icon: '📋', label: 'إدارة مناقصاتي', url: 'tenders.html' },
+            { icon: '📊', label: 'لوحة التحكم',    url: 'customer-dashboard.html' },
+        ],
+        CONSULTING: [
+            { icon: '👨‍💼', label: 'تصفح المستشارين', url: 'consultations.html' },
+            { icon: '📊', label: 'لوحة التحكم',     url: 'customer-dashboard.html' },
+        ],
+        COMPLAINT: [
+            { icon: '💬', label: 'الدردشة مع الدعم', url: 'chat.html?type=support' },
+            { icon: '📊', label: 'لوحة التحكم',     url: 'customer-dashboard.html' },
+        ],
+    };
+
+    return {
+        text: msgs[intent] || '✅ تم إرسال طلبك بنجاح!',
+        cards: cards[intent] || [],
+        variant: 'done',
+    };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  ALPINE COMPONENT
+// ══════════════════════════════════════════════════════════════════════
+
+function chatApp() {
+    return {
+        messages:    [],
+        inputText:   '',
+        isTyping:    false,
+        isDark:      document.documentElement.classList.contains('dark'),
+        todayLabel:  '',
+
+        // ── Conversation state ──────────────────────────────────────
+        conv: {
+            intent:   null,
+            entities: {},
+            awaiting: null,
+            stage:    'idle',   // idle | gathering | confirming | done
+        },
+
+        // ── Init ────────────────────────────────────────────────────
+        init() {
+            const d    = new Date();
+            const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+            this.todayLabel = 'اليوم — ' + days[d.getDay()];
+
+            this._pushAI({
+                text: 'مرحباً! أنا مساعد خدمة الذكي 👋\n\nأستطيع مساعدتك في:\n• خدمات منزلية (كهرباء، سباكة، تكييف...)\n• مناقصات المشاريع\n• توفير العمالة المتخصصة\n• تأجير المعدات الثقيلة\n• الاستشارات الهندسية والفنية\n• رفع الشكاوى والمتابعة\n\nماذا تحتاج؟',
+                chips: ['🔧 خدمة منزلية','📋 مناقصة','👷 عمالة','🏗️ معدات','👨‍💼 استشارة','⚠️ شكوى'],
+            });
+            this.$nextTick(() => this.scrollBottom());
+        },
+
+        // ── Submit input ────────────────────────────────────────────
+        submitInput() {
+            const t = this.inputText.trim();
+            if (!t || this.isTyping) return;
+            this.inputText = '';
+            this.sendMessage(t);
+        },
+
+        // ── Quick chip shortcut (doesn't disable typing) ────────────
+        quickSend(text) {
+            if (this.isTyping) return;
+            this.sendMessage(text);
+        },
+
+        // ── Chip inside a message ───────────────────────────────────
+        useChip(msg, chip) {
+            if (msg.chipsUsed || this.isTyping) return;
+            msg.chipsUsed = true;
+            this.sendMessage(chip);
+        },
+
+        // ── Core send ───────────────────────────────────────────────
+        sendMessage(text) {
+            if (!text || !text.trim() || this.isTyping) return;
+            const msg = text.trim();
+
+            // Append user message
+            this.messages.push({
+                id:   Date.now(),
+                role: 'user',
+                text: msg,
+                time: this._time(),
+            });
+            this.$nextTick(() => this.scrollBottom());
+
+            this.isTyping = true;
+
+            // Simulate thinking delay (400-900ms)
+            const delay = 400 + Math.random() * 500;
+            setTimeout(() => {
+                this.isTyping = false;
+                const response = this._process(msg);
+                this._pushAI(response);
+                this.$nextTick(() => this.scrollBottom());
+            }, delay);
+        },
+
+        // ── Main AI processing engine ───────────────────────────────
+        _process(msg) {
+            const t = msg.toLowerCase();
+
+            // ── Special: reset
+            if (SPECIAL_INTENTS.RESET.test(t)) {
+                this.conv = { intent: null, entities: {}, awaiting: null, stage: 'idle' };
+                return {
+                    text: 'تمام! لنبدأ من جديد 🔄\nماذا تحتاج؟',
+                    chips: ['🔧 خدمة منزلية','📋 مناقصة','👷 عمالة','🏗️ معدات','👨‍💼 استشارة','⚠️ شكوى'],
+                };
+            }
+
+            // ── Special: greeting
+            if (!this.conv.intent && SPECIAL_INTENTS.GREETING.test(t)) {
+                return this._greeting();
+            }
+
+            // ── Special: thanks
+            if (SPECIAL_INTENTS.THANKS.test(t)) {
+                return {
+                    text: 'العفو! 😊 سعيد بخدمتك دائماً.\nهل تحتاج شيئاً آخر؟',
+                    chips: ['🔧 طلب خدمة جديدة','📊 لوحة التحكم'],
+                };
+            }
+
+            // ── Special: help
+            if (SPECIAL_INTENTS.HELP.test(t)) {
+                return {
+                    text: 'أنا مساعد ذكي يمكنني:\n\n1️⃣ إنشاء طلبات الخدمات المنزلية\n2️⃣ نشر مناقصات المشاريع\n3️⃣ طلب عمالة متخصصة\n4️⃣ تأجير المعدات الثقيلة\n5️⃣ حجز استشارات هندسية\n6️⃣ رفع الشكاوى\n\nفقط أخبرني ما تحتاجه بكلامك العادي وسأتولى الباقي!',
+                    chips: ['🔧 خدمة منزلية','📋 مناقصة','👷 عمالة'],
+                };
+            }
+
+            // ── STAGE: confirming
+            if (this.conv.stage === 'confirming') {
+                return this._handleConfirmation(t, msg);
+            }
+
+            // ── Always extract entities from the message
+            this.conv.entities = extractAll(msg, this.conv.entities);
+
+            // ── If awaiting a specific answer, try to capture it
+            if (this.conv.awaiting) {
+                this._captureAnswer(this.conv.awaiting, msg);
+                this.conv.awaiting = null;
+            }
+
+            // ── Detect intent if not yet set
+            if (!this.conv.intent) {
+                // Multi-service detection
+                if (INTENTS.MULTI_SERVICE.pattern.test(t)) {
+                    return this._handleMultiService(msg);
+                }
+                // Payment info
+                if (INTENTS.PAYMENT.pattern.test(t)) {
+                    return this._handlePayment();
+                }
+                // Tracking
+                if (INTENTS.TRACKING.pattern.test(t)) {
+                    return this._handleTracking();
+                }
+                // Chips may contain intent keywords directly
+                const chipIntentMap = {
+                    '🔧 خدمة منزلية': 'HOME_SERVICE',
+                    '📋 مناقصة':       'TENDER',
+                    '👷 عمالة':        'MANPOWER',
+                    '🏗️ معدات':       'EQUIPMENT',
+                    '👨‍💼 استشارة':   'CONSULTING',
+                    '⚠️ شكوى':        'COMPLAINT',
+                };
+                for (const [chip, intent] of Object.entries(chipIntentMap)) {
+                    if (msg.includes(chip.replace(/[🔧📋👷🏗️👨‍💼⚠️]\s*/u, ''))) {
+                        this.conv.intent = intent;
+                        this.conv.stage = 'gathering';
+                        break;
+                    }
+                }
+                // Detect from full INTENTS patterns
+                if (!this.conv.intent) {
+                    for (const [intentKey, cfg] of Object.entries(INTENTS)) {
+                        if (intentKey === 'MULTI_SERVICE') continue;
+                        if (cfg.pattern.test(t)) {
+                            this.conv.intent = intentKey;
+                            this.conv.stage  = 'gathering';
+                            break;
+                        }
+                    }
+                }
+                // Still no intent
+                if (!this.conv.intent) {
+                    return this._fallback();
+                }
+
+                // Show intent opener + first question
+                const opener = (INTENT_OPENERS[this.conv.intent] || ['تمام!'])[Math.floor(Math.random() * 2)];
+                const firstMissing = this._nextMissing();
+                if (!firstMissing) {
+                    // All entities already in the first message — go to confirm
+                    this.conv.stage = 'confirming';
+                    return this._confirmationMessage(opener + '\n\nجمعت كل المعلومات! ');
+                }
+                this.conv.awaiting = firstMissing;
+                const q = QUESTIONS[firstMissing];
+                return {
+                    text: opener + '\n\n' + q.text,
+                    chips: q.chips,
+                };
+            }
+
+            // ── Intent already set — keep gathering
+            this.conv.stage = 'gathering';
+            const missing = this._nextMissing();
+            if (!missing) {
+                this.conv.stage = 'confirming';
+                return this._confirmationMessage();
+            }
+            this.conv.awaiting = missing;
+            const q = QUESTIONS[missing];
+            return { text: q.text, chips: q.chips };
+        },
+
+        // ── Capture an answer for the awaited entity field ──────────
+        _captureAnswer(field, msg) {
+            // Try dedicated extractor first
+            const extractors = {
+                city:             extractCity,
+                urgency:          extractUrgency,
+                quantity:         extractQuantity,
+                serviceType:      extractServiceType,
+                workerType:       extractWorkerType,
+                equipmentType:    extractEquipmentType,
+                duration:         extractDuration,
+                budget:           extractBudget,
+                projectType:      extractProjectType,
+                consultationType: extractConsultationType,
+                complaintType:    extractComplaintType,
+            };
+            const extractor = extractors[field];
+            const val = extractor ? extractor(msg) : null;
+
+            if (val) {
+                this.conv.entities[field] = val;
+            } else {
+                // Use raw answer as-is (e.g. from chips like "أسبوع واحد", "6-10", etc.)
+                // Strip leading emoji + dashes from chip labels
+                const clean = msg.replace(/^[\u{1F300}-\u{1FFFF}⚡📅📆🗓️✅❌✏️]\s*/u, '')
+                                 .replace(/\s*—.*/, '')
+                                 .trim();
+                if (clean && clean.length < 80) {
+                    this.conv.entities[field] = clean;
+                }
+            }
+        },
+
+        // ── Handle confirmation response ────────────────────────────
+        _handleConfirmation(t, msg) {
+            if (/نعم|أكد|تأكيد|صح|موافق|ok|yes|✅|ايوا|أيوا/.test(t) || msg.includes('✅')) {
+                this.conv.stage = 'done';
+                const result = executeAction(this.conv.intent, this.conv.entities);
+                // Reset conv after delay for new requests
+                setTimeout(() => {
+                    this.conv = { intent: null, entities: {}, awaiting: null, stage: 'idle' };
+                }, 8000);
+                return result;
+            }
+            if (/لا|تغيير|تعديل|خطأ|❌|✏️/.test(t) || msg.includes('❌') || msg.includes('✏️')) {
+                this.conv.stage  = 'gathering';
+                this.conv.awaiting = null;
+                return {
+                    text: 'حسناً! ما الذي تريد تعديله؟\n\nأخبرني مباشرةً أو اختر من الأسفل:',
+                    chips: this._buildEditChips(),
+                };
+            }
+            if (/إلغاء|cancel/.test(t)) {
+                this.conv = { intent: null, entities: {}, awaiting: null, stage: 'idle' };
+                return {
+                    text: 'تم إلغاء الطلب.\nكيف يمكنني مساعدتك؟',
+                    chips: ['🔧 خدمة منزلية','📋 مناقصة','👷 عمالة','🏗️ معدات'],
+                };
+            }
+            // Any other message during confirmation → try as entity update
+            this.conv.entities = extractAll(msg, this.conv.entities);
+            return this._confirmationMessage('حسناً! راجعت التفاصيل — ');
+        },
+
+        // ── Build chips listing current entity values for editing ───
+        _buildEditChips() {
+            const e = this.conv.entities;
+            const chips = [];
+            if (e.city)            chips.push('تغيير المدينة: ' + e.city);
+            if (e.urgency)         chips.push('تغيير الأولوية');
+            if (e.serviceType)     chips.push('تغيير الخدمة');
+            if (e.workerType)      chips.push('تغيير التخصص');
+            if (e.quantity)        chips.push('تغيير العدد');
+            if (e.duration)        chips.push('تغيير المدة');
+            if (e.equipmentType)   chips.push('تغيير المعدة');
+            if (e.budget)          chips.push('تغيير الميزانية');
+            if (e.projectType)     chips.push('تغيير نوع المشروع');
+            if (e.consultationType)chips.push('تغيير نوع الاستشارة');
+            return chips.slice(0, 5);
+        },
+
+        // ── Confirmation message ────────────────────────────────────
+        _confirmationMessage(prefix = '') {
+            const summary = buildSummary(this.conv.intent, this.conv.entities);
+            return {
+                text:         (prefix + 'يرجى مراجعة التفاصيل وتأكيد الطلب:').trim(),
+                summary,
+                summaryTitle: INTENT_SUMMARY_TITLE[this.conv.intent] || 'ملخص الطلب',
+                chips:        ['✅ نعم، أكد الإرسال', '✏️ تعديل', '❌ إلغاء'],
+            };
+        },
+
+        // ── Next missing required entity ────────────────────────────
+        _nextMissing() {
+            const cfg = INTENTS[this.conv.intent];
+            if (!cfg) return null;
+            for (const field of cfg.required) {
+                if (!this.conv.entities[field]) return field;
+            }
+            return null;
+        },
+
+        // ── Multi-service handler ────────────────────────────────────
+        _handleMultiService(msg) {
+            const projectType = extractProjectType(msg) || 'مشروع شامل';
+            const city = extractCity(msg);
+            return {
+                text: `رائع! يبدو أنك تحتاج حلاً متكاملاً لـ${projectType} 🏗️${city ? '\n📍 المدينة: ' + city : ''}\n\nبناءً على حجم المشروع، أنصحك بالجمع بين هذه الخدمات:`,
+                cards: [
+                    { icon: '📋', label: 'نشر مناقصة للمقاولين',   url: 'tender-create.html' },
+                    { icon: '👷', label: 'طلب عمالة متخصصة',       url: 'quote-request.html?category=manpower' },
+                    { icon: '🏗️', label: 'استئجار معدات',          url: 'equipment.html' },
+                    { icon: '👨‍💼', label: 'استشارة هندسية',        url: 'consultations.html' },
+                ],
+                chips: ['📋 أبدأ بالمناقصة','👷 أبدأ بالعمالة','🏗️ أبدأ بالمعدات'],
+            };
+        },
+
+        // ── Payment info handler ────────────────────────────────────
+        _handlePayment() {
+            return {
+                text: 'نظام الدفع في خدمة 💳\n\n🔒 الحجب الآمن (Escrow):\nيُحفظ مبلغك لدى المنصة ولا يُطلق للمزود إلا بعد إتمام الخدمة وتأكيدك.\n\nأنواع الدفع حسب الخدمة:\n🔧 خدمات منزلية — أجرة عمل + مواد (مفصولتان)\n📋 مقاولات — دفع بالمراحل حسب الإنجاز\n👨‍💼 استشارات — دفع مسبق، إفراج بعد الجلسة\n🏗️ معدات — إيجار + وديعة مستردة\n\nرسوم المنصة: 15% على الخدمات المنزلية، 2% على المقاولات.',
+                cards: [
+                    { icon: '💳', label: 'عرض المعاملات',   url: 'payment-escrow.html' },
+                    { icon: '🧾', label: 'الفواتير',         url: 'customer-invoice.html' },
+                    { icon: '📊', label: 'لوحة التحكم',      url: 'customer-dashboard.html' },
+                ],
+            };
+        },
+
+        // ── Tracking handler ────────────────────────────────────────
+        _handleTracking() {
+            return {
+                text: 'يمكنني مساعدتك في متابعة طلبك 📍\n\nتتبع حالة طلبك لحظة بلحظة من صفحة التتبع أو لوحة التحكم.',
+                cards: [
+                    { icon: '📍', label: 'تتبع الطلب',    url: 'order-tracking.html' },
+                    { icon: '📊', label: 'لوحة التحكم',   url: 'customer-dashboard.html' },
+                    { icon: '💬', label: 'تواصل مع الدعم', url: 'chat.html?type=support' },
+                ],
+            };
+        },
+
+        // ── Greeting handler ─────────────────────────────────────────
+        _greeting() {
+            const greetings = [
+                'أهلاً وسهلاً! 👋 كيف يمكنني مساعدتك اليوم؟',
+                'مرحباً بك في خدمة! 😊 ماذا تحتاج؟',
+                'هلا وغلا! 👋 أنا هنا خدمتك. بماذا أساعدك؟',
+            ];
+            return {
+                text:  greetings[Math.floor(Math.random() * greetings.length)],
+                chips: ['🔧 خدمة منزلية','📋 مناقصة','👷 عمالة','🏗️ معدات','👨‍💼 استشارة','⚠️ شكوى'],
+            };
+        },
+
+        // ── Fallback ─────────────────────────────────────────────────
+        _fallback() {
+            return {
+                text:  'أفهم ما تقصد! 😊\nاختر نوع الخدمة أو صف احتياجك بكلامك العادي:',
+                chips: ['🔧 خدمة منزلية','📋 مناقصة','👷 عمالة','🏗️ معدات','👨‍💼 استشارة','⚠️ شكوى'],
+            };
+        },
+
+        // ── Push an AI message ───────────────────────────────────────
+        _pushAI(response) {
+            this.messages.push({
+                id:           Date.now() + Math.random(),
+                role:         'ai',
+                text:         response.text || '',
+                chips:        response.chips || [],
+                cards:        response.cards || [],
+                summary:      response.summary || [],
+                summaryTitle: response.summaryTitle || '',
+                variant:      response.variant || 'normal',
+                chipsUsed:    false,
+                time:         this._time(),
+            });
+        },
+
+        // ── Helpers ──────────────────────────────────────────────────
+        _time() {
+            const n = new Date();
+            return n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+        },
+        scrollBottom() {
+            const el = document.getElementById('messagesArea');
+            if (el) el.scrollTop = el.scrollHeight;
+        },
+        toggleTheme() {
+            this.isDark = !this.isDark;
+            document.documentElement.classList.toggle('dark', this.isDark);
+            localStorage.setItem('khedmah_theme', this.isDark ? 'dark' : 'light');
+        },
+    };
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khedmah - فهرس الصفحات</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #028090, #00A896);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+        
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-box {
+            background: rgba(255,255,255,0.2);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            opacity: 0.9;
+        }
+        
+        .sections-grid {
+            display: grid;
+            gap: 2rem;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .section-header {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #028090;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #02C39A;
+        }
+        
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .page-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: #F8FAFC;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #1E293B;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .page-link:hover {
+            background: rgba(2, 128, 144, 0.05);
+            border-color: #02C39A;
+            transform: translateX(-5px);
+        }
+
+        .page-link.soon {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .soon-badge {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            color: #64748B;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        .page-icon {
+            font-size: 2rem;
+        }
+        
+        .page-info {
+            flex: 1;
+        }
+        
+        .page-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .page-desc {
+            font-size: 0.85rem;
+            color: #64748B;
+        }
+        
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark .section-card { background: #1e293b !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+        html.dark .section-header { color: #38bdf8; border-color: #334155; }
+        html.dark .page-link { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .page-link:hover { background: rgba(2,128,144,0.15); border-color: var(--accent, #02C39A); }
+        html.dark .page-desc { color: #94a3b8; }
+        html.dark .soon-badge { background: #334155; color: #94a3b8; }
+        html.dark .stat-box { background: rgba(255,255,255,0.08); }
+        .theme-toggle { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 40px; height: 40px; border-radius: 50%; background: white; border: 1.5px solid #e2e8f0; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 999; }
+        html.dark .theme-toggle { background: #1e293b; border-color: #334155; }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+            }
+            
+            .pages-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 منصة Khedmah</h1>
+            <p>فهرس شامل لجميع صفحات المشروع</p>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value">36</div>
+                    <div class="stat-label">صفحة HTML</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">9</div>
+                    <div class="stat-label">ميزات رئيسية</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">مكتمل</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sections-grid">
+            <!-- Main Pages -->
+            <div class="section-card">
+                <h2 class="section-header">📱 الصفحات الأساسية</h2>
+                <div class="pages-grid">
+                    <a href="home.html" class="page-link">
+                        <div class="page-icon">🏠</div>
+                        <div class="page-info">
+                            <div class="page-title">الصفحة الرئيسية</div>
+                            <div class="page-desc">Landing page with hero, stats, services, how it works</div>
+                        </div>
+                    </a>
+                    <a href="login.html" class="page-link">
+                        <div class="page-icon">🔐</div>
+                        <div class="page-info">
+                            <div class="page-title">تسجيل الدخول</div>
+                            <div class="page-desc">Email or username + password login</div>
+                        </div>
+                    </a>
+                    <a href="register-customer.html" class="page-link">
+                        <div class="page-icon">👤</div>
+                        <div class="page-info">
+                            <div class="page-title">إنشاء حساب عميل</div>
+                            <div class="page-desc">Customer registration with email verification</div>
+                        </div>
+                    </a>
+                    <a href="register-provider.html" class="page-link">
+                        <div class="page-icon">🔧</div>
+                        <div class="page-info">
+                            <div class="page-title">إنشاء حساب مزود</div>
+                            <div class="page-desc">Provider registration + docs upload + admin approval</div>
+                        </div>
+                    </a>
+                    <a href="forgot-password.html" class="page-link">
+                        <div class="page-icon">🔑</div>
+                        <div class="page-info">
+                            <div class="page-title">نسيت كلمة المرور</div>
+                            <div class="page-desc">Email-based password reset link</div>
+                        </div>
+                    </a>
+                    <a href="reset-password.html?token=demo_token_123" class="page-link">
+                        <div class="page-icon">🔓</div>
+                        <div class="page-info">
+                            <div class="page-title">إعادة تعيين كلمة المرور</div>
+                            <div class="page-desc">New password form (reached via email link)</div>
+                        </div>
+                    </a>
+                    <a href="admin-login.html" class="page-link">
+                        <div class="page-icon">🔑</div>
+                        <div class="page-info">
+                            <div class="page-title">تسجيل الدخول (أدمن)</div>
+                            <div class="page-desc">Admin login panel</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Customer Journey -->
+            <div class="section-card">
+                <h2 class="section-header">🛍️ رحلة العميل</h2>
+                <div class="pages-grid">
+                    <a href="search-services.html" class="page-link">
+                        <div class="page-icon">🔍</div>
+                        <div class="page-info">
+                            <div class="page-title">البحث عن خدمات</div>
+                            <div class="page-desc">Filter by category, city, rating, availability</div>
+                        </div>
+                    </a>
+                    <a href="provider-profile.html" class="page-link">
+                        <div class="page-icon">👤</div>
+                        <div class="page-info">
+                            <div class="page-title">ملف مزود الخدمة</div>
+                            <div class="page-desc">Profile with tabs: about, services, portfolio, reviews</div>
+                        </div>
+                    </a>
+                    <a href="quote-request.html" class="page-link">
+                        <div class="page-icon">📝</div>
+                        <div class="page-info">
+                            <div class="page-title">طلب عرض سعر</div>
+                            <div class="page-desc">3-step form: service type → details → confirm</div>
+                        </div>
+                    </a>
+                    <a href="customer-dashboard.html" class="page-link">
+                        <div class="page-icon">📊</div>
+                        <div class="page-info">
+                            <div class="page-title">لوحة تحكم العميل</div>
+                            <div class="page-desc">Active requests, quotes, completed, ratings</div>
+                        </div>
+                    </a>
+                    <a href="chat.html" class="page-link">
+                        <div class="page-icon">💬</div>
+                        <div class="page-info">
+                            <div class="page-title">المحادثة</div>
+                            <div class="page-desc">Real-time chat with providers</div>
+                        </div>
+                    </a>
+                    <a href="rate-service.html" class="page-link">
+                        <div class="page-icon">⭐</div>
+                        <div class="page-info">
+                            <div class="page-title">تقييم الخدمة</div>
+                            <div class="page-desc">5-star + sub-ratings, tags, photos</div>
+                        </div>
+                    </a>
+                    <a href="customer-notifications.html" class="page-link">
+                        <div class="page-icon">🔔</div>
+                        <div class="page-info">
+                            <div class="page-title">إشعارات العميل</div>
+                            <div class="page-desc">Tabs: all / unread / archive, mark-read</div>
+                        </div>
+                    </a>
+                    <a href="order-tracking.html" class="page-link">
+                        <div class="page-icon">🚗</div>
+                        <div class="page-info">
+                            <div class="page-title">تتبع الطلب</div>
+                            <div class="page-desc">4-step stepper, ETA countdown, map</div>
+                        </div>
+                    </a>
+                    <a href="customer-invoice.html" class="page-link">
+                        <div class="page-icon">🧾</div>
+                        <div class="page-info">
+                            <div class="page-title">فاتورة الخدمة</div>
+                            <div class="page-desc">Print-ready invoice, VAT, paid stamp</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Payment & Security -->
+            <div class="section-card">
+                <h2 class="section-header">💳 الدفع والحماية — نظام الدفع المزدوج</h2>
+
+                <!-- Split-payment feature highlight -->
+                <div style="background:linear-gradient(135deg,rgba(2,128,144,.08),rgba(124,58,237,.06));border:1.5px solid rgba(2,128,144,.2);border-radius:14px;padding:1.2rem 1.4rem;margin-bottom:1.2rem;">
+                    <div style="font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#7C3AED;margin-bottom:.6rem;">✨ ميزة حصرية — Split-Payment Architecture</div>
+                    <p style="font-size:.88rem;color:#475569;line-height:1.6;margin-bottom:.8rem;">
+                        كل طلب يحتوي على مواد يُقسَّم داخلياً إلى سجلين ماليين منفصلين تماماً:
+                        <strong style="color:#10B981;">رسوم الخدمة → ضمان محمي</strong> +
+                        <strong style="color:#7C3AED;">ميزانية المواد → متاحة فوراً للمزود</strong>
+                    </p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;">
+                        <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:9px;padding:.7rem;font-size:.8rem;">
+                            <div style="font-weight:700;color:#10B981;margin-bottom:.3rem;">🔒 Service Escrow</div>
+                            <div style="color:#475569;">HELD → READY_FOR_RELEASE → RELEASED | REFUNDED | DISPUTED</div>
+                        </div>
+                        <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:9px;padding:.7rem;font-size:.8rem;">
+                            <div style="font-weight:700;color:#7C3AED;margin-bottom:.3rem;">⚡ Materials Budget</div>
+                            <div style="color:#475569;">PAID_AVAILABLE → PARTIALLY_USED → FULLY_USED | REFUNDED_PARTIAL</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pages-grid">
+                    <a href="payment-escrow.html" class="page-link">
+                        <div class="page-icon">💰</div>
+                        <div class="page-info">
+                            <div class="page-title">الدفع الآمن — Split Payment</div>
+                            <div class="page-desc">اختار: خدمة فقط أو خدمة + مواد | تفصيل واضح قبل الدفع</div>
+                        </div>
+                    </a>
+                    <a href="service-confirmation.html" class="page-link">
+                        <div class="page-icon">✅</div>
+                        <div class="page-info">
+                            <div class="page-title">تأكيد الخدمة + حالة المواد</div>
+                            <div class="page-desc">إطلاق الضمان + عرض سجل مشتريات المواد + استرداد الفائض</div>
+                        </div>
+                    </a>
+                    <a href="customer-invoice.html" class="page-link">
+                        <div class="page-icon">🧾</div>
+                        <div class="page-info">
+                            <div class="page-title">الفاتورة التفصيلية</div>
+                            <div class="page-desc">فاتورة منفصلة: رسوم الخدمة + المواد + ضريبة 15%</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tenders -->
+            <div class="section-card">
+                <h2 class="section-header">📋 المناقصات</h2>
+                <div class="pages-grid">
+                    <a href="tenders.html" class="page-link">
+                        <div class="page-icon">📋</div>
+                        <div class="page-info">
+                            <div class="page-title">قائمة المناقصات</div>
+                            <div class="page-desc">Browse and filter tenders by sector, city, budget</div>
+                        </div>
+                    </a>
+                    <a href="tender-create.html" class="page-link">
+                        <div class="page-icon">✍️</div>
+                        <div class="page-info">
+                            <div class="page-title">نشر مناقصة</div>
+                            <div class="page-desc">6-step wizard: details, scope, requirements, docs</div>
+                        </div>
+                    </a>
+                    <a href="tender-detail.html?id=1" class="page-link">
+                        <div class="page-icon">🔍</div>
+                        <div class="page-info">
+                            <div class="page-title">تفاصيل المناقصة</div>
+                            <div class="page-desc">Full tender view + submit bid + countdown</div>
+                        </div>
+                    </a>
+                    <a href="tender-bids.html" class="page-link">
+                        <div class="page-icon">📊</div>
+                        <div class="page-info">
+                            <div class="page-title">إدارة العروض</div>
+                            <div class="page-desc">Review bids, shortlist, accept/reject, price insights</div>
+                        </div>
+                    </a>
+                    <a href="milestone-payments.html" class="page-link">
+                        <div class="page-icon">🏁</div>
+                        <div class="page-info">
+                            <div class="page-title">دفعات المراحل</div>
+                            <div class="page-desc">Milestone timeline, approve/dispute per phase</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Additional Marketplaces -->
+            <div class="section-card">
+                <h2 class="section-header">🏗️ الأسواق الإضافية</h2>
+                <div class="pages-grid">
+                    <a href="equipment.html" class="page-link">
+                        <div class="page-icon">🏗️</div>
+                        <div class="page-info">
+                            <div class="page-title">سوق المعدات</div>
+                            <div class="page-desc">Browse/rent equipment by category, city, price</div>
+                        </div>
+                    </a>
+                    <a href="consultations.html" class="page-link">
+                        <div class="page-icon">💼</div>
+                        <div class="page-info">
+                            <div class="page-title">الاستشارات</div>
+                            <div class="page-desc">Expert consultants by specialty, book sessions</div>
+                        </div>
+                    </a>
+                    <a href="ai-assistant.html" class="page-link">
+                        <div class="page-icon">🤖</div>
+                        <div class="page-info">
+                            <div class="page-title">المساعد الذكي</div>
+                            <div class="page-desc">AI chat — find services, get recommendations</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Provider Features -->
+            <div class="section-card">
+                <h2 class="section-header">🔧 ميزات مزود الخدمة</h2>
+                <div class="pages-grid">
+                    <a href="provider-dashboard.html" class="page-link">
+                        <div class="page-icon">📊</div>
+                        <div class="page-info">
+                            <div class="page-title">لوحة تحكم المزود</div>
+                            <div class="page-desc">New requests, active orders, wallet, quick actions</div>
+                        </div>
+                    </a>
+                    <a href="provider-wallet.html" class="page-link">
+                        <div class="page-icon">💰</div>
+                        <div class="page-info">
+                            <div class="page-title">المحفظة</div>
+                            <div class="page-desc">Balance, transaction history, withdrawal requests</div>
+                        </div>
+                    </a>
+                    <a href="provider-bank-settings.html" class="page-link">
+                        <div class="page-icon">🏦</div>
+                        <div class="page-info">
+                            <div class="page-title">إعدادات الحساب البنكي</div>
+                            <div class="page-desc">IBAN, all Saudi banks + digital banks</div>
+                        </div>
+                    </a>
+                    <a href="provider-rate-customer.html" class="page-link">
+                        <div class="page-icon">👥</div>
+                        <div class="page-info">
+                            <div class="page-title">تقييم العميل</div>
+                            <div class="page-desc">Dual rating system — provider rates customer</div>
+                        </div>
+                    </a>
+                    <a href="provider-manage-services.html" class="page-link">
+                        <div class="page-icon">🛠️</div>
+                        <div class="page-info">
+                            <div class="page-title">إدارة خدمات المزود</div>
+                            <div class="page-desc">Add/edit/delete services, toggle active</div>
+                        </div>
+                    </a>
+                    <a href="provider-availability.html" class="page-link">
+                        <div class="page-icon">📅</div>
+                        <div class="page-info">
+                            <div class="page-title">جدول التوفر</div>
+                            <div class="page-desc">Weekly schedule grid, vacation mode</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Rewards & Extras -->
+            <div class="section-card">
+                <h2 class="section-header">🎁 المكافآت والإضافات</h2>
+                <div class="pages-grid">
+                    <a href="referral-program.html" class="page-link">
+                        <div class="page-icon">🎁</div>
+                        <div class="page-info">
+                            <div class="page-title">برنامج الإحالة</div>
+                            <div class="page-desc">50 SAR each, referral code, share options</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Admin & Tools -->
+            <div class="section-card">
+                <h2 class="section-header">📚 الإدارة والأدوات</h2>
+                <div class="pages-grid">
+                    <a href="admin-login.html" class="page-link">
+                        <div class="page-icon">🔐</div>
+                        <div class="page-info">
+                            <div class="page-title">تسجيل دخول الإدارة</div>
+                            <div class="page-desc">Admin login panel</div>
+                        </div>
+                    </a>
+                    <a href="admin-dashboard.html" class="page-link">
+                        <div class="page-icon">🛡️</div>
+                        <div class="page-info">
+                            <div class="page-title">لوحة تحكم الإدارة</div>
+                            <div class="page-desc">KPIs, verifications, disputes, system health</div>
+                        </div>
+                    </a>
+                    <a href="gantt-chart.html" class="page-link">
+                        <div class="page-icon">📊</div>
+                        <div class="page-info">
+                            <div class="page-title">مخطط جانت</div>
+                            <div class="page-desc">Project Gantt chart for milestone tracking</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+    </script>
+</body>
+</html>

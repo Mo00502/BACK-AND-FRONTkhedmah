@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الفاتورة - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            min-height: 100vh;
+        }
+
+        input, select, textarea { font-size: 16px; }
+
+        /* Nav */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--primary); }
+
+        /* Actions (screen only) */
+        .action-bar {
+            max-width: 820px;
+            margin: 1.5rem auto;
+            padding: 0 5%;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-start;
+        }
+        .btn-print {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-print:hover { background: #026d7c; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(2,128,144,0.25); }
+        .btn-pdf {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-pdf:hover { background: rgba(2,128,144,0.05); }
+        .btn-back {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.2rem;
+            background: white;
+            color: var(--gray);
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { border-color: var(--gray); }
+
+        /* Invoice Card */
+        .invoice-wrapper {
+            max-width: 820px;
+            margin: 0 auto 3rem;
+            padding: 0 5%;
+        }
+        .invoice-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        /* Invoice Header */
+        .invoice-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 2.5rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .invoice-logo { font-size: 2rem; font-weight: 800; letter-spacing: 1px; }
+        .invoice-logo-sub { font-size: 0.85rem; opacity: 0.85; margin-top: 2px; }
+        .invoice-meta { text-align: left; }
+        .invoice-num { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .invoice-date { font-size: 0.9rem; opacity: 0.9; }
+
+        /* Body */
+        .invoice-body { padding: 2rem 2.5rem; }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-block h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+        .info-block p { color: var(--dark); font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .info-block .name { font-weight: 700; font-size: 1.05rem; }
+
+        /* Table */
+        .service-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+        .service-table th {
+            background: var(--light);
+            padding: 0.75rem 1rem;
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--gray);
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .service-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+        .service-table tr:last-child td { border-bottom: none; }
+        .service-table td:not(:first-child) { text-align: center; }
+        .service-table th:not(:first-child) { text-align: center; }
+        .service-name { font-weight: 600; }
+        .service-desc { font-size: 0.82rem; color: var(--gray); margin-top: 2px; }
+
+        /* Totals */
+        .totals-section {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .totals-table {
+            width: 300px;
+            margin-right: auto;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.95rem;
+            color: var(--gray);
+        }
+        .total-row.vat { color: var(--dark); }
+        .total-row.grand {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--dark);
+            padding-top: 0.75rem;
+            margin-top: 0.25rem;
+            border-top: 2px solid var(--dark);
+        }
+
+        /* Payment Info */
+        .payment-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .payment-method {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .method-icon-box {
+            width: 44px; height: 44px;
+            background: var(--light);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .method-label { font-size: 0.8rem; color: var(--gray); }
+        .method-name { font-weight: 700; font-size: 0.95rem; }
+        .escrow-ref {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        .escrow-ref span { font-weight: 700; color: var(--dark); }
+
+        /* Paid Stamp */
+        .stamp-wrapper { display: flex; justify-content: center; margin-bottom: 2rem; }
+        .paid-stamp {
+            border: 4px solid var(--success);
+            color: var(--success);
+            padding: 0.6rem 2.5rem;
+            border-radius: 8px;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            transform: rotate(-8deg);
+            display: inline-block;
+            position: relative;
+        }
+
+        /* Footer */
+        .invoice-footer {
+            background: var(--light);
+            padding: 1.5rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .invoice-footer p { font-size: 0.85rem; color: var(--gray); }
+
+        /* PDF hint */
+        .pdf-hint {
+            max-width: 820px;
+            margin: -1rem auto 2rem;
+            padding: 0 5%;
+        }
+        .pdf-hint-box {
+            background: rgba(2,128,144,0.06);
+            border: 1px solid rgba(2,128,144,0.2);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        .pdf-hint-box strong { color: var(--primary); }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav { background: #1e293b !important; border-color: #334155; }
+        html.dark .invoice-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .invoice-footer { background: #0f172a; }
+        html.dark .invoice-footer p { color: #94a3b8; }
+        html.dark .info-grid { border-color: #334155; }
+        html.dark .info-block p { color: #e2e8f0; }
+        html.dark .service-table { color: #e2e8f0; }
+        html.dark .service-table th { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .service-table td { border-color: #334155; }
+        html.dark .service-desc { color: #94a3b8; }
+        html.dark .total-row { color: #94a3b8; }
+        html.dark .total-row.vat, html.dark .total-row.grand { color: #e2e8f0; }
+        html.dark .total-row.grand { border-color: #e2e8f0; }
+        html.dark .totals-section { border-color: #334155; }
+        html.dark .method-icon-box { background: #0f172a; }
+        html.dark .method-label, html.dark .escrow-ref { color: #94a3b8; }
+        html.dark .escrow-ref span { color: #e2e8f0; }
+        html.dark .btn-back { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark .btn-pdf { background: #1e293b; }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a:hover { color: #02C39A; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        /* Print styles */
+        @media print {
+            nav, .action-bar, .pdf-hint, .btn-print, .btn-pdf, .btn-back { display: none !important; }
+            body { background: white !important; color: #1E293B !important; }
+            html.dark body { background: white !important; color: #1E293B !important; }
+            html.dark .invoice-card { background: white !important; box-shadow: none; }
+            html.dark .invoice-footer { background: #F8FAFC; }
+            html.dark .invoice-footer p, html.dark .service-desc, html.dark .total-row,
+            html.dark .method-label, html.dark .escrow-ref { color: #64748B !important; }
+            html.dark .info-block p, html.dark .service-table, html.dark .total-row.vat,
+            html.dark .total-row.grand, html.dark .escrow-ref span { color: #1E293B !important; }
+            html.dark .service-table th { background: #F8FAFC; color: #64748B; border-color: #e2e8f0; }
+            html.dark .service-table td { border-color: #f1f5f9; }
+            html.dark .info-grid, html.dark .totals-section, html.dark .total-row.grand { border-color: #e2e8f0; }
+            html.dark .method-icon-box { background: #F8FAFC; }
+            .invoice-wrapper { max-width: 100%; padding: 0; margin: 0; }
+            .invoice-card { box-shadow: none; border-radius: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .invoice-header { flex-direction: column; gap: 1rem; }
+            .invoice-meta { text-align: right; }
+            .info-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .payment-info { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="INDEX.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="customer-dashboard.html">لوحة التحكم</a>
+            <a href="customer-notifications.html">الإشعارات</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </div>
+</nav>
+
+<div class="action-bar">
+    <a href="customer-dashboard.html" class="btn-back">← رجوع</a>
+    <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+    <button class="btn-pdf" onclick="showPdfHint()">📄 تحميل PDF</button>
+</div>
+
+<div class="pdf-hint" id="pdfHint" style="display:none;">
+    <div class="pdf-hint-box">
+        <strong>تحميل PDF:</strong> في نافذة الطباعة التي ستفتح، اختر "<strong>حفظ كـ PDF</strong>" بدلاً من الطابعة، ثم اضغط حفظ.
+        <button onclick="window.print()" style="margin-right:1rem; background:var(--primary); color:white; border:none; border-radius:6px; padding:4px 12px; cursor:pointer; font-family:'Tajawal',sans-serif; font-weight:600;">فتح الطباعة</button>
+    </div>
+</div>
+
+<div class="invoice-wrapper">
+    <div class="invoice-card">
+
+        <!-- Header -->
+        <div class="invoice-header">
+            <div>
+                <div class="invoice-logo">KHEDMAH</div>
+                <div class="invoice-logo-sub">منصة الخدمات المنزلية</div>
+            </div>
+            <div class="invoice-meta">
+                <div class="invoice-num"># KH-2026-00451</div>
+                <div class="invoice-date">📅 8 مارس 2026</div>
+            </div>
+        </div>
+
+        <div class="invoice-body">
+
+            <!-- Parties Info -->
+            <div class="info-grid">
+                <div class="info-block">
+                    <h4>بيانات العميل</h4>
+                    <p class="name">محمد عبدالله السالم</p>
+                    <p>الرياض، حي النرجس</p>
+                    <p>0501234567</p>
+                    <p>m.alsalem@email.com</p>
+                </div>
+                <div class="info-block">
+                    <h4>بيانات مزود الخدمة</h4>
+                    <p class="name">أحمد السباك المحترف</p>
+                    <p>خدمات السباكة والتمديدات</p>
+                    <p>0557891234</p>
+                    <p>رقم الترخيص: PR-4521</p>
+                </div>
+            </div>
+
+            <!-- Service Table -->
+            <table class="service-table">
+                <thead>
+                    <tr>
+                        <th>الخدمة</th>
+                        <th>الكمية</th>
+                        <th>سعر الوحدة</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody id="inv-rows">
+                    <tr>
+                        <td>
+                            <div class="service-name">إصلاح تسريب مياه</div>
+                            <div class="service-desc">فحص وإصلاح تسريب أنبوب الحمام الرئيسي</div>
+                        </td>
+                        <td data-qty>1</td>
+                        <td data-unit>150</td>
+                        <td data-line></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="service-name">قطع غيار - خراطيم</div>
+                            <div class="service-desc">استبدال خرطوم وصمام التوقف</div>
+                        </td>
+                        <td data-qty>2</td>
+                        <td data-unit>15</td>
+                        <td data-line></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div class="totals-section">
+                <div class="totals-table">
+                    <div class="total-row">
+                        <span>المجموع الفرعي</span>
+                        <span id="inv-subtotal">180 ريال</span>
+                    </div>
+                    <div class="total-row vat">
+                        <span>ضريبة القيمة المضافة (15%)</span>
+                        <span id="inv-vat">27 ريال</span>
+                    </div>
+                    <div class="total-row">
+                        <span>خصم الإحالة</span>
+                        <span id="inv-discount" style="color:var(--success);">-27 ريال</span>
+                    </div>
+                    <div class="total-row grand">
+                        <span>المجموع النهائي</span>
+                        <span id="inv-grand">180 ريال</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Info -->
+            <div class="payment-info">
+                <div class="payment-method">
+                    <div class="method-icon-box">💳</div>
+                    <div>
+                        <div class="method-label">طريقة الدفع</div>
+                        <div class="method-name">بطاقة مدى •••• 4512</div>
+                    </div>
+                </div>
+                <div class="escrow-ref">
+                    مرجع صندوق الأمان: <span>ESC-2026-00451</span><br>
+                    تاريخ التحرير: <span>8 مارس 2026</span>
+                </div>
+            </div>
+
+            <!-- Paid Stamp -->
+            <div class="stamp-wrapper">
+                <div class="paid-stamp">تم الدفع بالكامل ✓</div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <p>شكراً لاختيارك Khedmah — منصة الخدمات المنزلية الموثوقة</p>
+            <p>support@khedmah.sa • 920001234</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+
+    function showPdfHint() {
+        const hint = document.getElementById('pdfHint');
+        hint.style.display = hint.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Dynamic invoice calculation
+    (function calcInvoice() {
+        const VAT_RATE = 0.15;
+        const REFERRAL_DISCOUNT = 27; // fixed referral credit (ريال)
+
+        let subtotal = 0;
+        document.querySelectorAll('#inv-rows tr').forEach(row => {
+            const qty      = parseFloat(row.querySelector('[data-qty]')?.textContent || 0);
+            const unitCell = row.querySelector('[data-unit]');
+            const unit     = parseFloat(unitCell?.textContent || 0);
+            const line     = qty * unit;
+            if (unitCell) unitCell.textContent = unit.toFixed(0) + ' ريال';
+            const lineCell = row.querySelector('[data-line]');
+            if (lineCell) lineCell.textContent = line.toFixed(0) + ' ريال';
+            subtotal += line;
+        });
+
+        const vat   = +(subtotal * VAT_RATE).toFixed(2);
+        const grand = +(subtotal + vat - REFERRAL_DISCOUNT).toFixed(2);
+
+        document.getElementById('inv-subtotal').textContent = subtotal.toFixed(0) + ' ريال';
+        document.getElementById('inv-vat').textContent      = vat.toFixed(0) + ' ريال';
+        document.getElementById('inv-discount').textContent = '-' + REFERRAL_DISCOUNT + ' ريال';
+        document.getElementById('inv-grand').textContent    = grand.toFixed(0) + ' ريال';
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المعدات - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        nav { background: white; padding: 1rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; flex-shrink: 0; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; font-size: 0.9rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .btn-list { background: var(--primary); color: white !important; padding: 0.45rem 1.1rem; border-radius: 10px; font-weight: 600 !important; }
+        .avatar-btn { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
+
+        .page-header { background: white; border-bottom: 1px solid #e2e8f0; padding: 1.25rem 5%; }
+        .page-header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+        .page-title { font-size: 1.3rem; font-weight: 800; }
+        .page-title span { color: var(--primary); }
+        .page-subtitle { font-size: 0.85rem; color: var(--gray); margin-top: 0.2rem; }
+        .header-search { display: flex; align-items: center; background: var(--light); border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; max-width: 360px; flex: 1; }
+        .header-search input { flex: 1; border: none; background: transparent; padding: 0.5rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; }
+        .header-search button { background: var(--primary); border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; font-family: 'Tajawal', sans-serif; white-space: nowrap; }
+
+        .page-layout { max-width: 1200px; margin: 0 auto; padding: 1.5rem 5%; display: flex; gap: 1.5rem; }
+
+        .filters-sidebar { width: 230px; flex-shrink: 0; }
+        .filter-panel { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        .filter-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .filter-clear { font-size: 0.75rem; color: var(--primary); cursor: pointer; font-weight: 500; }
+        .filter-option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; cursor: pointer; }
+        .filter-option input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+        .filter-option label { font-size: 0.85rem; cursor: pointer; flex: 1; }
+        .filter-option .count { font-size: 0.72rem; color: var(--gray); }
+        .range-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .range-input { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.4rem 0.6rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; width: 0; }
+        .range-input:focus { border-color: var(--primary); }
+        .filter-select { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.45rem 0.7rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; background: white; margin-top: 0.5rem; }
+
+        .results-area { flex: 1; min-width: 0; }
+        .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .results-count { font-size: 0.9rem; color: var(--gray); }
+        .results-count strong { color: var(--dark); }
+        .sort-select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.45rem 0.85rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; background: white; cursor: pointer; }
+
+        .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+        .equip-card { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); transition: box-shadow 0.2s, transform 0.2s; overflow: hidden; }
+        .equip-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .equip-card.hidden { display: none; }
+        .equip-img { height: 130px; display: flex; align-items: center; justify-content: center; font-size: 3.2rem; background: var(--light); }
+        .equip-body { padding: 1rem 1.1rem; }
+        .equip-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .equip-owner { font-size: 0.78rem; color: var(--gray); margin-bottom: 0.6rem; }
+        .equip-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 0.75rem; color: var(--gray); margin-bottom: 0.75rem; align-items: center; }
+        .avail-badge { font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 8px; }
+        .avail-yes { background: rgba(16,185,129,0.12); color: #065f46; }
+        .avail-no { background: rgba(239,68,68,0.1); color: #991b1b; }
+        .equip-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
+        .equip-footer-actions { display: flex; gap: 0.4rem; align-items: center; }
+        .equip-price { font-size: 1rem; font-weight: 800; color: var(--primary); }
+        .equip-price small { font-size: 0.72rem; font-weight: 400; color: var(--gray); }
+        .btn-rent { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 0.4rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+        .btn-rent:hover { background: #026f7e; }
+        .btn-rent:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-chat-equip { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 10px; padding: 0.35rem 0.7rem; font-family: 'Tajawal', sans-serif; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-chat-equip:hover { background: rgba(2,128,144,0.08); color: var(--primary); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.75rem; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.15rem; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; background: var(--light); border: none; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.4rem; }
+        .form-control { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.9rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+        .price-summary { background: var(--light); border-radius: 12px; padding: 1rem; margin-top: 0.5rem; }
+        .price-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 0.3rem 0; }
+        .price-row.total { font-weight: 800; font-size: 1rem; padding-top: 0.6rem; border-top: 1px solid #e2e8f0; margin-top: 0.3rem; color: var(--primary); }
+        .modal-footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-full { flex: 1; padding: 0.7rem; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; }
+        .btn-submit { background: var(--primary); color: white; }
+        .btn-submit:hover { background: #026f7e; }
+        .btn-cancel { background: var(--light); color: var(--dark); }
+
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--gray); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* Theme Toggle */
+        .theme-toggle { width: 34px; height: 34px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+
+        /* Dark Mode */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark nav { background: #1e293b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a.active { color: var(--primary); }
+        html.dark .page-header { background: #1e293b; border-color: #334155; }
+        html.dark .header-search { background: #0f172a; border-color: #334155; }
+        html.dark .header-search input { color: #e2e8f0; }
+        html.dark .filter-panel { background: #1e293b; }
+        html.dark .filter-option label { color: #cbd5e1; }
+        html.dark .filter-select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark .range-input { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .sort-select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark .equip-card { background: #1e293b; }
+        html.dark .equip-img { background: #0f172a; }
+        html.dark .equip-footer { border-color: #334155; }
+        html.dark .modal { background: #1e293b; }
+        html.dark .form-control { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .form-control:focus { border-color: var(--primary); }
+        html.dark .price-summary { background: #0f172a; }
+        html.dark .price-row { border-color: #334155; }
+        html.dark .btn-cancel { background: #334155; color: #e2e8f0; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            .filters-sidebar { display: none; }
+            .page-layout { flex-direction: column; }
+            .equip-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 500px) { .equip-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<script>
+  (function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    if (!localStorage.getItem('khedmah_demo')) {
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+
+<body>
+<script src="js/api.js"></script>
+    <nav>
+        <div class="nav-content">
+            <a href="home.html" class="logo">KHEDMAH</a>
+            <div class="nav-links">
+                <a href="search-services.html">الخدمات</a>
+                <a href="tenders.html">المناقصات</a>
+                <a href="equipment.html" class="active">المعدات</a>
+                <a href="consultations.html">الاستشارات</a>
+                <a href="#" class="btn-list" onclick="openListModal()">+ إدراج معدة</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="customer-dashboard.html" class="avatar-btn">م</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div class="page-header-inner">
+            <div>
+                <div class="page-title">تأجير <span>المعدات</span></div>
+                <div class="page-subtitle">أدوات ومعدات احترافية للإيجار اليومي</div>
+            </div>
+            <div class="header-search">
+                <input type="text" id="searchInput" placeholder="🔍 ابحث عن معدة..." oninput="applyFilters()">
+                <button onclick="applyFilters()">بحث</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-layout">
+        <aside class="filters-sidebar">
+            <div class="filter-panel">
+                <div class="filter-title">الفئة <span class="filter-clear" onclick="clearFilters()">مسح الكل</span></div>
+                <div class="filter-option"><input type="checkbox" id="c1" data-filter="cat" value="حفر" onchange="applyFilters()"><label for="c1">⛏️ حفر وتجريف</label><span class="count">12</span></div>
+                <div class="filter-option"><input type="checkbox" id="c2" data-filter="cat" value="رفع" onchange="applyFilters()"><label for="c2">🏗️ رفع ونقل</label><span class="count">8</span></div>
+                <div class="filter-option"><input type="checkbox" id="c3" data-filter="cat" value="كهرباء" onchange="applyFilters()"><label for="c3">⚡ كهرباء وطاقة</label><span class="count">15</span></div>
+                <div class="filter-option"><input type="checkbox" id="c4" data-filter="cat" value="تشطيب" onchange="applyFilters()"><label for="c4">🎨 تشطيب وبناء</label><span class="count">20</span></div>
+                <div class="filter-option"><input type="checkbox" id="c5" data-filter="cat" value="زراعة" onchange="applyFilters()"><label for="c5">🌿 زراعة ومناظر</label><span class="count">7</span></div>
+            </div>
+            <div class="filter-panel">
+                <div class="filter-title">التوفر</div>
+                <div class="filter-option"><input type="checkbox" id="av1" data-filter="avail" value="yes" onchange="applyFilters()"><label for="av1">✅ متاح الآن</label></div>
+                <div class="filter-option"><input type="checkbox" id="av2" data-filter="avail" value="no" onchange="applyFilters()"><label for="av2">⏳ محجوز</label></div>
+            </div>
+            <div class="filter-panel">
+                <div class="filter-title">الإيجار اليومي (ر.س)</div>
+                <div class="range-row">
+                    <input type="number" id="priceMin" class="range-input" placeholder="من" oninput="applyFilters()">
+                    <span style="color:var(--gray)">—</span>
+                    <input type="number" id="priceMax" class="range-input" placeholder="إلى" oninput="applyFilters()">
+                </div>
+            </div>
+            <div class="filter-panel">
+                <div class="filter-title">المدينة</div>
+                <select class="filter-select" id="cityFilter" onchange="applyFilters()">
+                    <option value="">جميع المدن</option>
+                    <option value="الرياض">الرياض</option>
+                    <option value="جدة">جدة</option>
+                    <option value="الدمام">الدمام</option>
+                    <option value="مكة المكرمة">مكة المكرمة</option>
+                </select>
+            </div>
+        </aside>
+
+        <div class="results-area">
+            <div class="results-header">
+                <div class="results-count">عرض <strong id="visibleCount">8</strong> من <strong>8</strong> معدة</div>
+                <select class="sort-select" id="sortSelect" onchange="sortEquip()">
+                    <option value="newest">الأحدث أولاً</option>
+                    <option value="price_low">السعر: الأقل</option>
+                    <option value="price_high">السعر: الأعلى</option>
+                </select>
+            </div>
+
+            <div class="equip-grid" id="equipGrid">
+                <div class="equip-card" data-cat="حفر" data-avail="yes" data-price="850" data-city="الرياض" data-date="2024-03-10">
+                    <div class="equip-img">🚜</div>
+                    <div class="equip-body">
+                        <div class="equip-name">حفار هيدروليكي 20 طن</div>
+                        <div class="equip-owner">📦 مؤسسة النخبة للمعدات</div>
+                        <div class="equip-meta">
+                            <span>📍 الرياض</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">850 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('حفار هيدروليكي 20 طن', 850)">استئجار</button>
+                                <a href="chat.html?type=equip&id=1" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="رفع" data-avail="yes" data-price="1200" data-city="جدة" data-date="2024-03-09">
+                    <div class="equip-img">🏗️</div>
+                    <div class="equip-body">
+                        <div class="equip-name">رافعة برجية 50 متر</div>
+                        <div class="equip-owner">📦 شركة الجبل للمعدات الثقيلة</div>
+                        <div class="equip-meta">
+                            <span>📍 جدة</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">1,200 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('رافعة برجية 50 متر', 1200)">استئجار</button>
+                                <a href="chat.html?type=equip&id=2" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="كهرباء" data-avail="yes" data-price="350" data-city="الرياض" data-date="2024-03-08">
+                    <div class="equip-img">⚡</div>
+                    <div class="equip-body">
+                        <div class="equip-name">مولد كهربائي 100 كيلوفولت</div>
+                        <div class="equip-owner">📦 مؤسسة الطاقة للمعدات</div>
+                        <div class="equip-meta">
+                            <span>📍 الرياض</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">350 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('مولد كهربائي 100 كيلوفولت', 350)">استئجار</button>
+                                <a href="chat.html?type=equip&id=3" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="تشطيب" data-avail="no" data-price="180" data-city="الدمام" data-date="2024-03-07">
+                    <div class="equip-img">🔨</div>
+                    <div class="equip-body">
+                        <div class="equip-name">آلة خلط الخرسانة الكهربائية</div>
+                        <div class="equip-owner">📦 أدوات البناء الحديث</div>
+                        <div class="equip-meta">
+                            <span>📍 الدمام</span>
+                            <span class="avail-badge avail-no">محجوز</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">180 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" disabled>محجوز</button>
+                                <a href="chat.html?type=equip&id=4" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="حفر" data-avail="yes" data-price="620" data-city="الرياض" data-date="2024-03-06">
+                    <div class="equip-img">🚧</div>
+                    <div class="equip-body">
+                        <div class="equip-name">جرافة بوبكات مدمجة</div>
+                        <div class="equip-owner">📦 مؤسسة النخبة للمعدات</div>
+                        <div class="equip-meta">
+                            <span>📍 الرياض</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">620 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('جرافة بوبكات مدمجة', 620)">استئجار</button>
+                                <a href="chat.html?type=equip&id=5" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="تشطيب" data-avail="yes" data-price="95" data-city="مكة المكرمة" data-date="2024-03-05">
+                    <div class="equip-img">🎨</div>
+                    <div class="equip-body">
+                        <div class="equip-name">ماكينة رش الدهان الكهربائية</div>
+                        <div class="equip-owner">📦 أدوات التشطيب المتخصصة</div>
+                        <div class="equip-meta">
+                            <span>📍 مكة المكرمة</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">95 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('ماكينة رش الدهان الكهربائية', 95)">استئجار</button>
+                                <a href="chat.html?type=equip&id=6" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="زراعة" data-avail="yes" data-price="280" data-city="جدة" data-date="2024-03-04">
+                    <div class="equip-img">🌿</div>
+                    <div class="equip-body">
+                        <div class="equip-name">جرار زراعي متعدد الاستخدامات</div>
+                        <div class="equip-owner">📦 الخضراء للمعدات الزراعية</div>
+                        <div class="equip-meta">
+                            <span>📍 جدة</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">280 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('جرار زراعي متعدد الاستخدامات', 280)">استئجار</button>
+                                <a href="chat.html?type=equip&id=7" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equip-card" data-cat="رفع" data-avail="yes" data-price="490" data-city="الدمام" data-date="2024-03-03">
+                    <div class="equip-img">🔧</div>
+                    <div class="equip-body">
+                        <div class="equip-name">ونش رفع هيدروليكي 10 طن</div>
+                        <div class="equip-owner">📦 المتحدة للمعدات الثقيلة</div>
+                        <div class="equip-meta">
+                            <span>📍 الدمام</span>
+                            <span class="avail-badge avail-yes">متاح</span>
+                        </div>
+                        <div class="equip-footer">
+                            <div class="equip-price">490 ر.س <small>/يوم</small></div>
+                            <div class="equip-footer-actions">
+                                <button class="btn-rent" onclick="openRentModal('ونش رفع هيدروليكي 10 طن', 490)">استئجار</button>
+                                <a href="chat.html?type=equip&id=8" class="btn-chat-equip">💬</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="icon">🔍</div>
+                <p>لا توجد معدات تطابق معايير البحث</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rent Modal -->
+    <div class="modal-overlay" id="rentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">استئجار معدة</div>
+                <button class="modal-close" onclick="closeModal('rentModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">المعدة</label>
+                <div style="background:var(--light); border-radius:10px; padding:0.65rem 0.9rem; font-size:0.9rem;" id="rentEquipName"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">تاريخ البداية *</label>
+                <input type="date" class="form-control" id="rentStart" onchange="calcRent()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">تاريخ الانتهاء *</label>
+                <input type="date" class="form-control" id="rentEnd" onchange="calcRent()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">موقع التسليم</label>
+                <input type="text" class="form-control" id="rentLocation" placeholder="العنوان الكامل">
+            </div>
+            <div class="price-summary" id="rentSummary" style="display:none;">
+                <div class="price-row"><span>عدد الأيام</span><span id="rentDays">0</span></div>
+                <div class="price-row"><span>السعر اليومي</span><span id="rentDailyPrice">0 ر.س</span></div>
+                <div class="price-row"><span>المجموع</span><span id="rentSubtotal">0 ر.س</span></div>
+                <div class="price-row"><span>ضريبة القيمة المضافة (15%)</span><span id="rentVAT">0 ر.س</span></div>
+                <div class="price-row total"><span>الإجمالي</span><span id="rentTotal">0 ر.س</span></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-cancel" onclick="closeModal('rentModal')">إلغاء</button>
+                <button class="btn-full btn-submit" onclick="confirmRent()">تأكيد الحجز</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List Modal -->
+    <div class="modal-overlay" id="listModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">إدراج معدة جديدة</div>
+                <button class="modal-close" onclick="closeModal('listModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">اسم المعدة *</label>
+                <input type="text" class="form-control" placeholder="مثال: حفار هيدروليكي 20 طن">
+            </div>
+            <div class="form-group">
+                <label class="form-label">الفئة *</label>
+                <select class="form-control">
+                    <option value="">اختر الفئة</option>
+                    <option>حفر وتجريف</option><option>رفع ونقل</option>
+                    <option>كهرباء وطاقة</option><option>تشطيب وبناء</option><option>زراعة ومناظر</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">السعر اليومي (ر.س) *</label>
+                <input type="number" class="form-control" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">المدينة *</label>
+                <select class="form-control">
+                    <option>الرياض</option><option>جدة</option><option>الدمام</option><option>مكة المكرمة</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">تفاصيل المعدة</label>
+                <textarea class="form-control" placeholder="الحالة، المواصفات، ما يشمله الإيجار..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-cancel" onclick="closeModal('listModal')">إلغاء</button>
+                <button class="btn-full btn-submit" onclick="submitList()">إدراج المعدة</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDailyPrice = 0;
+
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            const priceMin = parseFloat(document.getElementById('priceMin').value) || 0;
+            const priceMax = parseFloat(document.getElementById('priceMax').value) || Infinity;
+            const city = document.getElementById('cityFilter').value;
+            const cats = [...document.querySelectorAll('[data-filter="cat"]:checked')].map(el => el.value);
+            const avails = [...document.querySelectorAll('[data-filter="avail"]:checked')].map(el => el.value);
+            const cards = document.querySelectorAll('.equip-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const show = (!q || card.textContent.toLowerCase().includes(q))
+                    && (cats.length === 0 || cats.includes(card.dataset.cat))
+                    && (avails.length === 0 || avails.includes(card.dataset.avail))
+                    && (parseFloat(card.dataset.price) >= priceMin && parseFloat(card.dataset.price) <= priceMax)
+                    && (!city || card.dataset.city === city);
+                card.classList.toggle('hidden', !show);
+                if (show) visible++;
+            });
+            document.getElementById('visibleCount').textContent = visible;
+            document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        function sortEquip() {
+            const sort = document.getElementById('sortSelect').value;
+            const grid = document.getElementById('equipGrid');
+            [...grid.querySelectorAll('.equip-card')]
+                .sort((a, b) => sort === 'price_low' ? a.dataset.price - b.dataset.price
+                    : sort === 'price_high' ? b.dataset.price - a.dataset.price
+                    : new Date(b.dataset.date) - new Date(a.dataset.date))
+                .forEach(c => grid.appendChild(c));
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('[data-filter]').forEach(el => el.checked = false);
+            ['priceMin','priceMax'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        let _rentEquipName = '';
+        let _rentEquipId = null;
+        function openRentModal(name, price, id) {
+            _rentEquipName  = name;
+            _rentEquipId = id || null;
+            currentDailyPrice = price;
+            document.getElementById('rentEquipName').textContent = name;
+            ['rentStart','rentEnd','rentLocation'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('rentSummary').style.display = 'none';
+            document.getElementById('rentModal').classList.add('show');
+        }
+
+        function calcRent() {
+            const s = document.getElementById('rentStart').value;
+            const e = document.getElementById('rentEnd').value;
+            if (!s || !e) return;
+            const days = Math.max(1, Math.ceil((new Date(e) - new Date(s)) / 86400000));
+            const sub = days * currentDailyPrice;
+            const vat = sub * 0.15;
+            document.getElementById('rentDays').textContent = days + ' يوم';
+            document.getElementById('rentDailyPrice').textContent = currentDailyPrice.toLocaleString() + ' ر.س';
+            document.getElementById('rentSubtotal').textContent = sub.toLocaleString() + ' ر.س';
+            document.getElementById('rentVAT').textContent = vat.toFixed(2) + ' ر.س';
+            document.getElementById('rentTotal').textContent = (sub + vat).toFixed(2) + ' ر.س';
+            document.getElementById('rentSummary').style.display = 'block';
+        }
+
+        function openListModal() { document.getElementById('listModal').classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        async function confirmRent() {
+            const start = document.getElementById('rentStart').value;
+            const end   = document.getElementById('rentEnd').value;
+            if (!start || !end) { alert('يرجى تحديد تاريخ البداية والانتهاء'); return; }
+            const totalText = document.getElementById('rentTotal').textContent.replace(/[^\d.]/g, '') || '0';
+            closeModal('rentModal');
+            showToast('تم تأكيد الحجز ✅ — جارٍ الانتقال للدفع...');
+            let reqId = 'EQ-' + Date.now().toString().slice(-6);
+            if (_rentEquipId) {
+                try {
+                    const rental = await API.equipment.rent(_rentEquipId, { startDate: start, endDate: end });
+                    if (rental?.id) reqId = rental.id;
+                } catch(e) { /* proceed with demo ID */ }
+            }
+            setTimeout(() => {
+                const params = new URLSearchParams({
+                    requestId:    reqId,
+                    service:      'استئجار معدة — ' + _rentEquipName,
+                    hasMaterials: 'false',
+                    materialsEst: '0',
+                    serviceAmount: totalText,
+                });
+                window.location.href = 'payment-escrow.html?' + params.toString();
+            }, 1000);
+        }
+
+        function submitList() { closeModal('listModal'); showToast('تم إدراج المعدة بنجاح ✅'); }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.9rem;z-index:9999;font-family:Tajawal,sans-serif;';
+            t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+
+        // Role-aware dashboard link
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const user = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                const btn = document.querySelector('.avatar-btn');
+                if (btn && user.role === 'provider') btn.href = 'provider-dashboard.html';
+            } catch(e) {}
+        });
+    </script>
+</body>
+</html>

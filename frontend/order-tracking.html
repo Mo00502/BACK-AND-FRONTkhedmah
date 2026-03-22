@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تتبع الطلب - Khedmah</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* Nav */
+        nav {
+            background: white; padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--primary); }
+        .avatar-btn {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; cursor: pointer; text-decoration: none;
+        }
+
+        /* Main */
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 5%; }
+
+        /* Order Summary Card */
+        .order-summary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            padding: 1.75rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .order-service { display: flex; align-items: center; gap: 1rem; }
+        .service-icon-box {
+            width: 56px; height: 56px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+        }
+        .order-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .order-subtitle { font-size: 0.9rem; opacity: 0.9; }
+        .order-time-box { text-align: left; }
+        .order-time-label { font-size: 0.82rem; opacity: 0.85; margin-bottom: 0.25rem; }
+        .order-time-val { font-size: 1.1rem; font-weight: 700; }
+
+        /* Stepper */
+        .stepper-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+        }
+        .stepper-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--dark); }
+        .stepper { display: flex; flex-direction: column; gap: 0; }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            position: relative;
+        }
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 19px;
+            top: 42px;
+            width: 2px;
+            height: calc(100% - 10px);
+            background: #e2e8f0;
+            z-index: 0;
+        }
+        .step.done::after { background: var(--success); }
+        .step.active::after { background: linear-gradient(to bottom, var(--primary), #e2e8f0); }
+
+        .step-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+        .step.done .step-icon { background: var(--success); color: white; }
+        .step.active .step-icon {
+            background: var(--primary); color: white;
+            box-shadow: 0 0 0 6px rgba(2,128,144,0.15);
+            animation: stepPulse 2s infinite;
+        }
+        .step.pending .step-icon { background: #e2e8f0; color: var(--gray); }
+        @keyframes stepPulse {
+            0%,100% { box-shadow: 0 0 0 4px rgba(2,128,144,0.15); }
+            50% { box-shadow: 0 0 0 10px rgba(2,128,144,0.08); }
+        }
+
+        .step-content { padding: 0.5rem 0 1.5rem; flex: 1; }
+        .step-title {
+            font-weight: 700; font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+        }
+        .step.done .step-title { color: var(--success); }
+        .step.active .step-title { color: var(--primary); }
+        .step.pending .step-title { color: var(--gray); }
+        .step-desc { font-size: 0.83rem; color: var(--gray); }
+        .step-time { font-size: 0.78rem; color: var(--gray); margin-top: 0.2rem; }
+
+        /* ETA Timer */
+        .eta-card {
+            background: rgba(2,128,144,0.05);
+            border: 2px solid rgba(2,128,144,0.2);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .eta-label { font-size: 0.9rem; color: var(--gray); margin-bottom: 0.25rem; }
+        .eta-timer {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+        .eta-note { font-size: 0.8rem; color: var(--gray); margin-top: 0.25rem; }
+        .eta-icon { font-size: 3rem; opacity: 0.7; }
+
+        /* Bottom Grid */
+        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+        /* Provider Card */
+        .provider-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .provider-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--gray); }
+        .provider-info { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .provider-avatar {
+            width: 54px; height: 54px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: white; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .provider-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.2rem; }
+        .provider-stars { color: var(--warning); font-size: 0.85rem; }
+        .provider-rating-num { color: var(--gray); font-size: 0.82rem; }
+        .btn-call {
+            width: 100%;
+            padding: 0.7rem;
+            background: rgba(16,185,129,0.1);
+            color: var(--success);
+            border: 2px solid var(--success);
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-call:hover { background: var(--success); color: white; }
+
+        /* Map Card */
+        .map-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .map-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--gray); }
+        .map-legend { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--gray); margin-bottom: 0.75rem; }
+        .map-legend span { display: flex; align-items: center; gap: 0.3rem; }
+        #liveMap { width: 100%; height: 200px; border-radius: 12px; z-index: 1; }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex; gap: 1rem; margin-bottom: 2rem;
+        }
+        .btn-chat {
+            flex: 1; padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; border-radius: 14px;
+            font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn-chat:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(2,128,144,0.3); }
+        .btn-cancel {
+            padding: 1rem 1.5rem;
+            background: white; color: var(--error);
+            border: 2px solid var(--error); border-radius: 14px;
+            font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-cancel:hover { background: var(--error); color: white; }
+        .btn-cancel:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-cancel:disabled:hover { background: white; color: var(--error); }
+        .btn-confirm-service {
+            width: 100%; padding: 1.1rem;
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white; border: none; border-radius: 14px;
+            font-family: 'Tajawal', sans-serif; font-size: 1.1rem; font-weight: 800;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+            margin-bottom: 1rem; animation: pulse-green 1.5s infinite;
+        }
+        .btn-confirm-service:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--dark); color: white;
+            padding: 0.9rem 1.8rem; border-radius: 12px;
+            font-weight: 600; opacity: 0; transition: all 0.3s;
+            z-index: 999; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        @media (max-width: 600px) {
+            .order-summary { flex-direction: column; align-items: flex-start; }
+            .order-time-box { text-align: right; }
+            .bottom-grid { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .navbar, html.dark header, html.dark .topbar, html.dark .admin-nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .stats-card, html.dark .data-card, html.dark .section-card, html.dark .tracking-card, html.dark .step-card, html.dark .referral-card, html.dark .gantt-card, html.dark .provider-card, html.dark .filter-panel { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link, html.dark .admin-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active, html.dark .nav-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="password"], html.dark input[type="search"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; border-color: #334155; }
+        html.dark .table th, html.dark table th, html.dark thead th { background: #0f172a !important; color: #94a3b8; border-color: #334155; }
+        html.dark .table td, html.dark table td, html.dark tbody td { border-color: #334155; }
+        html.dark .table tbody tr:hover, html.dark tbody tr:hover { background: rgba(255,255,255,0.03); }
+        html.dark .badge, html.dark .tag, html.dark .status-badge { border: 1px solid #334155; }
+        html.dark .modal, html.dark .modal-content { background: #1e293b !important; color: #e2e8f0; }
+        html.dark #liveMap { filter: invert(0.85) hue-rotate(180deg); }
+        html.dark .stepper-line { background: #334155; }
+        html.dark .stepper-card, html.dark .provider-card, html.dark .map-card { background: #1e293b !important; }
+        html.dark .stepper-card h3, html.dark .provider-card h3, html.dark .map-card h3 { color: #94a3b8; }
+        html.dark .step.pending .step-icon { background: #334155; color: #64748b; }
+        html.dark .step:not(:last-child)::after { background: #334155; }
+        html.dark .eta-card { background: rgba(2,128,144,0.08); border-color: rgba(2,128,144,0.25); }
+        html.dark .btn-cancel { background: #1e293b; }
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="INDEX.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="customer-dashboard.html">← لوحة التحكم</a>
+            <a href="customer-notifications.html">الإشعارات</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <a href="customer-dashboard.html" class="avatar-btn">م</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Order Summary -->
+    <div class="order-summary">
+        <div class="order-service">
+            <div class="service-icon-box">🔧</div>
+            <div>
+                <div class="order-title">إصلاح تسريب مياه</div>
+                <div class="order-subtitle" id="orderSubtitle">أحمد السباك المحترف • طلب #KH-0451</div>
+            </div>
+        </div>
+        <div class="order-time-box">
+            <div class="order-time-label">موعد الخدمة</div>
+            <div class="order-time-val">اليوم، 10:30 ص</div>
+        </div>
+    </div>
+
+    <!-- ETA Timer -->
+    <div class="eta-card" id="etaCard">
+        <div>
+            <div class="eta-label">🚗 المزود في الطريق — الوقت المتوقع للوصول</div>
+            <div class="eta-timer" id="etaTimer">00:00</div>
+            <div class="eta-note">يتحدث تلقائياً كل دقيقة</div>
+        </div>
+        <div class="eta-icon">🗺️</div>
+    </div>
+
+    <!-- Progress Stepper -->
+    <div class="stepper-card">
+        <h3>📍 حالة الطلب</h3>
+        <div class="stepper">
+
+            <div class="step done" id="step-1">
+                <div class="step-icon">✓</div>
+                <div class="step-content">
+                    <div class="step-title">تم قبول الطلب</div>
+                    <div class="step-desc">وافق المزود على طلبك وتأكدت تفاصيل الخدمة</div>
+                    <div class="step-time">الساعة 9:15 ص</div>
+                </div>
+            </div>
+
+            <div class="step active" id="step-2">
+                <div class="step-icon">🚗</div>
+                <div class="step-content">
+                    <div class="step-title">المزود في الطريق</div>
+                    <div class="step-desc">أحمد السباك في طريقه إليك حالياً</div>
+                    <div class="step-time">الساعة 9:55 ص — جارٍ الآن</div>
+                </div>
+            </div>
+
+            <div class="step pending" id="step-3">
+                <div class="step-icon">⚙️</div>
+                <div class="step-content">
+                    <div class="step-title">بدأ العمل</div>
+                    <div class="step-desc">سيبدأ المزود تنفيذ الخدمة عند الوصول</div>
+                    <div class="step-time">في انتظار الوصول</div>
+                </div>
+            </div>
+
+            <div class="step pending" id="step-4">
+                <div class="step-icon">🎉</div>
+                <div class="step-content">
+                    <div class="step-title">اكتملت الخدمة</div>
+                    <div class="step-desc">سيتم إشعارك عند اكتمال الخدمة لتأكيد الدفع</div>
+                    <div class="step-time">—</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Provider + Map -->
+    <div class="bottom-grid">
+
+        <div class="provider-card">
+            <h3>مزود الخدمة</h3>
+            <div class="provider-info">
+                <div class="provider-avatar">أ</div>
+                <div>
+                    <div class="provider-name">أحمد السباك المحترف</div>
+                    <div class="provider-stars">★★★★★ <span class="provider-rating-num">4.9 (128 تقييم)</span></div>
+                </div>
+            </div>
+            <button class="btn-call" onclick="callProvider()">📞 اتصل بالمزود</button>
+        </div>
+
+        <div class="map-card">
+            <h3>📍 الموقع المباشر</h3>
+            <div class="map-legend">
+                <span>🟢 موقعك</span>
+                <span>🚗 المزود</span>
+            </div>
+            <div id="liveMap"></div>
+        </div>
+
+    </div>
+
+    <!-- Confirm Service Button (shown when step 4 reached) -->
+    <a href="service-confirmation.html" id="confirmServiceLink" class="btn-confirm-service" style="display:none;">
+        ✅ تأكيد إتمام الخدمة وإطلاق الدفع →
+    </a>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="chat.html" id="chatLink" class="btn-chat">💬 تواصل مع المزود</a>
+        <button class="btn-cancel" id="cancelBtn" onclick="cancelOrder()">إلغاء الطلب</button>
+    </div>
+
+    <!-- Demo helper: simulate service completion instantly -->
+    <div id="demoBar" style="background:rgba(245,158,11,0.1);border:1.5px solid rgba(245,158,11,0.4);border-radius:14px;padding:0.875rem 1rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+        <span style="font-size:0.82rem;color:#92400e;font-weight:600;">🔧 وضع العرض التجريبي — لمحاكاة الخدمة</span>
+        <button onclick="simulateCompletion()" style="background:#f59e0b;color:white;border:none;border-radius:10px;padding:0.5rem 1rem;font-family:'Tajawal',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;">⚡ محاكاة اكتمال الخدمة</button>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Thread requestId from URL params — store globally so advanceStep() can use it
+    const _urlParams = new URLSearchParams(location.search);
+    const _currentRequestId = _urlParams.get('requestId')     || 'REQ-demo-001';
+    const _service          = _urlParams.get('service')       || 'إصلاح تسريب مياه';
+    const _serviceAmount    = _urlParams.get('serviceAmount') || '180';
+    const _materialsEst     = _urlParams.get('materialsEst')  || '0';
+    (function() {
+        const sub = document.getElementById('orderSubtitle');
+        if (sub) sub.textContent = 'أحمد السباك المحترف • طلب #' + _currentRequestId;
+        const titleEl = document.querySelector('.order-title');
+        if (titleEl && _urlParams.get('service')) titleEl.textContent = decodeURIComponent(_service);
+        const chatLink = document.getElementById('chatLink');
+        if (chatLink) chatLink.href = 'chat.html?type=service&requestId=' + _currentRequestId;
+    })();
+
+    // Current step (1-4). 2 = provider en route.
+    let currentStep = 2;
+    // Use shorter ETA for new requests arriving from payment flow (30s demo), else 12min
+    const _isNewRequest = !!_urlParams.get('requestId') && !['REQ-demo-001'].includes(_currentRequestId);
+    let etaSeconds = _isNewRequest ? 30 : 12 * 60;
+
+    // ── Live Map ─────────────────────────────────────────────────────────────
+    // Demo coordinates: Riyadh, Saudi Arabia
+    const CUSTOMER_COORDS = [24.7136, 46.6753]; // customer location (fixed)
+    // Provider starts ~1.5km away, moves toward customer
+    let providerCoords = [24.7228, 46.6620];
+
+    const map = L.map('liveMap', { zoomControl: true, attributionControl: false }).setView(
+        [(CUSTOMER_COORDS[0] + providerCoords[0]) / 2, (CUSTOMER_COORDS[1] + providerCoords[1]) / 2], 14
+    );
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Customer marker (home icon)
+    const customerIcon = L.divIcon({
+        className: '',
+        html: '<div style="background:#10b981;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
+        iconSize: [20, 20], iconAnchor: [10, 10]
+    });
+    const customerMarker = L.marker(CUSTOMER_COORDS, { icon: customerIcon })
+        .addTo(map).bindPopup('موقعك 🏠');
+
+    // Provider marker (car icon)
+    const providerIcon = L.divIcon({
+        className: '',
+        html: '<div style="background:#028090;width:22px;height:22px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:11px">🚗</div>',
+        iconSize: [22, 22], iconAnchor: [11, 11]
+    });
+    const providerMarker = L.marker(providerCoords, { icon: providerIcon })
+        .addTo(map).bindPopup('أحمد السباك 🔧');
+
+    // Draw path line
+    let pathLine = L.polyline([providerCoords, CUSTOMER_COORDS], {
+        color: '#028090', weight: 3, opacity: 0.5, dashArray: '6 4'
+    }).addTo(map);
+
+    // Fit bounds to show both markers
+    map.fitBounds([CUSTOMER_COORDS, providerCoords], { padding: [30, 30] });
+
+    // Simulate provider moving toward customer
+    let moveInterval = null;
+    function startProviderMovement() {
+        if (currentStep !== 2) return;
+        moveInterval = setInterval(() => {
+            const lat1 = providerCoords[0], lng1 = providerCoords[1];
+            const lat2 = CUSTOMER_COORDS[0], lng2 = CUSTOMER_COORDS[1];
+            const dist = Math.sqrt(Math.pow(lat2-lat1,2) + Math.pow(lng2-lng1,2));
+            if (dist < 0.002) {
+                clearInterval(moveInterval);
+                return;
+            }
+            // Move 5% of remaining distance each tick
+            providerCoords = [
+                lat1 + (lat2 - lat1) * 0.05,
+                lng1 + (lng2 - lng1) * 0.05
+            ];
+            providerMarker.setLatLng(providerCoords);
+            pathLine.setLatLngs([providerCoords, CUSTOMER_COORDS]);
+        }, 3000); // move every 3 seconds
+    }
+    startProviderMovement();
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ETA Countdown
+    function updateTimer() {
+        const m = Math.floor(etaSeconds / 60);
+        const s = etaSeconds % 60;
+        document.getElementById('etaTimer').textContent =
+            String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+
+        if (etaSeconds > 0) {
+            etaSeconds--;
+        } else {
+            // Provider arrived — advance to step 3
+            clearInterval(timerInterval);
+            document.getElementById('etaCard').style.display = 'none';
+            advanceStep(3);
+            showToast('🛎️ وصل المزود! بدأ العمل.');
+            // Auto-advance to step 4 (work complete) after 8 seconds for demo
+            setTimeout(() => {
+                advanceStep(4);
+                showToast('🎉 اكتملت الخدمة! يرجى تأكيد الاستلام وإطلاق الدفع.');
+            }, 8000);
+        }
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+
+    function advanceStep(newStep) {
+        currentStep = newStep;
+
+        // Mark all previous steps as done
+        for (let i = 1; i < newStep; i++) {
+            const s = document.getElementById(`step-${i}`);
+            s.className = 'step done';
+            s.querySelector('.step-icon').textContent = '✓';
+        }
+
+        // Mark current step as active
+        const activeStep = document.getElementById(`step-${newStep}`);
+        if (activeStep) {
+            activeStep.className = 'step active';
+        }
+
+        // Disable cancel if past step 1
+        if (newStep > 1) {
+            document.getElementById('cancelBtn').disabled = true;
+        }
+
+        // If step 4, show completion — reveal confirm-service button
+        if (newStep === 4) {
+            const confirmLink = document.getElementById('confirmServiceLink');
+            if (confirmLink) {
+                confirmLink.href = 'service-confirmation.html?requestId=' + _currentRequestId
+                    + '&service='       + encodeURIComponent(_service)
+                    + '&serviceAmount=' + _serviceAmount
+                    + '&materialsEst='  + _materialsEst;
+                confirmLink.style.display = 'flex';
+            }
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            setTimeout(() => {
+                showToast('🎉 اكتملت الخدمة! يرجى تأكيد الإتمام وإطلاق الدفع.');
+            }, 800);
+        }
+    }
+
+    function callProvider() {
+        showToast('📞 جارٍ الاتصال بأحمد السباك...');
+    }
+
+    async function cancelOrder() {
+        if (currentStep > 1) return;
+        if (!confirm('هل تريد إلغاء الطلب؟\n\nسيتم استرداد المبلغ خلال 2-5 أيام عمل.')) return;
+        const btn = document.getElementById('cancelBtn');
+        btn.disabled = true;
+        const reqId = new URLSearchParams(location.search).get('requestId');
+        try {
+            if (reqId && reqId.includes('-')) await API.requests.cancel(reqId);
+        } catch(e) { /* silent */ }
+        showToast('✓ تم إلغاء الطلب. سيتم استرداد المبلغ قريباً.');
+    }
+
+    function simulateCompletion() {
+        clearInterval(timerInterval);
+        clearInterval(moveInterval);
+        document.getElementById('etaCard').style.display = 'none';
+        document.getElementById('demoBar').style.display = 'none';
+        // Advance through all steps instantly
+        if (currentStep < 2) advanceStep(2);
+        if (currentStep < 3) advanceStep(3);
+        setTimeout(() => {
+            advanceStep(4);
+            showToast('🎉 اكتملت الخدمة! الرجاء تأكيد الاستلام وإطلاق الدفع.');
+        }, 400);
+    }
+
+    // Demo: simulate step advancement for testing
+    // Uncomment to auto-advance through all steps
+    // let demoStep = 2;
+    // setInterval(() => { if(demoStep < 4) advanceStep(++demoStep); }, 8000);
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب عرض سعر - Khedmah</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --secondary: #00A896; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* ── Nav ── */
+        nav { background: white; padding: 1rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 200; }
+        .nav-content { max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .btn-back { color: var(--gray); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .btn-back:hover { color: var(--primary); }
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        /* ── Wizard Layout ── */
+        .wizard-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Sticky header */
+        .wizard-header {
+            position: sticky; top: 64px; background: white; z-index: 50;
+            padding: 1rem 5% 0.75rem; border-bottom: 1px solid #f1f5f9;
+        }
+        .wizard-progress { height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 0.6rem; }
+        .wizard-bar { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.4s ease; }
+        .wizard-meta { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--gray); }
+
+        /* Body */
+        .wizard-body { flex: 1; padding: 1.5rem 5% 7rem; max-width: 600px; margin: 0 auto; width: 100%; }
+
+        /* Step panel */
+        .step-panel { }
+        .step-heading { margin-bottom: 1.75rem; }
+        .step-heading h2 { font-size: 1.4rem; font-weight: 800; color: var(--dark); margin-bottom: 0.35rem; }
+        .step-heading p { color: var(--gray); font-size: 0.9rem; }
+
+        /* Sticky bottom nav */
+        .wizard-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background: white;
+            border-top: 1px solid #f1f5f9; padding: 0.875rem 5%;
+            padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; gap: 1rem;
+        }
+        .btn-prev { background: var(--light); color: var(--dark); border: none; border-radius: 12px; padding: 0.85rem 1.5rem; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+        .btn-next { background: var(--primary); color: white; border: none; border-radius: 12px; padding: 0.85rem 2rem; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1; max-width: 200px; }
+        .btn-submit-req { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0.85rem 2rem; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1; max-width: 200px; }
+        .step-error { color: var(--error); font-size: 0.82rem; margin-top: 0.35rem; font-weight: 600; }
+
+        /* Field styles */
+        .field-group { margin-bottom: 1.25rem; }
+        .field-label { font-size: 0.88rem; font-weight: 600; color: var(--dark); display: block; margin-bottom: 0.4rem; }
+        .field-required { color: var(--error); }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+            padding: 0.85rem 1rem; font-family: 'Tajawal', sans-serif;
+            font-size: 16px; outline: none; color: var(--dark);
+            background: white; transition: border-color 0.15s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+        .form-textarea { resize: vertical; min-height: 120px; }
+        .char-count { font-size: 0.75rem; color: var(--gray); text-align: left; margin-top: 0.25rem; }
+
+        /* Step 1 — Services grid */
+        .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+        .service-option {
+            border: 2px solid #e2e8f0; border-radius: 16px; padding: 1.25rem 0.75rem;
+            text-align: center; cursor: pointer; transition: all 0.15s;
+            min-height: 95px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
+            background: white;
+        }
+        .service-option.selected { border-color: var(--primary); background: rgba(2,128,144,0.08); box-shadow: 0 0 0 3px rgba(2,128,144,0.1); }
+        .service-icon { font-size: 2rem; }
+        .service-name { font-size: 0.85rem; font-weight: 700; color: var(--dark); }
+
+        /* Step 2 — Toggle + Photos */
+        .step-subtitle { font-size: 0.82rem; color: var(--primary); font-weight: 700; background: rgba(2,128,144,0.08); padding: 0.4rem 0.75rem; border-radius: 8px; display: inline-block; margin-bottom: 1.25rem; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; background: var(--light); border-radius: 12px; padding: 0.875rem 1rem; margin-bottom: 1rem; }
+        .toggle-label { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
+        .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-knob { position: absolute; inset: 0; background: #cbd5e1; border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+        .toggle-knob::before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 3px; right: 3px; transition: transform 0.2s; }
+        .toggle-switch input:checked + .toggle-knob { background: var(--primary); }
+        .toggle-switch input:checked + .toggle-knob::before { transform: translateX(-22px); }
+        .photos-row { display: flex; gap: 0.75rem; }
+        .photo-slot { width: 80px; height: 80px; border: 2px dashed #e2e8f0; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; cursor: pointer; font-size: 0.7rem; color: var(--gray); flex-shrink: 0; }
+        .photo-slot span:first-of-type { font-size: 1.5rem; }
+        .photo-slot:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Step 3 — Timing */
+        .timing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .timing-chip { border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.875rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 0.9rem; background: white; cursor: pointer; text-align: center; transition: all 0.15s; min-height: 52px; }
+        .timing-chip.selected { background: var(--primary); border-color: var(--primary); color: white; font-weight: 700; }
+
+        /* Step 4 — Confirm */
+        .confirm-card { background: var(--light); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem; }
+        .confirm-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid #e2e8f0; align-items: flex-start; gap: 1rem; }
+        .confirm-row:last-child { border-bottom: none; }
+        .confirm-lbl { font-size: 0.85rem; color: var(--gray); flex-shrink: 0; }
+        .confirm-val { font-size: 0.9rem; font-weight: 700; color: var(--dark); text-align: left; }
+        .edit-links { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .edit-links button { background: none; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.45rem 0.875rem; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; color: var(--primary); cursor: pointer; }
+        .info-notice { background: rgba(2,128,144,0.08); border-right: 3px solid var(--primary); border-radius: 10px; padding: 0.875rem 1rem; font-size: 0.88rem; color: var(--dark); line-height: 1.6; }
+
+        /* Success state */
+        .success-state { text-align: center; padding: 3rem 1rem; }
+        .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .success-state h2 { font-size: 1.75rem; font-weight: 900; color: var(--dark); margin-bottom: 0.5rem; }
+        .success-state p { color: var(--gray); margin-bottom: 0.25rem; }
+        .success-sub { font-size: 0.9rem; margin-bottom: 2rem; }
+        .success-actions { display: flex; gap: 0.875rem; flex-direction: column; max-width: 280px; margin: 0 auto; }
+        .btn-primary-action { background: var(--primary); color: white; padding: 0.95rem; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 1rem; display: block; text-align: center; }
+        .btn-secondary-action { background: var(--light); color: var(--dark); padding: 0.95rem; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 1rem; display: block; text-align: center; }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav { background: #1e293b !important; border-color: #334155; }
+        html.dark .wizard-header { background: #1e293b; border-color: #334155; }
+        html.dark .wizard-progress { background: #334155; }
+        html.dark .wizard-nav { background: #1e293b; border-color: #334155; }
+        html.dark .btn-prev { background: #0f172a; color: #e2e8f0; }
+        html.dark .step-heading h2 { color: #e2e8f0; }
+        html.dark .step-heading p { color: #94a3b8; }
+        html.dark .field-label { color: #cbd5e1; }
+        html.dark .form-input, html.dark .form-select, html.dark .form-textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-input::placeholder, html.dark .form-textarea::placeholder { color: #64748b; }
+        html.dark .form-input:focus, html.dark .form-select:focus, html.dark .form-textarea:focus { border-color: var(--primary) !important; }
+        html.dark .service-option { background: #1e293b; border-color: #334155; }
+        html.dark .service-name { color: #e2e8f0; }
+        html.dark .service-option.selected { background: rgba(2,128,144,0.15); border-color: var(--primary); }
+        html.dark .toggle-row { background: #0f172a; }
+        html.dark .toggle-label { color: #e2e8f0; }
+        html.dark .photo-slot { border-color: #334155; }
+        html.dark .timing-chip { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .timing-chip.selected { background: var(--primary); color: white; }
+        html.dark .confirm-card { background: #0f172a; }
+        html.dark .confirm-row { border-color: #334155; }
+        html.dark .confirm-val { color: #e2e8f0; }
+        html.dark .edit-links button { border-color: #334155; color: var(--accent); }
+        html.dark .info-notice { background: rgba(2,128,144,0.12); color: #e2e8f0; }
+        html.dark .success-state h2 { color: #e2e8f0; }
+        html.dark .btn-secondary-action { background: #1e293b; color: #e2e8f0; }
+        html.dark .btn-back { color: #94a3b8; }
+        html.dark .wizard-meta { color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script>
+        (function() {
+            const demo = localStorage.getItem('khedmah_demo');
+            if (!demo) { window.location.href = 'login.html'; return; }
+            try {
+                const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
+            } catch(e) {}
+        })();
+    </script>
+
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div style="display:flex;align-items:center;gap:1rem;">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="search-services.html" class="btn-back">← العودة للبحث</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="wizard-wrap"
+        x-data="{
+            step: 1,
+            totalSteps: 4,
+            selectedService: '',
+            description: '',
+            city: 'الرياض',
+            district: '',
+            timing: 'أقرب وقت ممكن',
+            customDate: '',
+            hasMaterials: false,
+            materialsEst: '',
+            submitted: false,
+            reqNumber: '',
+            errors: {},
+            stepLabels: ['نوع الخدمة','وصف المشكلة','الموقع والوقت','مراجعة وإرسال'],
+            DISTRICTS: {
+                'الرياض': [
+                    'حي العليا','حي النزهة','حي الملقا','حي الياسمين','حي الروضة',
+                    'حي العقيق','حي الورود','حي الربوة','حي السليمانية','حي المحمدية',
+                    'حي الشفا','حي الخزامى','حي الوادي','حي الريان','حي النخيل',
+                    'حي الرمال','حي العزيزية','حي البديعة','حي الفيحاء','حي القادسية',
+                    'حي المنصورة','حي أم الحمام الغربي','حي أم الحمام الشرقي','حي الفلاح',
+                    'حي المربع','حي العود','حي الديرة','حي القرى','حي الوزارات',
+                    'حي الغدير','حي الصحافة','حي حطين','حي الحمراء','حي الشهداء',
+                    'حي الجزيرة','حي الدار البيضاء','حي الشرق','حي المونسية',
+                    'حي طويق','حي الدريهمية','حي الضباط','حي لبن','حي عرقة',
+                    'حي الشعلة','حي الرحمانية','حي المرسلات','حي التعاون','حي الخليج',
+                    'حي الحزم','حي السعادة','حي النهضة','حي منفوحة','حي بدر',
+                    'حي السويدي','حي ظهرة البديعة','حي الروابي','حي الجنادرية',
+                    'حي الصناعية الأولى','حي الصناعية الثانية','حي الصناعية الثالثة',
+                    'حي ثليم','حي الرفيعة','حي العرض','حي الهضبة','حي المصيف',
+                    'حي النسيم الغربي','حي النسيم الشرقي','حي المروج','حي الملز',
+                    'حي السفارات','حي الواحة','حي الفيصلية','حي العزيزية الجنوبية',
+                ],
+                'جدة': [
+                    'حي الروضة','حي البلد','حي الحمدانية','حي الصفا','حي الزهراء',
+                    'حي النعيم','حي البوادي','حي العزيزية','حي النسيم','حي الفيصلية',
+                    'حي أبحر الشمالية','حي أبحر الجنوبية','حي السلامة','حي المرجان',
+                    'حي الكوثر','حي ذهبان','حي مريخ','حي بحرة','حي الرحمانية',
+                    'حي الشاطئ','حي المنتزهات','حي الجامعة','حي الثغر','حي القريات',
+                    'حي الفروسية','حي الأجاويد','حي الحرازات','حي البشائر','حي مدائن الفهد',
+                    'حي الواجهة البحرية','حي الأندلس','حي الفيحاء','حي الرويس',
+                    'حي المسفلة','حي السامر','حي المحجر','حي الربوة','حي الوادي',
+                    'حي الأمير فواز الجنوبي','حي الأمير فواز الشمالي','حي المحمدية',
+                    'حي الخمرة','حي مشرفة','حي الرحاب','حي الصواري','حي قويزة',
+                    'حي الجوهرة','حي الرياض','حي الهنداوية','حي طيبة','حي المطار',
+                    'حي الدغيثر','حي الأمواج','حي السروات','حي الجنادرية','حي غليل',
+                    'حي السنابل','حي المصيف','حي الحسينية','حي البرج','حي الشراع',
+                    'حي بريمان','حي الضاحية','حي الأمير عبدالمجيد','حي الورود',
+                    'حي الوزيرية','حي الرغامة','حي العمارية','حي ابن سينا',
+                ],
+                'الدمام': [
+                    'حي الفيصلية','حي العنود','حي الشاطئ','حي القزاز','حي الجلوية',
+                    'حي الروضة','حي النزهة','حي البادية','حي المنار','حي الأندلس',
+                    'حي الضباب','حي الواجهة البحرية','حي الريان','حي الفردوس',
+                    'حي الإسكان','حي الشرق','حي المريكبات','حي الأحساء','حي الخليج',
+                    'حي الصناعية','حي ضاحية الملك فهد','حي الحمراء','حي بحري',
+                    'حي الطبيشي','حي العمامرة','حي المنصورة','حي السيف','حي الجامعة',
+                    'حي الدواسر','حي العزيزية','حي الدوحة الجنوبية','حي الدوحة الشمالية',
+                    'حي قصر الخليج','حي اليرموك','حي الحزام الأخضر','حي الشمال',
+                    'حي الربيع','حي اليرموك الجنوبي','حي الوسام','حي السلام',
+                    'حي المزروعية','حي الأمانة','حي الضيافة','حي النور','حي سناء',
+                    'حي الإتحاد','حي الفنار','حي النهضة','حي ابن خلدون',
+                    'حي المحمدية','حي الزهور','حي المريح','حي الشفق',
+                ],
+            },
+            get progressPct() { return ((this.step - 1) / (this.totalSteps - 1)) * 100; },
+            goNext() {
+                this.errors = {};
+                if (this.step === 1 && !this.selectedService) { this.errors.service = 'يرجى اختيار نوع الخدمة'; return; }
+                if (this.step === 2 && this.description.trim().length < 10) { this.errors.description = 'يرجى كتابة وصف أوضح (10 أحرف على الأقل)'; return; }
+                if (this.step === 3 && !this.district.trim()) { this.errors.district = 'يرجى إدخال الحي'; return; }
+                if (this.step === 4 && this.timing === 'custom') {
+                    if (!this.customDate) { this.errors.timing = 'يرجى اختيار التاريخ والوقت'; return; }
+                    if (new Date(this.customDate) <= new Date()) { this.errors.timing = 'يجب أن يكون الموعد في المستقبل'; return; }
+                }
+                if (this.step < this.totalSteps) { this.step++; window.scrollTo(0, 0); }
+            },
+            goPrev() {
+                if (this.step > 1) { this.step--; window.scrollTo(0, 0); }
+            },
+            async submitRequest() {
+                this.submitted = true;
+                window.scrollTo(0, 0);
+                try {
+                    const req = await API.requests.create({
+                        serviceTitle:    this.selectedService,
+                        serviceCategory: this.selectedService,
+                        city:            this.city,
+                        district:        this.district,
+                        description:     this.description || '',
+                        scheduledAt:     this.scheduledDate ? new Date(this.scheduledDate).toISOString() : undefined,
+                        hasMaterials:    this.hasMaterials,
+                        materialsEst:    this.hasMaterials ? (this.materialsEst || 0) : 0,
+                    });
+                    this.reqNumber = req?.id || ('REQ-' + Date.now().toString().slice(-6));
+                } catch(e) {
+                    this.reqNumber = 'REQ-' + Date.now().toString().slice(-6);
+                }
+                setTimeout(() => {
+                    const p = new URLSearchParams({
+                        requestId:    this.reqNumber,
+                        service:      this.selectedService,
+                        hasMaterials: String(this.hasMaterials),
+                        materialsEst: String(this.materialsEst || 0),
+                    });
+                    window.location.href = 'payment-escrow.html?' + p.toString();
+                }, 1500);
+            }
+        }"
+        x-init="
+            const c = new URLSearchParams(location.search).get('category'); if(c) selectedService = c;
+            $watch('city', () => { district = ''; });
+        ">
+
+        <!-- Progress header — sticky -->
+        <div class="wizard-header" x-show="!submitted">
+            <div class="wizard-progress">
+                <div class="wizard-bar" :style="`width:${progressPct}%`"></div>
+            </div>
+            <div class="wizard-meta">
+                <span x-text="`الخطوة ${step} من ${totalSteps}`"></span>
+                <span x-text="stepLabels[step-1]"></span>
+            </div>
+        </div>
+
+        <!-- Step panels body -->
+        <div class="wizard-body">
+
+            <!-- STEP 1 — Service Category -->
+            <div class="step-panel" x-show="step === 1">
+                <div class="step-heading">
+                    <h2>🔧 ما نوع الخدمة؟</h2>
+                    <p>اختر التصنيف الذي يناسب احتياجك</p>
+                </div>
+                <div class="services-grid">
+                    <div class="service-option" :class="{selected: selectedService==='كهرباء'}" @click="selectedService='كهرباء'">
+                        <div class="service-icon">🔌</div>
+                        <div class="service-name">كهرباء</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='سباكة'}" @click="selectedService='سباكة'">
+                        <div class="service-icon">🚿</div>
+                        <div class="service-name">سباكة</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='دهانات'}" @click="selectedService='دهانات'">
+                        <div class="service-icon">🎨</div>
+                        <div class="service-name">دهانات</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='تكييف'}" @click="selectedService='تكييف'">
+                        <div class="service-icon">❄️</div>
+                        <div class="service-name">تكييف</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='نجارة'}" @click="selectedService='نجارة'">
+                        <div class="service-icon">🚪</div>
+                        <div class="service-name">نجارة</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='تنظيف'}" @click="selectedService='تنظيف'">
+                        <div class="service-icon">🧹</div>
+                        <div class="service-name">تنظيف</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='حدائق'}" @click="selectedService='حدائق'">
+                        <div class="service-icon">🌿</div>
+                        <div class="service-name">حدائق</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='سيراميك'}" @click="selectedService='سيراميك'">
+                        <div class="service-icon">🏗️</div>
+                        <div class="service-name">سيراميك</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='مكافحة حشرات'}" @click="selectedService='مكافحة حشرات'">
+                        <div class="service-icon">🐛</div>
+                        <div class="service-name">مكافحة حشرات</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='عزل'}" @click="selectedService='عزل'">
+                        <div class="service-icon">🔒</div>
+                        <div class="service-name">عزل</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='نقل أثاث'}" @click="selectedService='نقل أثاث'">
+                        <div class="service-icon">🚛</div>
+                        <div class="service-name">نقل أثاث</div>
+                    </div>
+                    <div class="service-option" :class="{selected: selectedService==='تصميم داخلي'}" @click="selectedService='تصميم داخلي'">
+                        <div class="service-icon">🛋️</div>
+                        <div class="service-name">تصميم داخلي</div>
+                    </div>
+                </div>
+                <p class="step-error" x-show="errors.service" x-text="errors.service"></p>
+            </div>
+
+            <!-- STEP 2 — Problem Description + Photos + Materials -->
+            <div class="step-panel" x-show="step === 2">
+                <div class="step-heading">
+                    <h2>📋 صف المشكلة</h2>
+                    <p>كلما كانت التفاصيل أوضح، كانت العروض أدق وأسرع</p>
+                </div>
+                <div class="step-subtitle" x-text="'الخدمة المختارة: ' + (selectedService || '—')"></div>
+
+                <div class="field-group">
+                    <label class="field-label">وصف المشكلة <span class="field-required">*</span></label>
+                    <textarea class="form-textarea" x-model="description"
+                        placeholder="مثال: أحتاج إصلاح قاطع رئيسي يقطع الكهرباء باستمرار في غرفة المعيشة..."
+                        maxlength="500"></textarea>
+                    <div class="char-count" x-text="description.length + ' / 500 حرف'"></div>
+                    <p class="step-error" x-show="errors.description" x-text="errors.description"></p>
+                </div>
+
+                <!-- Materials toggle -->
+                <div class="toggle-row">
+                    <span class="toggle-label">هل يشمل الطلب مواد أو قطع غيار؟</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" x-model="hasMaterials">
+                        <span class="toggle-knob"></span>
+                    </label>
+                </div>
+                <div class="field-group" x-show="hasMaterials" style="margin-top:0.75rem">
+                    <label class="field-label">تقدير تكلفة المواد (ر.س)</label>
+                    <input type="number" class="form-input" x-model="materialsEst" placeholder="500" min="0">
+                    <div style="font-size:0.78rem;color:var(--gray);margin-top:4px">هذا المبلغ يُحجز ويتاح فوراً للمزود لشراء المواد</div>
+                </div>
+
+                <!-- Photo upload (optional) -->
+                <div class="field-group">
+                    <label class="field-label">صور توضيحية <span style="font-weight:400;color:var(--gray)">(اختياري)</span></label>
+                    <div class="photos-row">
+                        <label class="photo-slot"><input type="file" accept="image/*" capture="environment" style="display:none"><span>📷</span><span>إضافة</span></label>
+                        <label class="photo-slot"><input type="file" accept="image/*" style="display:none"><span>📷</span><span>إضافة</span></label>
+                        <label class="photo-slot"><input type="file" accept="image/*" style="display:none"><span>📷</span><span>إضافة</span></label>
+                        <label class="photo-slot"><input type="file" accept="image/*" style="display:none"><span>📷</span><span>إضافة</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3 — Location + Time -->
+            <div class="step-panel" x-show="step === 3">
+                <div class="step-heading">
+                    <h2>📍 الموقع والموعد</h2>
+                    <p>أين ومتى تحتاج الخدمة؟</p>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">المدينة <span class="field-required">*</span></label>
+                    <select class="form-select" x-model="city">
+                        <option>الرياض</option>
+                        <option>جدة</option>
+                        <option>الدمام</option>
+                        <option>مكة المكرمة</option>
+                        <option>المدينة المنورة</option>
+                        <option>الطائف</option>
+                        <option>أبها</option>
+                        <option>تبوك</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">الحي <span class="field-required">*</span></label>
+                    <template x-if="['الرياض','جدة','الدمام'].includes(city)">
+                        <select class="form-select" x-model="district">
+                            <option value="">— اختر الحي —</option>
+                            <template x-for="d in (DISTRICTS[city] || [])" :key="d">
+                                <option :value="d" x-text="d"></option>
+                            </template>
+                        </select>
+                    </template>
+                    <template x-if="!['الرياض','جدة','الدمام'].includes(city)">
+                        <input type="text" class="form-input" x-model="district" placeholder="مثال: حي النزهة">
+                    </template>
+                    <p class="step-error" x-show="errors.district" x-text="errors.district"></p>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">الموعد المفضل <span class="field-required">*</span></label>
+                    <div class="timing-grid">
+                        <template x-for="opt in ['أقرب وقت ممكن','اليوم','غداً','هذا الأسبوع']" :key="opt">
+                            <button type="button" class="timing-chip" :class="{ selected: timing === opt }" @click="timing = opt" x-text="opt"></button>
+                        </template>
+                        <button type="button" class="timing-chip" :class="{ selected: timing === 'custom' }" @click="timing = 'custom'">📅 اختر تاريخاً</button>
+                    </div>
+                    <div x-show="timing === 'custom'" style="margin-top:0.75rem">
+                        <input type="datetime-local" class="form-input" x-model="customDate"
+                            :min="new Date(Date.now() + 60000).toISOString().slice(0,16)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4 — Confirm -->
+            <div class="step-panel" x-show="step === 4">
+                <div class="step-heading">
+                    <h2>✅ مراجعة الطلب</h2>
+                    <p>تأكد من البيانات قبل الإرسال</p>
+                </div>
+
+                <div class="confirm-card">
+                    <div class="confirm-row">
+                        <span class="confirm-lbl">نوع الخدمة</span>
+                        <span class="confirm-val" x-text="selectedService || '—'"></span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-lbl">الموقع</span>
+                        <span class="confirm-val" x-text="city + (district ? ' — ' + district : '')"></span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-lbl">الموعد</span>
+                        <span class="confirm-val" x-text="timing === 'custom' ? (customDate || '—') : timing"></span>
+                    </div>
+                    <div class="confirm-row" x-show="hasMaterials">
+                        <span class="confirm-lbl">تكلفة المواد</span>
+                        <span class="confirm-val" x-text="(materialsEst || '—') + ' ر.س'"></span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-lbl">الوصف</span>
+                        <span class="confirm-val" x-text="description.slice(0, 100) + (description.length > 100 ? '...' : '')"></span>
+                    </div>
+                </div>
+
+                <div class="edit-links">
+                    <button type="button" @click="step = 1">✏️ تعديل الخدمة</button>
+                    <button type="button" @click="step = 2">✏️ تعديل الوصف</button>
+                    <button type="button" @click="step = 3">✏️ تعديل الموقع</button>
+                </div>
+
+                <div class="info-notice">
+                    💡 سيتلقى المزودون المتاحون طلبك ويرسلون عروض أسعار خلال <strong>30 دقيقة</strong>
+                </div>
+            </div>
+
+            <!-- SUCCESS STATE -->
+            <div class="success-state" x-show="submitted">
+                <div class="success-icon">🎉</div>
+                <h2>تم إرسال طلبك!</h2>
+                <p>رقم الطلب: <strong x-text="reqNumber"></strong></p>
+                <p class="success-sub" style="color:var(--primary);font-weight:600;">جارٍ الانتقال لصفحة الدفع...</p>
+                <div style="margin-top:1.5rem;">
+                    <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;"></div>
+                </div>
+            </div>
+            <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+        </div><!-- .wizard-body -->
+
+        <!-- Bottom nav — sticky -->
+        <div class="wizard-nav" x-show="!submitted">
+            <button class="btn-prev" x-show="step > 1" @click="goPrev()">← رجوع</button>
+            <span x-show="step === 1"></span>
+            <button class="btn-next" x-show="step < 4" @click="goNext()">
+                التالي ←
+            </button>
+            <button class="btn-submit-req" x-show="step === 4" @click="submitRequest()">
+                إرسال الطلب ✓
+            </button>
+        </div>
+
+    </div><!-- .wizard-wrap -->
+
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+    </script>
+</body>
+</html>

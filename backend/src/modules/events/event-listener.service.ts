@@ -1,0 +1,301 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { WalletService } from '../wallet/wallet.service';
+
+/**
+ * Central event listener — handles cross-cutting notifications and
+ * side-effects that don't belong in any single domain service.
+ *
+ * NOTE: Domain-specific events (provider approved, quote accepted, etc.)
+ * are already handled directly in NotificationsService to keep this file
+ * focused on events that need DB lookups beyond what the emitter provides.
+ */
+@Injectable()
+export class EventListenerService {
+  private readonly logger = new Logger(EventListenerService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private notif: NotificationsService,
+    private wallet: WalletService,
+  ) {}
+
+  // ── Escrow events ────────────────────────────────────────────────────────
+
+  /**
+   * When escrow is released (by customer, auto-scheduler, or admin dispute resolution),
+   * credit the provider's wallet with their net payout (amount − platformFee).
+   */
+  @OnEvent('escrow.released')
+  async onEscrowReleased(event: { requestId: string; providerId?: string; escrowId?: string }) {
+    try {
+      // Fetch escrow by requestId to get the definitive amounts
+      const escrow = await this.prisma.escrow.findUnique({
+        where: { requestId: event.requestId },
+        select: {
+          id: true,
+          amount: true,
+          platformFee: true,
+          requestId: true,
+          request: { select: { providerId: true } },
+        },
+      });
+      if (!escrow) {
+        this.logger.warn(`escrow.released: no escrow found for request ${event.requestId}`);
+        return;
+      }
+
+      const providerId = event.providerId ?? escrow.request.providerId;
+      if (!providerId) {
+        this.logger.warn(`escrow.released: no providerId for request ${event.requestId}`);
+        return;
+      }
+
+      const netPayout = Number(escrow.amount) - Number(escrow.platformFee);
+      if (netPayout <= 0) return;
+
+      await this.wallet.credit(providerId, netPayout, 'مستحقات خدمة — إطلاق الضمان', escrow.id);
+
+      this.logger.log(
+        `Wallet credited: provider ${providerId} +${netPayout} SAR (escrow ${escrow.id})`,
+      );
+    } catch (err) {
+      this.logger.error(`onEscrowReleased failed for request ${event.requestId}: ${err}`);
+    }
+  }
+
+  // ── Tender events ───────────────────────────────────────────────────────
+
+  @OnEvent('commissions.overdue_batch')
+  async onCommissionsOverdue(payload: { count: number }) {
+    this.logger.warn(`${payload.count} commissions marked overdue`);
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await this.notif.sendEmail(
+        adminEmail,
+        `⚠️ ${payload.count} عمولات متأخرة — منصة خدمة`,
+        `<p>يوجد <strong>${payload.count}</strong> عمولة مناقصة متأخرة تحتاج متابعة.</p>`,
+      );
+    }
+  }
+
+  // ── Support ticket events ───────────────────────────────────────────────
+
+  @OnEvent('support.ticket_opened')
+  async onTicketOpened(payload: {
+    ticketId: string;
+    userId: string;
+    category: string;
+    priority: string;
+  }) {
+    // Notify admin for URGENT tickets
+    if (payload.priority === 'URGENT') {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        await this.notif.sendEmail(
+          adminEmail,
+          `🚨 تذكرة دعم عاجلة — ${payload.ticketId.slice(0, 8).toUpperCase()}`,
+          `<p>فُتحت تذكرة دعم <strong>عاجلة</strong> بتصنيف <strong>${payload.category}</strong>.<br>معرف التذكرة: ${payload.ticketId}</p>`,
+        );
+      }
+    }
+  }
+
+  // ── Dispute events ──────────────────────────────────────────────────────
+
+  @OnEvent('dispute.opened')
+  async onDisputeOpened(payload: {
+    disputeId: string;
+    requestId: string;
+    reporterId: string;
+    againstId: string;
+  }) {
+    await this.notif.notifyUser(
+      payload.againstId,
+      '⚠️ نزاع جديد',
+      'فُتح نزاع ضدك. سيراجعه فريق الدعم خلال 24 ساعة.',
+      { disputeId: payload.disputeId, requestId: payload.requestId },
+    );
+    this.logger.log(`Dispute opened: ${payload.disputeId}`);
+  }
+
+  // ── Materials payment events ─────────────────────────────────────────────
+
+  @OnEvent('materials.payment.funded')
+  async onMaterialsFunded(payload: { requestId: string; amount: number }) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id: payload.requestId },
+      select: { providerId: true },
+    });
+    if (request?.providerId) {
+      await this.notif.notifyUser(
+        request.providerId,
+        '💰 ميزانية المواد متاحة',
+        `تم تمويل ميزانية المواد (${payload.amount} ريال). يمكنك الآن إدارة المشتريات.`,
+        { requestId: payload.requestId },
+      );
+    }
+  }
+
+  @OnEvent('materials.adjustment.requested')
+  async onAdjustmentRequested(payload: {
+    requestId: string;
+    providerId: string;
+    amount: number;
+    adjustmentId: string;
+    expiresAt: Date;
+  }) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id: payload.requestId },
+      select: { customerId: true },
+    });
+    if (request?.customerId) {
+      await this.notif.notifyUser(
+        request.customerId,
+        '🔔 طلب زيادة ميزانية المواد',
+        `يطلب المزود إضافة ${payload.amount} ريال لميزانية المواد. يرجى الموافقة أو الرفض.`,
+        { requestId: payload.requestId, adjustmentId: payload.adjustmentId },
+      );
+    }
+  }
+
+  @OnEvent('materials.adjustment.responded')
+  async onAdjustmentResponded(payload: {
+    adjustmentId: string;
+    approved: boolean;
+    requestId: string;
+  }) {
+    const adj = await this.prisma.materialsAdjustmentRequest.findUnique({
+      where: { id: payload.adjustmentId },
+      include: { materialsPayment: { include: { request: { select: { providerId: true } } } } },
+    });
+    const providerId = adj?.materialsPayment?.request?.providerId;
+    if (providerId) {
+      const titleAr = payload.approved ? '✅ تمت الموافقة على طلب الزيادة' : '❌ رُفض طلب الزيادة';
+      const bodyAr = payload.approved
+        ? 'وافق العميل على زيادة ميزانية المواد. الرصيد الإضافي متاح الآن.'
+        : 'رفض العميل طلب زيادة ميزانية المواد.';
+      await this.notif.notifyUser(providerId, titleAr, bodyAr, { requestId: payload.requestId });
+    }
+  }
+
+  @OnEvent('materials.usage.rejected')
+  async onUsageRejected(payload: { usageLogId: string; amount: number }) {
+    const log = await this.prisma.materialsUsageLog.findUnique({
+      where: { id: payload.usageLogId },
+      select: { loggedById: true },
+    });
+    if (log?.loggedById) {
+      await this.notif.notifyUser(
+        log.loggedById,
+        '❌ رُفض إدخال المواد',
+        `رفض المشرف إدخال مبلغ ${payload.amount} ريال. تم إعادة المبلغ للرصيد.`,
+        { usageLogId: payload.usageLogId },
+      );
+    }
+  }
+
+  @OnEvent('materials.reconciled.refund')
+  async onMaterialsRefundPartial(payload: { requestId: string; refundAmount: number }) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id: payload.requestId },
+      select: { customerId: true },
+    });
+    if (request?.customerId) {
+      await this.notif.notifyUser(
+        request.customerId,
+        '💸 استرداد جزء من ميزانية المواد',
+        `تم استرداد ${payload.refundAmount} ريال (الرصيد غير المستخدم من ميزانية المواد).`,
+        { requestId: payload.requestId },
+      );
+    }
+  }
+
+  @OnEvent('materials.refund.full')
+  async onMaterialsRefundFull(payload: { requestId: string; amount: number }) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id: payload.requestId },
+      select: { customerId: true },
+    });
+    if (request?.customerId) {
+      await this.notif.notifyUser(
+        request.customerId,
+        '💸 استرداد كامل ميزانية المواد',
+        `تم استرداد ${payload.amount} ريال كاملة من ميزانية المواد.`,
+        { requestId: payload.requestId },
+      );
+    }
+  }
+
+  // ── Equipment events ─────────────────────────────────────────────────────
+
+  @OnEvent('equipment.rental.status_changed')
+  async onRentalStatusChanged(payload: { id: string; status: string }) {
+    const rental = await this.prisma.equipmentRental.findUnique({
+      where: { id: payload.id },
+      select: { renterId: true, equipment: { select: { name: true } } },
+    });
+    if (!rental) return;
+
+    const statusMessages: Record<string, string> = {
+      CONFIRMED: 'تم تأكيد طلب الإيجار. المعدة محجوزة لك.',
+      ACTIVE: 'بدأ إيجار معدتك.',
+      COMPLETED: 'اكتمل الإيجار بنجاح.',
+      CANCELLED: 'تم إلغاء طلب الإيجار.',
+    };
+    const bodyAr = statusMessages[payload.status];
+    if (bodyAr) {
+      await this.notif.notifyUser(
+        rental.renterId,
+        `تحديث حالة إيجار: ${rental.equipment.name}`,
+        bodyAr,
+        { rentalId: payload.id },
+      );
+    }
+  }
+
+  @OnEvent('equipment.inquiry_received')
+  async onEquipmentInquiry(payload: { equipmentId: string; ownerId: string; inquiryId: string }) {
+    const equipment = await this.prisma.equipment.findUnique({
+      where: { id: payload.equipmentId },
+      select: { name: true },
+    });
+    if (equipment) {
+      await this.notif.notifyUser(
+        payload.ownerId,
+        '📩 استفسار جديد عن معدتك',
+        `تلقيت استفساراً جديداً عن "${equipment.name}". راجع تفاصيل الاستفسار للرد.`,
+        { equipmentId: payload.equipmentId, inquiryId: payload.inquiryId },
+      );
+    }
+  }
+
+  @OnEvent('equipment.reviewed')
+  async onEquipmentReviewed(payload: { rentalId: string; score: number }) {
+    const rental = await this.prisma.equipmentRental.findUnique({
+      where: { id: payload.rentalId },
+      include: { equipment: { select: { ownerId: true, name: true } } },
+    });
+    if (rental?.equipment?.ownerId) {
+      await this.notif.notifyUser(
+        rental.equipment.ownerId,
+        '⭐ تقييم جديد لمعدتك',
+        `حصلت معدة "${rental.equipment.name}" على تقييم ${payload.score}/5.`,
+        { rentalId: payload.rentalId },
+      );
+    }
+  }
+
+  // ── Wallet events ────────────────────────────────────────────────────────
+
+  @OnEvent('wallet.debited')
+  async onWalletDebited(payload: { userId: string; amount: number; newBalance: number }) {
+    await this.notif.createInApp(
+      payload.userId,
+      '💳 تم خصم من محفظتك',
+      `تم خصم ${payload.amount} ريال. رصيدك الحالي: ${payload.newBalance} ريال.`,
+    );
+  }
+}

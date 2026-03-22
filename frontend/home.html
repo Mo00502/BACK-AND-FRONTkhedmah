@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>خدمة | المنصة الأولى للخدمات المنزلية</title>
+
+    <!-- Google Fonts: Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 RTL CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+
+    <!-- Font Awesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Alpine.js v3 (defer) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        /* ── Reset & Base ─────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #028090; --secondary: #00A896; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Tajawal', sans-serif; color: var(--dark); background: var(--white); overflow-x: hidden; }
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark { color-scheme: dark; }
+
+        /* ── NAV ──────────────────────────────────────────────────── */
+        nav {
+            background: white;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-weight: 900;
+            font-size: 1.35rem;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+        .nav-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .btn-login {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .btn-login:hover { background: #026f7e; color: white; }
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hamburger {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            color: var(--dark);
+        }
+        .mobile-menu {
+            background: white;
+            border-top: 1px solid #f1f5f9;
+            padding: 0.5rem 5% 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+        .mobile-menu a {
+            padding: 0.75rem 0.5rem;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 8px;
+        }
+        .mobile-menu a:hover { background: var(--light); color: var(--primary); }
+        .mobile-menu hr { border: none; border-top: 1px solid #f1f5f9; margin: 0.5rem 0; }
+
+        /* Desktop nav links */
+        .nav-links-desktop {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .nav-links-desktop a {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.15s;
+        }
+        .nav-links-desktop a:hover { color: var(--primary); }
+
+        @media (max-width: 767px) {
+            .hamburger { display: flex; }
+            .nav-links-desktop { display: none; }
+        }
+        @media (min-width: 768px) {
+            .hamburger { display: none; }
+            .mobile-menu { display: none !important; }
+        }
+
+        /* Dark nav */
+        html.dark nav { background: #1e293b; box-shadow: 0 1px 8px rgba(0,0,0,0.3); }
+        html.dark .mobile-menu { background: #1e293b; border-color: #334155; }
+        html.dark .mobile-menu a { color: #e2e8f0; }
+        html.dark .mobile-menu a:hover { background: #0f172a; }
+        html.dark .btn-login { background: var(--primary); }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+        html.dark .hamburger { color: #e2e8f0; }
+        html.dark .nav-links-desktop a { color: #94a3b8; }
+        html.dark .nav-links-desktop a:hover { color: var(--accent); }
+
+        /* ── HERO ─────────────────────────────────────────────────── */
+        .hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #0f3460 50%, var(--primary) 100%);
+            padding: 3rem 5% 3.5rem;
+            color: white;
+            text-align: center;
+        }
+        .hero-inner { max-width: 640px; margin: 0 auto; }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1.25rem;
+        }
+        .hero-title {
+            font-size: clamp(2rem, 6vw, 3rem);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+        }
+        .highlight { color: var(--accent); }
+        .hero-sub { font-size: 1.05rem; opacity: 0.85; margin-bottom: 1.75rem; }
+
+        /* Search box */
+        .hero-search { margin-bottom: 1.25rem; }
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            padding: 1rem 1.25rem;
+            font-size: 16px;
+            font-family: 'Tajawal', sans-serif;
+            outline: none;
+            color: var(--dark);
+            min-width: 0;
+        }
+        .search-box .city-select {
+            border: none;
+            border-right: 1px solid #e2e8f0;
+            padding: 0.75rem 0.75rem;
+            color: var(--gray);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            background: white;
+        }
+        .search-box button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.9rem 1.5rem;
+            font-weight: 800;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .search-box button:hover { background: #026f7e; }
+
+        /* Quick tags */
+        .quick-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .quick-tags a {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: background 0.15s;
+        }
+        .quick-tags a:hover { background: rgba(255,255,255,0.25); }
+
+        /* Trust pills */
+        .trust-pills {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .trust-pills span { color: rgba(255,255,255,0.7); font-size: 0.8rem; }
+
+        @media (max-width: 767px) {
+            .hero { padding: 2rem 5% 2.5rem; }
+            .city-select { display: none; }
+            .search-box button { padding: 0.9rem 1rem; }
+        }
+
+        /* ── CATEGORIES ───────────────────────────────────────────── */
+        .cats-section { background: var(--light); padding: 2.5rem 5%; }
+        .section-inner { max-width: 800px; margin: 0 auto; }
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+        .cats-primary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+        .cat-card {
+            border-radius: 20px;
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 120px;
+            background: white;
+        }
+        .cat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(2,128,144,0.15);
+        }
+        .cat-services { border-top: 3px solid var(--primary); }
+        .cat-tenders  { border-top: 3px solid #6366f1; }
+        .cat-equip    { border-top: 3px solid #f59e0b; }
+        .cat-consult  { border-top: 3px solid #8b5cf6; }
+        .cat-ico { font-size: 2.5rem; }
+        .cat-lbl { font-weight: 800; font-size: 0.95rem; color: var(--dark); }
+        .cat-cnt { font-size: 0.75rem; color: var(--gray); }
+
+        /* Sub categories */
+        .cats-all { margin-top: 1rem; }
+        .cats-all-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+        .sub-cat {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.6rem 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.15s;
+            display: block;
+        }
+        .sub-cat:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Expander button */
+        .cats-expander {
+            display: block;
+            margin: 1.25rem auto 0;
+            background: none;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+        }
+        .cats-expander:hover { background: rgba(2,128,144,0.06); }
+
+        @media (min-width: 769px) {
+            .cats-primary { grid-template-columns: repeat(4, 1fr); max-width: 100%; }
+            .cats-all-grid { grid-template-columns: repeat(6, 1fr); }
+        }
+
+        html.dark .cats-section { background: #0f172a; }
+        html.dark .section-title { color: #e2e8f0; }
+        html.dark .cat-card { background: #1e293b; color: #e2e8f0; }
+        html.dark .cat-lbl { color: #e2e8f0; }
+        html.dark .cat-cnt { color: #64748b; }
+        html.dark .sub-cat { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .sub-cat:hover { border-color: var(--primary); color: var(--accent); }
+        html.dark .cats-expander { border-color: var(--primary); color: var(--accent); }
+
+        /* ── HOW IT WORKS ─────────────────────────────────────────── */
+        .how-section { background: white; padding: 2.5rem 5%; }
+        .steps-scroll {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.5rem;
+        }
+        .steps-scroll::-webkit-scrollbar { display: none; }
+        .step-card {
+            scroll-snap-align: start;
+            flex: 0 0 220px;
+            background: var(--light);
+            border-radius: 18px;
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+            position: relative;
+        }
+        .step-num {
+            position: absolute;
+            top: -12px;
+            right: 50%;
+            transform: translateX(50%);
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .step-ico { font-size: 2.25rem; margin-bottom: 0.75rem; margin-top: 0.5rem; }
+        .step-title { font-weight: 800; font-size: 1rem; color: var(--dark); margin-bottom: 0.5rem; }
+        .step-desc { font-size: 0.82rem; color: var(--gray); line-height: 1.5; }
+
+        @media (min-width: 768px) {
+            .steps-scroll {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                overflow: visible;
+            }
+            .step-card { flex: unset; }
+        }
+
+        html.dark .how-section { background: #1e293b; }
+        html.dark .step-card { background: #0f172a; }
+        html.dark .step-title { color: #e2e8f0; }
+
+        /* ── STATS STRIP ──────────────────────────────────────────── */
+        .stats-strip {
+            background: var(--primary);
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+        }
+        .stat-item { text-align: center; color: white; }
+        .stat-num { font-size: 1.75rem; font-weight: 900; }
+        .stat-lbl { font-size: 0.8rem; opacity: 0.8; }
+
+        @media (max-width: 767px) {
+            .stat-hide-mobile { display: none; }
+            .stats-strip { gap: 2rem; }
+        }
+
+        html.dark .stats-strip { background: #026f7e; }
+
+        /* ── CTA BANNER ───────────────────────────────────────────── */
+        .cta-section { background: var(--dark); padding: 2.5rem 5%; }
+        .cta-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .cta-text h2 { font-size: 1.4rem; font-weight: 800; color: white; margin-bottom: 0.5rem; }
+        .cta-text p { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        .btn-cta {
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.85rem 2rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+        .btn-cta:hover { background: #01a882; color: var(--dark); }
+
+        @media (max-width: 600px) {
+            .cta-inner { flex-direction: column; text-align: center; }
+            .btn-cta { width: 100%; text-align: center; }
+        }
+
+        html.dark .cta-section { background: #0f172a; }
+
+        /* ── FOOTER ───────────────────────────────────────────────── */
+        footer {
+            background: var(--dark);
+            color: rgba(255,255,255,0.6);
+            padding: 2rem 5%;
+            text-align: center;
+        }
+        .footer-inner { max-width: 800px; margin: 0 auto; }
+        .footer-logo { color: var(--accent); font-weight: 900; font-size: 1.25rem; margin-bottom: 1rem; }
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .footer-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; }
+        .footer-links a:hover { color: var(--accent); }
+        .footer-copy { font-size: 0.8rem; }
+
+        html.dark footer { background: #0a0f1c; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+
+    <!-- ── NAV ──────────────────────────────────────────────────── -->
+    <nav x-data="{ menuOpen: false }">
+        <div class="nav-inner">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+
+            <!-- Desktop links -->
+            <div class="nav-links-desktop">
+                <a href="search-services.html">الخدمات</a>
+                <a href="tenders.html">المناقصات</a>
+                <a href="equipment.html">المعدات</a>
+                <a href="consultations.html">الاستشارات</a>
+                <a href="ai-assistant.html">🤖 المساعد الذكي</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="login.html" class="btn-login">تسجيل الدخول</a>
+                <button class="hamburger" @click="menuOpen = !menuOpen" :aria-expanded="menuOpen">☰</button>
+            </div>
+        </div>
+
+        <!-- Mobile drawer -->
+        <div class="mobile-menu" x-show="menuOpen" x-transition @click.outside="menuOpen = false">
+            <a href="search-services.html">🔧 الخدمات</a>
+            <a href="tenders.html">📋 المناقصات</a>
+            <a href="equipment.html">🏗️ المعدات</a>
+            <a href="consultations.html">💼 الاستشارات</a>
+            <a href="ai-assistant.html">🤖 المساعد الذكي</a>
+            <hr>
+            <a href="register-provider.html">انضم كمزود خدمة</a>
+            <a href="register-customer.html">إنشاء حساب عميل</a>
+        </div>
+    </nav>
+
+    <!-- ── HERO ─────────────────────────────────────────────────── -->
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-badge">🏆 المنصة الأولى للخدمات المنزلية في السعودية</div>
+            <h1 class="hero-title">أي خدمة تحتاج<br><span class="highlight">اليوم؟</span></h1>
+            <p class="hero-sub">اعثر على أفضل المزودين في منطقتك خلال دقائق</p>
+
+            <!-- Embedded search bar -->
+            <div class="hero-search">
+                <div class="search-box">
+                    <input type="search" id="heroSearch" placeholder="ابحث: كهرباء، سباكة، تكييف..." autocomplete="off">
+                    <select class="city-select" id="heroCity">
+                        <option>الرياض</option>
+                        <option>جدة</option>
+                        <option>الدمام</option>
+                        <option>مكة المكرمة</option>
+                        <option>المدينة المنورة</option>
+                    </select>
+                    <button onclick="doSearch()">بحث</button>
+                </div>
+                <!-- Quick tags -->
+                <div class="quick-tags">
+                    <a href="search-services.html?q=كهرباء">⚡ كهرباء</a>
+                    <a href="search-services.html?q=سباكة">🚿 سباكة</a>
+                    <a href="search-services.html?q=تكييف">❄️ تكييف</a>
+                    <a href="search-services.html?q=دهانات">🎨 دهانات</a>
+                    <a href="search-services.html?q=نجارة">🪵 نجارة</a>
+                </div>
+            </div>
+
+            <!-- Trust pills -->
+            <div class="trust-pills">
+                <span>✓ 438 مزود معتمد</span>
+                <span>✓ دفع آمن</span>
+                <span>✓ ضمان الجودة</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CATEGORIES ──────────────────────────────────────────── -->
+    <section class="cats-section" x-data="{ allOpen: false }">
+        <div class="section-inner">
+            <h2 class="section-title">تصفح حسب الفئة</h2>
+
+            <!-- 4 primary categories -->
+            <div class="cats-primary">
+                <a href="search-services.html" class="cat-card cat-services">
+                    <div class="cat-ico">🔧</div>
+                    <div class="cat-lbl">الخدمات المنزلية</div>
+                    <div class="cat-cnt">كهرباء، سباكة، دهانات وأكثر</div>
+                </a>
+                <a href="tenders.html" class="cat-card cat-tenders">
+                    <div class="cat-ico">📋</div>
+                    <div class="cat-lbl">المناقصات</div>
+                    <div class="cat-cnt">للشركات والمقاولين</div>
+                </a>
+                <a href="equipment.html" class="cat-card cat-equip">
+                    <div class="cat-ico">🏗️</div>
+                    <div class="cat-lbl">المعدات الثقيلة</div>
+                    <div class="cat-cnt">استئجار معدات البناء</div>
+                </a>
+                <a href="consultations.html" class="cat-card cat-consult">
+                    <div class="cat-ico">💼</div>
+                    <div class="cat-lbl">الاستشارات</div>
+                    <div class="cat-cnt">هندسية، قانونية، مالية</div>
+                </a>
+            </div>
+
+            <!-- Expandable sub-categories -->
+            <div class="cats-all" x-show="allOpen" x-transition>
+                <div class="cats-all-grid">
+                    <a href="search-services.html?q=كهرباء" class="sub-cat">⚡ كهرباء</a>
+                    <a href="search-services.html?q=سباكة" class="sub-cat">🚿 سباكة</a>
+                    <a href="search-services.html?q=تكييف" class="sub-cat">❄️ تكييف</a>
+                    <a href="search-services.html?q=دهانات" class="sub-cat">🎨 دهانات</a>
+                    <a href="search-services.html?q=نجارة" class="sub-cat">🪵 نجارة</a>
+                    <a href="search-services.html?q=تنظيف" class="sub-cat">🧹 تنظيف</a>
+                    <a href="search-services.html?q=حراسة" class="sub-cat">🛡️ حراسة</a>
+                    <a href="search-services.html?q=زراعة" class="sub-cat">🌿 زراعة</a>
+                    <a href="search-services.html?q=سباكة حمامات" class="sub-cat">🛁 حمامات</a>
+                    <a href="search-services.html?q=أجهزة منزلية" class="sub-cat">📺 أجهزة</a>
+                    <a href="search-services.html?q=طاقة شمسية" class="sub-cat">☀️ طاقة شمسية</a>
+                    <a href="search-services.html?q=أمن وكاميرات" class="sub-cat">📷 أمن وكاميرات</a>
+                </div>
+            </div>
+
+            <button class="cats-expander" @click="allOpen = !allOpen">
+                <span x-text="allOpen ? '← إخفاء' : 'عرض الكل (24 خدمة) →'"></span>
+            </button>
+        </div>
+    </section>
+
+    <!-- ── HOW IT WORKS ────────────────────────────────────────── -->
+    <section class="how-section">
+        <div class="section-inner">
+            <h2 class="section-title">كيف تعمل خدمة؟</h2>
+            <div class="steps-scroll">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <div class="step-ico">🔍</div>
+                    <div class="step-title">اختر خدمتك</div>
+                    <p class="step-desc">ابحث عن الخدمة التي تحتاجها من بين أكثر من 24 تصنيف</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <div class="step-ico">📝</div>
+                    <div class="step-title">أرسل طلبك</div>
+                    <p class="step-desc">صف المشكلة بتفاصيل بسيطة وحدد موعدك المفضل</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <div class="step-ico">💬</div>
+                    <div class="step-title">قارن العروض</div>
+                    <p class="step-desc">يصلك عروض من مزودين معتمدين خلال 30 دقيقة</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <div class="step-ico">✅</div>
+                    <div class="step-title">تم! قيّم وادفع</div>
+                    <p class="step-desc">ادفع بأمان عبر الضمان وقيّم المزود بعد الانتهاء</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── STATS STRIP ─────────────────────────────────────────── -->
+    <div class="stats-strip">
+        <div class="stat-item">
+            <div class="stat-num">+10K</div>
+            <div class="stat-lbl">مزود معتمد</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">+50K</div>
+            <div class="stat-lbl">عميل راضٍ</div>
+        </div>
+        <div class="stat-item stat-hide-mobile">
+            <div class="stat-num">24/7</div>
+            <div class="stat-lbl">دعم مستمر</div>
+        </div>
+        <div class="stat-item stat-hide-mobile">
+            <div class="stat-num">4.9★</div>
+            <div class="stat-lbl">متوسط التقييم</div>
+        </div>
+    </div>
+
+    <!-- ── CTA BANNER ─────────────────────────────────────────── -->
+    <section class="cta-section">
+        <div class="cta-inner">
+            <div class="cta-text">
+                <h2>هل أنت مزود خدمة؟</h2>
+                <p>انضم لأكثر من 10,000 مزود معتمد وابدأ استقبال الطلبات اليوم</p>
+            </div>
+            <a href="register-provider.html" class="btn-cta">انضم الآن ←</a>
+        </div>
+    </section>
+
+    <!-- ── FOOTER ─────────────────────────────────────────────── -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-logo">KHEDMAH</div>
+            <div class="footer-links">
+                <a href="search-services.html">الخدمات</a>
+                <a href="tenders.html">المناقصات</a>
+                <a href="equipment.html">المعدات</a>
+                <a href="login.html">تسجيل الدخول</a>
+            </div>
+            <p class="footer-copy">© 2025 خدمة — جميع الحقوق محفوظة</p>
+        </div>
+    </footer>
+
+    <!-- AI Assistant FAB -->
+    <a href="ai-assistant.html" class="ai-fab" title="مساعد خدمة الذكي">
+      🤖
+      <span class="ai-fab-label">مساعد ذكي</span>
+    </a>
+    <style>
+      .ai-fab {
+        position: fixed;
+        bottom: 80px;
+        left: 20px;
+        background: linear-gradient(135deg, #028090, #02C39A);
+        color: white;
+        border-radius: 50px;
+        padding: 0.75rem 1.1rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(2,128,144,0.4);
+        z-index: 999;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .ai-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(2,128,144,0.5); }
+      .ai-fab-label { font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 700; }
+      html.dark .ai-fab { box-shadow: 0 4px 15px rgba(2,195,154,0.3); }
+    </style>
+
+    <script>
+        function doSearch() {
+            const q = document.getElementById('heroSearch').value.trim();
+            const city = document.getElementById('heroCity').value;
+            if (!q) return;
+            location.href = 'search-services.html?q=' + encodeURIComponent(q) + '&city=' + encodeURIComponent(city);
+        }
+
+        document.getElementById('heroSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doSearch();
+        });
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+    </script>
+</body>
+</html>

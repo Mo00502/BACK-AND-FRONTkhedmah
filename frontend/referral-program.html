@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>برنامج الإحالة - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 4rem 5%;
+            color: white;
+            text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .hero-content h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+        
+        .hero-content p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+        }
+        
+        .reward-highlight {
+            background: rgba(255,255,255,0.2);
+            padding: 1.5rem;
+            border-radius: 20px;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        
+        /* Container */
+        .referral-container {
+            max-width: 1200px;
+            margin: -3rem auto 2rem;
+            padding: 0 5%;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-size: 1rem;
+        }
+        
+        /* Referral Code Section */
+        .referral-code-section {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-header p {
+            color: var(--gray);
+        }
+        
+        .code-display {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .code-label {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .code-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 5px;
+            margin-bottom: 1.5rem;
+            font-family: monospace;
+        }
+        
+        .code-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-copy {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .btn-copy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-share {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-share:hover {
+            background: white;
+            color: var(--primary);
+        }
+        
+        /* Share Options */
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .share-btn {
+            padding: 1.2rem;
+            background: var(--light);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .share-btn:hover {
+            border-color: var(--primary);
+            background: rgba(2, 128, 144, 0.05);
+        }
+        
+        .share-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .share-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        /* How It Works */
+        .how-it-works {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .step-card {
+            text-align: center;
+        }
+        
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .step-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .step-card p {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+        
+        /* Referral History */
+        .referral-history {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .history-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem;
+            background: var(--light);
+            border-radius: 12px;
+        }
+        
+        .history-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .history-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .history-name {
+            font-weight: 600;
+        }
+        
+        .history-date {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+        
+        .history-reward {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray);
+        }
+        
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        @media (max-width: 968px) {
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid,
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .share-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .navbar, html.dark header, html.dark .topbar, html.dark .admin-nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .stats-card, html.dark .data-card, html.dark .section-card, html.dark .tracking-card, html.dark .step-card, html.dark .referral-card, html.dark .gantt-card, html.dark .provider-card, html.dark .filter-panel { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link, html.dark .admin-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active, html.dark .nav-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="password"], html.dark input[type="search"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; border-color: #334155; }
+        html.dark .table th, html.dark table th, html.dark thead th { background: #0f172a !important; color: #94a3b8; border-color: #334155; }
+        html.dark .table td, html.dark table td, html.dark tbody td { border-color: #334155; }
+        html.dark .table tbody tr:hover, html.dark tbody tr:hover { background: rgba(255,255,255,0.03); }
+        html.dark .badge, html.dark .tag, html.dark .status-badge { border: 1px solid #334155; }
+        html.dark .modal, html.dark .modal-content { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .map-placeholder, html.dark #liveMap { filter: invert(0.85) hue-rotate(180deg); }
+        html.dark .stepper-line { background: #334155; }
+        html.dark .gantt-row { background: #1e293b; border-color: #334155; }
+        html.dark .gantt-header { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .gantt-bar { opacity: 0.9; }
+        html.dark .filter-option label { color: #cbd5e1; }
+        html.dark .filter-option input[type="checkbox"] { accent-color: #02C39A; }
+        html.dark .tag { background: #0f172a; color: #94a3b8; }
+        html.dark .stat-card, html.dark .referral-code-section, html.dark .how-it-works, html.dark .referral-history { background: #1e293b !important; }
+        html.dark .section-header p { color: #94a3b8; }
+        html.dark .history-item { background: #0f172a; }
+        html.dark .share-btn { background: #0f172a; border-color: #334155; }
+        html.dark .share-btn:hover { border-color: #02C39A; background: rgba(2,195,154,0.08); }
+        html.dark .share-name { color: #e2e8f0; }
+        html.dark .step-card p { color: #94a3b8; }
+        html.dark .history-date { color: #94a3b8; }
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        if (!API.isLoggedIn()) window.location.href = 'login.html';
+    })();
+</script>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-icon">🎁</div>
+            <h1>ادعُ أصدقاءك واكسب معاً!</h1>
+            <p>كل صديق تدعوه يحصل على خصم، وأنت تحصل على مكافأة</p>
+            <div class="reward-highlight">
+                50 ريال لك + 50 ريال لصديقك
+            </div>
+        </div>
+    </div>
+
+    <!-- Container -->
+    <div class="referral-container">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value">12</div>
+                <div class="stat-label">إحالات ناجحة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value">600 ريال</div>
+                <div class="stat-label">إجمالي الأرباح</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-value">3</div>
+                <div class="stat-label">قيد الانتظار</div>
+            </div>
+        </div>
+
+        <!-- Referral Code -->
+        <div class="referral-code-section">
+            <div class="section-header">
+                <h2>كود الإحالة الخاص بك</h2>
+                <p>شارك هذا الكود مع أصدقائك</p>
+            </div>
+
+            <div class="code-display">
+                <div class="code-label">كود الإحالة</div>
+                <div class="code-value" id="referralCode">AHMED2026</div>
+                
+                <div class="code-actions">
+                    <button class="btn btn-copy" onclick="copyCode()">
+                        <span>📋</span>
+                        <span>نسخ الكود</span>
+                    </button>
+                    <button class="btn btn-share" onclick="shareCode()">
+                        <span>📤</span>
+                        <span>مشاركة</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Share Options -->
+            <div class="share-options">
+                <button class="share-btn" onclick="shareVia('whatsapp')">
+                    <div class="share-icon">💬</div>
+                    <div class="share-name">واتساب</div>
+                </button>
+                <button class="share-btn" onclick="shareVia('twitter')">
+                    <div class="share-icon">🐦</div>
+                    <div class="share-name">تويتر</div>
+                </button>
+                <button class="share-btn" onclick="shareVia('telegram')">
+                    <div class="share-icon">✈️</div>
+                    <div class="share-name">تيليجرام</div>
+                </button>
+                <button class="share-btn" onclick="shareVia('email')">
+                    <div class="share-icon">✉️</div>
+                    <div class="share-name">إيميل</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="how-it-works">
+            <div class="section-header">
+                <h2>كيف يعمل البرنامج؟</h2>
+                <p>ثلاث خطوات بسيطة للحصول على المكافأة</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>شارك الكود</h3>
+                    <p>أرسل كود الإحالة الخاص بك لأصدقائك عبر واتساب أو أي وسيلة أخرى</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>صديقك يسجل</h3>
+                    <p>عند التسجيل باستخدام كودك، يحصل صديقك على خصم 50 ريال فوراً</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>احصل على مكافأتك</h3>
+                    <p>بعد أول حجز ناجح لصديقك، تحصل أنت على 50 ريال رصيد</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral History -->
+        <div class="referral-history">
+            <div class="section-header">
+                <h2>سجل الإحالات</h2>
+                <p>الأصدقاء الذين دعوتهم</p>
+            </div>
+
+            <div class="history-list">
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-avatar">س</div>
+                        <div>
+                            <div class="history-name">سعد العتيبي</div>
+                            <div class="history-date">انضم في 1 فبراير 2026</div>
+                        </div>
+                    </div>
+                    <div class="history-reward">+50 ريال</div>
+                </div>
+
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-avatar">خ</div>
+                        <div>
+                            <div class="history-name">خالد المطيري</div>
+                            <div class="history-date">انضم في 28 يناير 2026</div>
+                        </div>
+                    </div>
+                    <div class="history-reward">+50 ريال</div>
+                </div>
+
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-avatar">ف</div>
+                        <div>
+                            <div class="history-name">فيصل الدوسري</div>
+                            <div class="history-date">انضم في 25 يناير 2026</div>
+                        </div>
+                    </div>
+                    <div class="history-reward">+50 ريال</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            const code = document.getElementById('referralCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ تم نسخ الكود: ' + code);
+            });
+        }
+
+        function shareCode() {
+            const code = document.getElementById('referralCode').textContent;
+            const text = `🎁 انضم لـ Khedmah واحصل على خصم 50 ريال!\n\nاستخدم كود الإحالة: ${code}\n\nأفضل منصة للخدمات المنزلية في السعودية 🇸🇦`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'كود إحالة Khedmah',
+                    text: text
+                });
+            } else {
+                alert(text);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        function shareVia(platform) {
+            const code = document.getElementById('referralCode').textContent;
+            const text = `🎁 انضم لـ Khedmah واحصل على خصم 50 ريال! استخدم كود: ${code}`;
+            const url = 'https://khedmah.sa/signup?ref=' + code;
+            
+            let shareUrl = '';
+            
+            switch(platform) {
+                case 'whatsapp':
+                    shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+                    break;
+                case 'twitter':
+                    shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+                    break;
+                case 'telegram':
+                    shareUrl = `https://t.me/share/url?url=${url}&text=${encodeURIComponent(text)}`;
+                    break;
+                case 'email':
+                    shareUrl = `mailto:?subject=كود إحالة Khedmah&body=${encodeURIComponent(text + '\n\n' + url)}`;
+                    break;
+            }
+            
+            window.open(shareUrl, '_blank');
+        }
+    </script>
+</body>
+</html>

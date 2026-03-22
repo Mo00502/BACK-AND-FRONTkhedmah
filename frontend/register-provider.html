@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب مزود خدمة - خدمة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* ── Reset & fonts ── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #028090;
+            --accent:  #02C39A;
+            --dark:    #1E293B;
+            --light:   #F8FAFC;
+            --gray:    #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error:   #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); }
+
+        /* ── Wizard layout ── */
+        .wizard-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* ── Sticky progress header ── */
+        .wizard-header {
+            position: sticky; top: 0; background: white; z-index: 100;
+            padding: 0.875rem 5% 0.75rem; border-bottom: 1px solid #f1f5f9;
+        }
+        .wizard-logo { font-weight: 900; font-size: 1.2rem; color: var(--primary); }
+        .progress-bar-wrap { height: 6px; background: #e2e8f0; border-radius: 3px; margin: 0.6rem 0 0.4rem; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; }
+        .step-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--gray); }
+        .theme-toggle { background: none; border: 1.5px solid #e2e8f0; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; }
+
+        /* ── Body ── */
+        .wizard-body { flex: 1; padding: 1.5rem 5% 6rem; max-width: 560px; margin: 0 auto; width: 100%; }
+
+        /* ── Step panel ── */
+        .step-heading { margin-bottom: 1.75rem; }
+        .step-heading h2 { font-size: 1.35rem; font-weight: 800; color: var(--dark); margin-bottom: 0.3rem; }
+        .step-heading p { color: var(--gray); font-size: 0.88rem; }
+
+        /* ── Field groups ── */
+        .field-group { margin-bottom: 1.25rem; position: relative; }
+        .field-label { font-size: 0.85rem; font-weight: 700; color: var(--dark); display: block; margin-bottom: 0.4rem; }
+        .field-label .req { color: var(--error); }
+        .field-label .opt { color: var(--gray); font-weight: 400; font-size: 0.78rem; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+            padding: 0.875rem 1rem; font-family: 'Tajawal', sans-serif;
+            font-size: 16px; outline: none; color: var(--dark); background: white;
+            transition: border-color 0.15s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(2,128,144,0.1); }
+        .form-textarea { resize: vertical; min-height: 100px; }
+        .field-error { color: var(--error); font-size: 0.78rem; margin-top: 0.3rem; font-weight: 600; }
+        .field-hint { color: var(--gray); font-size: 0.75rem; margin-top: 0.3rem; }
+        .form-input.is-error, .form-select.is-error, .form-textarea.is-error { border-color: var(--error); }
+
+        /* ── Password toggle ── */
+        .pass-wrap { position: relative; }
+        .pass-toggle { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--gray); cursor: pointer; font-size: 1rem; }
+
+        /* ── Referral collapsible ── */
+        .referral-toggle-link { font-size: 0.82rem; color: var(--primary); cursor: pointer; text-decoration: underline; display: inline-block; margin-bottom: 0.75rem; background: none; border: none; font-family: 'Tajawal', sans-serif; }
+        .terms-note { font-size: 0.78rem; color: var(--gray); text-align: center; margin-top: 1rem; line-height: 1.6; }
+        .terms-note a { color: var(--primary); text-decoration: none; }
+        .login-link { text-align: center; font-size: 0.88rem; color: var(--gray); margin-top: 0.875rem; }
+        .login-link a { color: var(--primary); font-weight: 700; text-decoration: none; }
+
+        /* ── Provider type cards (Step 2) ── */
+        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+        .type-card {
+            border: 2px solid #e2e8f0; border-radius: 18px; padding: 1.5rem 1rem;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+            background: white; display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+            min-height: 120px;
+        }
+        .type-card.selected { border-color: var(--primary); background: rgba(2,128,144,0.06); box-shadow: 0 0 0 3px rgba(2,128,144,0.1); }
+        .type-ico { font-size: 2.5rem; }
+        .type-lbl { font-weight: 800; font-size: 0.9rem; color: var(--dark); }
+        .type-sub { font-size: 0.72rem; color: var(--gray); }
+        .type-grid .type-card:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: 50%; margin: 0 auto; }
+
+        /* ── Sub-category chips (Step 3) ── */
+        .sub-cats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .sub-cat-chip {
+            border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.5rem;
+            text-align: center; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--dark);
+            background: white; transition: all 0.15s;
+        }
+        .sub-cat-chip.selected { border-color: var(--primary); background: rgba(2,128,144,0.08); color: var(--primary); }
+
+        /* ── Primary chip enhancements ── */
+        .primary-chip { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; position: relative; }
+        .primary-badge { font-size: 0.62rem; font-weight: 700; color: var(--primary); line-height: 1; }
+        .primary-chip.primary-selected { border-color: var(--primary); background: rgba(2,128,144,0.1); color: var(--primary); box-shadow: 0 0 0 2px rgba(2,128,144,0.2); }
+
+        /* ── Additional categories ── */
+        .additional-cats-toggle { background: none; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 0.6rem 1rem; width: 100%; font-family: 'Tajawal', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--primary); cursor: pointer; text-align: right; transition: all 0.15s; }
+        .additional-cats-toggle:hover { border-color: var(--primary); background: rgba(2,128,144,0.04); }
+        .extra-chip { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+        .extra-check { font-size: 0.62rem; font-weight: 800; color: var(--accent); line-height: 1; }
+        .extra-chip.selected-extra { border-color: var(--accent); background: rgba(2,195,154,0.1); color: #007a68; }
+        .extra-chip.primary-lock { border-color: var(--primary); background: rgba(2,128,144,0.08); opacity: 0.7; cursor: default; }
+        .primary-lock-badge { font-size: 0.6rem; font-weight: 700; color: var(--primary); line-height: 1; }
+
+        /* ── Best At section ── */
+        .best-at-section { background: rgba(245,158,11,0.04); border-radius: 14px; padding: 1rem; border: 1.5px solid rgba(245,158,11,0.15); }
+        .best-at-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .best-at-chip { border: 1.5px solid #e2e8f0; border-radius: 50px; padding: 0.45rem 0.875rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; background: white; color: var(--dark); transition: all 0.15s; }
+        .best-at-chip.selected { border-color: var(--warning); background: rgba(245,158,11,0.1); color: #92400e; }
+        .best-at-chip.disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── Service mode tabs ── */
+        .mode-tabs { display: flex; gap: 0.5rem; }
+        .mode-tab {
+            flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.65rem;
+            text-align: center; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            background: white; transition: all 0.15s; color: var(--dark);
+        }
+        .mode-tab.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* ── District tags ── */
+        .district-input-row { display: flex; gap: 0.5rem; }
+        .district-input-row .form-input { flex: 1; }
+        .btn-add-district { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 0.875rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .district-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+        .district-tag { background: rgba(2,128,144,0.1); color: var(--primary); border-radius: 8px; padding: 0.3rem 0.65rem; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+        .district-tag button { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 0.85rem; padding: 0; line-height: 1; }
+
+        /* ── Service items (Step 4) ── */
+        .service-item { background: var(--light); border-radius: 14px; padding: 1.1rem; margin-bottom: 0.875rem; border: 1.5px solid #e2e8f0; }
+        .service-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .service-num { font-size: 0.78rem; font-weight: 700; color: var(--gray); }
+        .btn-remove-service { background: none; border: none; color: var(--error); cursor: pointer; font-size: 0.85rem; }
+        .price-row { display: flex; gap: 0.5rem; }
+        .price-row .form-input { flex: 1; }
+        .price-row .form-select { width: 140px; flex-shrink: 0; }
+        .btn-add-service { width: 100%; border: 2px dashed #e2e8f0; border-radius: 14px; padding: 0.85rem; background: none; color: var(--primary); font-family: 'Tajawal', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+        .btn-add-service:hover { background: rgba(2,128,144,0.05); border-color: var(--primary); }
+        .service-hint-box { background: rgba(2,128,144,0.06); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.8rem; color: var(--gray); }
+        .service-hint-box strong { color: var(--primary); display: block; margin-bottom: 0.25rem; }
+
+        /* ── Availability day pills (Step 5) ── */
+        .days-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .day-pill {
+            border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.55rem 0.9rem;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; background: white; color: var(--dark);
+            transition: all 0.15s;
+        }
+        .day-pill.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .time-row { display: flex; gap: 0.75rem; }
+        .time-row .field-group { flex: 1; }
+
+        /* ── Toggle switch ── */
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 0; border-bottom: 1px solid #f1f5f9; }
+        .toggle-lbl { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
+        .toggle-lbl small { display: block; font-size: 0.75rem; color: var(--gray); font-weight: 400; }
+        .toggle-sw { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+        .toggle-sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .toggle-knob { position: absolute; inset: 0; background: #cbd5e1; border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+        .toggle-knob::before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 3px; right: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .toggle-sw input:checked + .toggle-knob { background: var(--primary); }
+        .toggle-sw input:checked + .toggle-knob::before { transform: translateX(-22px); }
+        .info-box { background: rgba(2,128,144,0.07); border-radius: 12px; padding: 0.875rem 1rem; font-size: 0.82rem; color: var(--primary); margin-top: 1rem; display: flex; gap: 0.5rem; align-items: flex-start; }
+
+        /* ── Upload boxes (Step 6) ── */
+        .upload-grid { display: flex; flex-direction: column; gap: 0.875rem; }
+        .upload-box { border: 2px dashed #e2e8f0; border-radius: 16px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .upload-box:hover { border-color: var(--primary); background: rgba(2,128,144,0.03); }
+        .upload-box.done { border-color: var(--success); border-style: solid; background: rgba(16,185,129,0.05); }
+        .upload-ico { font-size: 2rem; margin-bottom: 0.5rem; }
+        .upload-title { font-weight: 700; font-size: 0.9rem; color: var(--dark); margin-bottom: 0.25rem; }
+        .upload-sub { font-size: 0.75rem; color: var(--gray); }
+        .upload-done-txt { font-size: 0.8rem; color: var(--success); font-weight: 700; margin-top: 0.5rem; }
+        .upload-hint { font-size: 0.75rem; color: var(--gray); text-align: center; margin-top: 0.75rem; }
+
+        /* ── Step 7 Review ── */
+        .review-card { background: white; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .review-card-title { font-size: 0.78rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.875rem; }
+        .review-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; align-items: flex-start; gap: 1rem; }
+        .review-row:last-child { border-bottom: none; }
+        .review-key { font-size: 0.82rem; color: var(--gray); flex-shrink: 0; }
+        .review-val { font-size: 0.88rem; font-weight: 700; color: var(--dark); text-align: left; }
+        .completion-meter { background: var(--light); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem; }
+        .completion-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .completion-pct { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+        .completion-label { font-size: 0.82rem; color: var(--gray); }
+        .completion-bar { height: 8px; background: #e2e8f0; border-radius: 4px; }
+        .completion-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 4px; transition: width 0.6s ease; }
+        .missing-list { margin-top: 0.875rem; display: flex; flex-direction: column; gap: 0.4rem; }
+        .missing-item { font-size: 0.8rem; color: var(--gray); display: flex; align-items: center; gap: 0.4rem; }
+        .submit-note { text-align: center; font-size: 0.78rem; color: var(--gray); margin-top: 0.75rem; }
+
+        /* ── Sticky bottom nav ── */
+        .wizard-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; background: white;
+            border-top: 1px solid #f1f5f9; padding: 0.875rem 5%;
+            padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+            display: flex; justify-content: space-between; align-items: center; gap: 0.875rem; z-index: 100;
+        }
+        .btn-prev { background: var(--light); color: var(--dark); border: none; border-radius: 12px; padding: 0.85rem 1.5rem; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-next { background: var(--primary); color: white; border: none; border-radius: 12px; padding: 0.85rem 0; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1; }
+        .btn-next:hover { background: #026f7e; }
+        .btn-skip { background: none; border: none; color: var(--gray); font-family: 'Tajawal', sans-serif; font-size: 0.85rem; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+        .btn-submit-final { background: var(--success); color: white; border: none; border-radius: 12px; padding: 0.85rem 0; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; flex: 1; }
+
+        /* ── Success state ── */
+        .success-wrap { text-align: center; padding: 3rem 1rem; }
+        .success-ico { font-size: 4rem; margin-bottom: 1.25rem; }
+        .success-wrap h2 { font-size: 1.75rem; font-weight: 900; color: var(--dark); margin-bottom: 0.5rem; }
+        .success-wrap p { color: var(--gray); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .order-num { font-size: 1rem; font-weight: 700; color: var(--primary); margin: 0.75rem 0 0.5rem; }
+        .success-actions { display: flex; flex-direction: column; gap: 0.875rem; max-width: 280px; margin: 2rem auto 0; }
+        .btn-dashboard { background: var(--primary); color: white; padding: 0.95rem; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 1rem; display: block; text-align: center; }
+        .btn-complete-profile { background: var(--light); color: var(--dark); padding: 0.875rem; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 0.95rem; display: block; text-align: center; }
+
+        /* ── Dark mode ── */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark .wizard-header { background: #1e293b; border-color: #334155; }
+        html.dark .wizard-nav { background: #1e293b; border-color: #334155; }
+        html.dark .btn-prev { background: #0f172a; color: #e2e8f0; }
+        html.dark .type-card { background: #1e293b; border-color: #334155; }
+        html.dark .type-card.selected { background: rgba(2,128,144,0.15); }
+        html.dark .type-lbl { color: #e2e8f0; }
+        html.dark .sub-cat-chip { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .sub-cat-chip.selected { background: rgba(2,128,144,0.15); color: var(--accent); }
+        html.dark .form-input, html.dark .form-select, html.dark .form-textarea { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .form-input::placeholder, html.dark .form-textarea::placeholder { color: #64748b; }
+        html.dark .field-label { color: #cbd5e1; }
+        html.dark .service-item { background: #0f172a; border-color: #334155; }
+        html.dark .day-pill { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .day-pill.active { background: var(--primary); color: white; }
+        html.dark .mode-tab { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .upload-box { border-color: #334155; }
+        html.dark .upload-title { color: #e2e8f0; }
+        html.dark .review-card { background: #1e293b; }
+        html.dark .review-row { border-color: #334155; }
+        html.dark .review-val { color: #e2e8f0; }
+        html.dark .completion-meter { background: #0f172a; }
+        html.dark .completion-bar { background: #334155; }
+        html.dark .toggle-row { border-color: #334155; }
+        html.dark .toggle-lbl { color: #e2e8f0; }
+        html.dark .step-heading h2 { color: #e2e8f0; }
+        html.dark .success-wrap h2 { color: #e2e8f0; }
+        html.dark .btn-complete-profile { background: #1e293b; color: #e2e8f0; }
+        html.dark .service-hint-box { background: rgba(2,128,144,0.1); }
+        html.dark .info-box { background: rgba(2,128,144,0.12); }
+        html.dark .btn-add-district { background: var(--primary); }
+        html.dark .additional-cats-toggle { border-color: #334155; color: var(--accent); }
+        html.dark .extra-chip.selected-extra { background: rgba(2,195,154,0.15); }
+        html.dark .extra-chip.primary-lock { background: rgba(2,128,144,0.12); }
+        html.dark .best-at-section { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.2); }
+        html.dark .best-at-chip { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+        html.dark .best-at-chip.selected { background: rgba(245,158,11,0.15); color: #fcd34d; border-color: var(--warning); }
+    </style>
+</head>
+<body>
+
+<!-- Auth guard: redirect if already logged in as provider -->
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+        try {
+            const demo = localStorage.getItem('khedmah_demo');
+            const user = JSON.parse(localStorage.getItem('khedmah_user') || 'null');
+            if (demo && user && user.role === 'provider') {
+                window.location.replace('provider-dashboard.html');
+            }
+        } catch(e) {}
+    })();
+</script>
+
+<div class="wizard-wrap"
+    x-data="{
+        step: 1,
+        totalSteps: 7,
+        submitted: false,
+
+        /* Step 1 — Account */
+        fullName: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: '',
+        referralCode: '',
+        showPass: false,
+        showReferral: false,
+
+        /* Step 2 — Provider type */
+        providerType: '',
+
+        /* Step 3 — Specialization */
+        subCategory: '',
+        additionalCategories: [],
+        showAdditionalCats: false,
+        bestAt: [],
+        bestAtInput: '',
+        city: 'الرياض',
+        districts: [],
+        districtInput: '',
+        serviceMode: 'onsite',
+        shortDesc: '',
+        yearsExp: '',
+
+        /* Step 4 — Services */
+        services: [{ name: '', desc: '', price: '', priceType: 'hourly', primary: true }],
+
+        /* Step 5 — Availability */
+        availDays: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'],
+        startTime: '08:00',
+        endTime: '18:00',
+        emergency: false,
+        sameDay: false,
+        step5Skipped: false,
+
+        /* Step 6 — Documents */
+        photoUploaded: false,
+        idUploaded: false,
+        licenseUploaded: false,
+        step6Skipped: false,
+
+        /* Validation */
+        errors: {},
+
+        /* Computed */
+        get progressPct() { return ((this.step - 1) / (this.totalSteps - 1)) * 100; },
+        get stepLabel() {
+            return ['إنشاء الحساب','نوع المزود','التخصص والموقع','الخدمات المقدمة','أوقات العمل','المستندات','مراجعة وإرسال'][this.step - 1];
+        },
+        get completionPct() {
+            let score = 0;
+            if (this.fullName) score += 15;
+            if (this.providerType) score += 10;
+            if (this.subCategory) score += 10;
+            if (this.additionalCategories.length > 0) score += 5;
+            if (this.bestAt.length > 0) score += 5;
+            if (this.city) score += 5;
+            if (this.shortDesc) score += 10;
+            if (this.services[0].name) score += 15;
+            if (!this.step5Skipped) score += 15;
+            if (this.photoUploaded) score += 7;
+            if (this.idUploaded) score += 3;
+            return Math.min(score, 100);
+        },
+        get subCatsByType() {
+            const map = {
+                home: ['⚡ كهرباء','🚿 سباكة','❄️ تكييف','🎨 دهانات','🪵 نجارة','🧹 تنظيف','🌿 زراعة','🏗️ سيراميك','🐛 مكافحة حشرات','🔒 عزل','🚛 نقل أثاث','🛠️ صيانة عامة'],
+                consultant: ['🏛️ هندسة معمارية','🏗️ هندسة مدنية','⚡ هندسة كهربائية','🎨 تصميم داخلي','📋 إدارة مشاريع','⚖️ استشارات قانونية','💰 استشارات مالية','💻 تقنية المعلومات'],
+                contractor: ['🏗️ مقاولات عامة','🏠 تشطيبات','⚡ كهرباء صناعية','🚿 سباكة صناعية','🎨 دهانات تجارية','🔧 أعمال ميكانيكية'],
+                equipment: ['⛏️ حفر وتجريف','🏗️ رفع ونقل','🚧 طرق وإنشاء','⚡ مولدات كهربائية','🚜 معدات زراعية','🔧 معدات تشطيب'],
+                manpower: ['👷 عمالة بناء','⚡ كهربائيون','🚿 سباكون','🎨 نقاشون','🧹 عمال نظافة','🏗️ عمالة تشطيب']
+            };
+            return map[this.providerType] || [];
+        },
+        get serviceExamples() {
+            const map = {
+                home: 'إصلاح تسريبات المياه، تركيب إضاءة، صيانة مكيفات...',
+                consultant: 'مراجعة المخططات، إشراف على التنفيذ، إعداد التقارير...',
+                contractor: 'تشطيب كامل، هيكل خرساني، أعمال عزل...',
+                equipment: 'تأجير حفار، تأجير رافعة، توفير مولد...',
+                manpower: 'توفير 5 كهربائيين، عمالة نظافة، فرق بناء...'
+            };
+            return map[this.providerType] || 'اسم الخدمة التي تقدمها...';
+        },
+        get dynamicDoc3() {
+            const map = {
+                home: { label: '📄 رخصة مزاولة المهنة', note: 'اختياري', flag: 'licenseUploaded' },
+                consultant: { label: '🎓 شهادة الكفاءة المهنية', note: 'اختياري', flag: 'licenseUploaded' },
+                contractor: { label: '📋 السجل التجاري', note: 'مطلوب', flag: 'licenseUploaded' },
+                equipment: { label: '🏢 رخصة المنشأة', note: 'مطلوب', flag: 'licenseUploaded' },
+                manpower: { label: '📜 رخصة الاستقدام', note: 'مطلوب', flag: 'licenseUploaded' }
+            };
+            return map[this.providerType] || { label: '📄 وثيقة إضافية', note: 'اختياري', flag: 'licenseUploaded' };
+        },
+        get providerTypeLabel() {
+            const map = { home: 'مزود خدمات منزلية', consultant: 'مستشار متخصص', contractor: 'مقاول / شركة', equipment: 'مورد معدات', manpower: 'مورد عمالة' };
+            return map[this.providerType] || '-';
+        },
+        get serviceModeLabel() {
+            const map = { onsite: 'في الموقع', remote: 'عن بُعد', both: 'كلاهما' };
+            return map[this.serviceMode] || '-';
+        },
+        get bestAtSuggestions() {
+            const map = {
+                home: ['تشخيص سريع','تركيب كامل','صيانة طارئة','أعمال دقيقة','تشطيب احترافي','أعمال جبس','تسليك مجاري','عزل أسطح','تركيب سيراميك','أعمال نجارة','مكافحة حشرات','نقل أثاث'],
+                consultant: ['تصميم مبتكر','إشراف ميداني','إعداد تقارير','تخطيط استراتيجي','مراجعة عقود','جدوى اقتصادية','رفع مخططات','ترخيص مباني'],
+                contractor: ['تشطيب راقي','أعمال خرسانة','عزل وأسقف','نظم كهربائية','سباكة صناعية','واجهات زجاجية','أعمال ألمنيوم','أرضيات إيبوكسي'],
+                equipment: ['تسليم سريع','معدات حديثة','مشغلون معتمدون','صيانة شاملة','توفر على مدار الساعة','أسعار تنافسية'],
+                manpower: ['كفاءة عالية','تدريب مستمر','التزام بالمواعيد','إشراف ميداني','إنتاجية عالية','انضباط وجدية']
+            };
+            return map[this.providerType] || [];
+        },
+
+        addDistrict() {
+            if (this.districtInput.trim() && !this.districts.includes(this.districtInput.trim())) {
+                this.districts.push(this.districtInput.trim());
+                this.districtInput = '';
+            }
+        },
+        removeDistrict(d) { this.districts = this.districts.filter(x => x !== d); },
+        toggleDay(d) {
+            if (this.availDays.includes(d)) this.availDays = this.availDays.filter(x => x !== d);
+            else this.availDays.push(d);
+        },
+        addService() { this.services.push({ name: '', desc: '', price: '', priceType: 'hourly', primary: false }); },
+        removeService(i) { if (this.services.length > 1) this.services.splice(i, 1); },
+        toggleAdditionalCat(cat) {
+            if (cat === this.subCategory) return;
+            if (this.additionalCategories.includes(cat)) {
+                this.additionalCategories = this.additionalCategories.filter(c => c !== cat);
+            } else {
+                this.additionalCategories.push(cat);
+            }
+        },
+        setPrimary(cat) {
+            this.additionalCategories = this.additionalCategories.filter(c => c !== cat);
+            this.subCategory = (this.subCategory === cat ? '' : cat);
+        },
+        toggleBestAt(tag) {
+            if (this.bestAt.includes(tag)) {
+                this.bestAt = this.bestAt.filter(t => t !== tag);
+            } else if (this.bestAt.length < 5) {
+                this.bestAt.push(tag);
+            }
+        },
+        addCustomBestAt() {
+            const val = this.bestAtInput.trim();
+            if (val && !this.bestAt.includes(val) && this.bestAt.length < 5) {
+                this.bestAt.push(val);
+                this.bestAtInput = '';
+            }
+        },
+        removeBestAt(tag) { this.bestAt = this.bestAt.filter(t => t !== tag); },
+
+        validate() {
+            this.errors = {};
+            if (this.step === 1) {
+                if (!this.fullName.trim()) this.errors.fullName = 'الاسم مطلوب';
+                if (!this.email.includes('@')) this.errors.email = 'البريد الإلكتروني غير صحيح';
+                if (this.phone.length < 9) this.errors.phone = 'رقم الجوال غير صحيح';
+                if (this.password.length < 8) this.errors.password = 'كلمة المرور 8 أحرف على الأقل';
+                if (this.password !== this.confirmPassword) this.errors.confirmPassword = 'كلمتا المرور غير متطابقتين';
+            }
+            if (this.step === 2 && !this.providerType) this.errors.providerType = 'يرجى اختيار نوع المزود';
+            if (this.step === 3) {
+                if (!this.subCategory) this.errors.subCategory = 'يرجى اختيار التخصص';
+                if (!this.shortDesc.trim()) this.errors.shortDesc = 'يرجى كتابة وصف مختصر';
+            }
+            if (this.step === 4 && !this.services[0].name.trim()) this.errors.services = 'أضف خدمة واحدة على الأقل';
+            return Object.keys(this.errors).length === 0;
+        },
+        goNext() {
+            if (!this.validate()) return;
+            if (this.step < this.totalSteps) { this.step++; window.scrollTo(0, 0); }
+        },
+        goPrev() { if (this.step > 1) { this.step--; window.scrollTo(0, 0); } },
+        skipStep() {
+            if (this.step === 5) this.step5Skipped = true;
+            if (this.step === 6) this.step6Skipped = true;
+            this.step++; window.scrollTo(0, 0);
+        },
+        async submitForm() {
+            const username = this.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') + Math.floor(Math.random()*900+100);
+            try {
+                await API.auth.registerProvider({
+                    email:    this.email,
+                    username,
+                    password: this.password,
+                    phone:    this.phone || undefined,
+                    nameAr:   this.fullName || undefined,
+                });
+                this.submitted = true;
+                window.scrollTo(0, 0);
+            } catch(err) {
+                API.toast('❌ ' + API.errorMsg(err));
+            }
+        }
+    }"
+    x-init="const c = new URLSearchParams(location.search).get('ref'); if(c) { referralCode = c; showReferral = true; }">
+
+    <!-- ═══════════════════ HEADER ═══════════════════ -->
+    <div class="wizard-header">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="wizard-logo">KHEDMAH</div>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="login.html" style="font-size:0.82rem;color:var(--gray);text-decoration:none">دخول</a>
+            </div>
+        </div>
+        <div class="progress-bar-wrap" x-show="!submitted">
+            <div class="progress-bar-fill" :style="`width:${progressPct}%`"></div>
+        </div>
+        <div class="step-meta" x-show="!submitted">
+            <span x-text="`الخطوة ${step} من ${totalSteps}`"></span>
+            <span x-text="stepLabel"></span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ BODY ═══════════════════ -->
+    <div class="wizard-body">
+
+        <!-- SUCCESS STATE -->
+        <div x-show="submitted" class="success-wrap" style="display:none">
+            <div class="success-ico">🎉</div>
+            <h2>تهانينا! تم إرسال طلبك بنجاح</h2>
+            <div class="order-num">#PRV-<span x-text="Math.floor(100000 + Math.random() * 900000)"></span></div>
+            <p>سنتواصل معك خلال 24 ساعة بعد مراجعة بياناتك</p>
+            <p style="font-size:0.78rem">تحقق من بريدك الإلكتروني لتفعيل حسابك</p>
+            <div class="success-actions">
+                <a href="provider-dashboard.html" class="btn-dashboard">متابعة — لوحة التحكم</a>
+                <a href="provider-dashboard.html" class="btn-complete-profile">إكمال الملف الشخصي</a>
+            </div>
+        </div>
+
+        <!-- ─────────── STEP 1: Account ─────────── -->
+        <div class="step-panel" x-show="step === 1 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>إنشاء حسابك</h2>
+                <p>أدخل بياناتك الأساسية للبدء</p>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">الاسم الكامل <span class="req">*</span></label>
+                <input class="form-input" :class="errors.fullName ? 'is-error' : ''" type="text" x-model="fullName" placeholder="مثال: محمد عبدالله الأحمد">
+                <div class="field-error" x-show="errors.fullName" x-text="errors.fullName"></div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">البريد الإلكتروني <span class="req">*</span></label>
+                <input class="form-input" :class="errors.email ? 'is-error' : ''" type="email" x-model="email" placeholder="provider@example.com" dir="ltr" style="text-align:right">
+                <div class="field-error" x-show="errors.email" x-text="errors.email"></div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">رقم الجوال <span class="req">*</span></label>
+                <input class="form-input" :class="errors.phone ? 'is-error' : ''" type="tel" x-model="phone" placeholder="05XXXXXXXX" dir="ltr" style="text-align:right">
+                <div class="field-hint">للتواصل مع العملاء — لا يُستخدم للمصادقة</div>
+                <div class="field-error" x-show="errors.phone" x-text="errors.phone"></div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">كلمة المرور <span class="req">*</span></label>
+                <div class="pass-wrap">
+                    <input class="form-input" :class="errors.password ? 'is-error' : ''" :type="showPass ? 'text' : 'password'" x-model="password" placeholder="8 أحرف على الأقل" autocomplete="new-password" style="padding-left:3rem">
+                    <button type="button" class="pass-toggle" @click="showPass = !showPass">
+                        <i :class="showPass ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                    </button>
+                </div>
+                <div class="field-error" x-show="errors.password" x-text="errors.password"></div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">تأكيد كلمة المرور <span class="req">*</span></label>
+                <div class="pass-wrap">
+                    <input class="form-input" :class="errors.confirmPassword ? 'is-error' : ''" :type="showPass ? 'text' : 'password'" x-model="confirmPassword" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password" style="padding-left:3rem">
+                    <button type="button" class="pass-toggle" @click="showPass = !showPass">
+                        <i :class="showPass ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                    </button>
+                </div>
+                <div class="field-error" x-show="errors.confirmPassword" x-text="errors.confirmPassword"></div>
+            </div>
+
+            <button class="referral-toggle-link" type="button" @click="showReferral = !showReferral">
+                <span x-text="showReferral ? 'إخفاء كود الإحالة ▲' : 'هل لديك كود إحالة؟ ▼'"></span>
+            </button>
+            <div x-show="showReferral" class="field-group" style="display:none">
+                <label class="field-label">كود الإحالة <span class="opt">(اختياري)</span></label>
+                <input class="form-input" type="text" x-model="referralCode" placeholder="مثال: REF-XXXXX" dir="ltr" style="text-align:right">
+            </div>
+
+            <p class="terms-note">
+                بإنشاء حساب، أنت توافق على
+                <a href="#">شروط الاستخدام</a> و<a href="#">سياسة الخصوصية</a>
+            </p>
+            <p class="login-link">
+                هل لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a>
+            </p>
+        </div>
+
+        <!-- ─────────── STEP 2: Provider Type ─────────── -->
+        <div class="step-panel" x-show="step === 2 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>ما نوع المزود؟</h2>
+                <p>اختر الفئة الأنسب لطبيعة عملك</p>
+            </div>
+
+            <div class="field-error" style="margin-bottom:0.75rem" x-show="errors.providerType" x-text="errors.providerType"></div>
+
+            <div class="type-grid">
+                <div class="type-card" :class="providerType === 'home' ? 'selected' : ''" @click="providerType = 'home'; subCategory = ''; additionalCategories = []; bestAt = []">
+                    <div class="type-ico">🔧</div>
+                    <div class="type-lbl">مزود خدمات منزلية</div>
+                    <div class="type-sub">كهربائي، سباك، نجار...</div>
+                </div>
+                <div class="type-card" :class="providerType === 'consultant' ? 'selected' : ''" @click="providerType = 'consultant'; subCategory = ''; additionalCategories = []; bestAt = []">
+                    <div class="type-ico">💼</div>
+                    <div class="type-lbl">مستشار متخصص</div>
+                    <div class="type-sub">مهندس، مصمم، مستشار...</div>
+                </div>
+                <div class="type-card" :class="providerType === 'contractor' ? 'selected' : ''" @click="providerType = 'contractor'; subCategory = ''; additionalCategories = []; bestAt = []">
+                    <div class="type-ico">🏗️</div>
+                    <div class="type-lbl">مقاول / شركة</div>
+                    <div class="type-sub">مقاولات، تشطيبات...</div>
+                </div>
+                <div class="type-card" :class="providerType === 'equipment' ? 'selected' : ''" @click="providerType = 'equipment'; subCategory = ''; additionalCategories = []; bestAt = []">
+                    <div class="type-ico">🚜</div>
+                    <div class="type-lbl">مورد معدات</div>
+                    <div class="type-sub">تأجير معدات ثقيلة...</div>
+                </div>
+                <div class="type-card" :class="providerType === 'manpower' ? 'selected' : ''" @click="providerType = 'manpower'; subCategory = ''; additionalCategories = []; bestAt = []">
+                    <div class="type-ico">👷</div>
+                    <div class="type-lbl">مورد عمالة</div>
+                    <div class="type-sub">عمالة ماهرة وغير ماهرة</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─────────── STEP 3: Specialization ─────────── -->
+        <div class="step-panel" x-show="step === 3 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>التخصص والموقع</h2>
+                <p>حدد مجال عملك ومنطقة الخدمة</p>
+            </div>
+
+            <!-- Primary service single-select -->
+            <div class="field-group">
+                <label class="field-label">التخصص الرئيسي <span class="req">*</span>
+                    <span class="opt">— اختر الأقوى</span>
+                </label>
+                <div class="sub-cats-grid">
+                    <template x-for="cat in subCatsByType" :key="cat">
+                        <div class="sub-cat-chip primary-chip"
+                             :class="subCategory === cat ? 'selected primary-selected' : ''"
+                             @click="setPrimary(cat)">
+                            <span x-text="cat"></span>
+                            <span class="primary-badge" x-show="subCategory === cat">✓ رئيسي</span>
+                        </div>
+                    </template>
+                </div>
+                <div class="field-error" x-show="errors.subCategory" x-text="errors.subCategory"></div>
+            </div>
+
+            <!-- Additional services (collapsible) -->
+            <div class="field-group" x-show="subCatsByType.length > 1">
+                <button type="button" class="additional-cats-toggle" @click="showAdditionalCats = !showAdditionalCats">
+                    <span x-show="!showAdditionalCats">＋ إضافة تخصصات أخرى <span class="opt" x-show="additionalCategories.length > 0" x-text="`(${additionalCategories.length} محدد)`"></span></span>
+                    <span x-show="showAdditionalCats">▲ إخفاء التخصصات الإضافية</span>
+                </button>
+                <div x-show="showAdditionalCats" style="display:none">
+                    <p class="field-hint" style="margin-bottom:0.6rem">اختر كل التخصصات التي تقدمها — يزيد فرص ظهورك في البحث</p>
+                    <div class="sub-cats-grid">
+                        <template x-for="cat in subCatsByType" :key="cat">
+                            <div class="sub-cat-chip extra-chip"
+                                 :class="subCategory === cat ? 'primary-lock' : (additionalCategories.includes(cat) ? 'selected-extra' : '')"
+                                 @click="toggleAdditionalCat(cat)">
+                                <span x-text="cat"></span>
+                                <span class="extra-check" x-show="additionalCategories.includes(cat)">✓</span>
+                                <span class="primary-lock-badge" x-show="subCategory === cat">رئيسي</span>
+                            </div>
+                        </template>
+                    </div>
+                    <!-- Selected additional tags -->
+                    <div class="district-tags" style="margin-top:0.75rem" x-show="additionalCategories.length > 0">
+                        <template x-for="cat in additionalCategories" :key="cat">
+                            <div class="district-tag" style="background:rgba(2,195,154,0.1);color:#007a68">
+                                <span x-text="cat"></span>
+                                <button type="button" @click="toggleAdditionalCat(cat)">&times;</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best At section -->
+            <div class="field-group best-at-section" x-show="subCategory">
+                <label class="field-label">ما الذي تتميز به؟ <span class="opt">(اختر حتى 5)</span></label>
+                <p class="field-hint" style="margin-bottom:0.6rem">يساعد العملاء على معرفة نقاط قوتك بسرعة</p>
+                <div class="best-at-grid">
+                    <template x-for="tag in bestAtSuggestions" :key="tag">
+                        <div class="best-at-chip"
+                             :class="bestAt.includes(tag) ? 'selected' : (bestAt.length >= 5 ? 'disabled' : '')"
+                             @click="toggleBestAt(tag)"
+                             x-text="tag">
+                        </div>
+                    </template>
+                </div>
+                <!-- Custom best-at input -->
+                <div class="district-input-row" style="margin-top:0.6rem">
+                    <input class="form-input" type="text" x-model="bestAtInput"
+                           placeholder="أضف ميزة مخصصة..." @keydown.enter.prevent="addCustomBestAt()"
+                           :disabled="bestAt.length >= 5">
+                    <button class="btn-add-district" type="button" @click="addCustomBestAt()" :disabled="bestAt.length >= 5">إضافة</button>
+                </div>
+                <!-- Selected best-at tags -->
+                <div class="district-tags" style="margin-top:0.5rem" x-show="bestAt.length > 0">
+                    <template x-for="tag in bestAt" :key="tag">
+                        <div class="district-tag" style="background:rgba(245,158,11,0.1);color:#92400e">
+                            <span>⭐</span><span x-text="tag"></span>
+                            <button type="button" @click="removeBestAt(tag)">&times;</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- City -->
+            <div class="field-group">
+                <label class="field-label">المدينة <span class="req">*</span></label>
+                <select class="form-select" x-model="city">
+                    <option>الرياض</option>
+                    <option>جدة</option>
+                    <option>مكة المكرمة</option>
+                    <option>المدينة المنورة</option>
+                    <option>الدمام</option>
+                    <option>الخبر</option>
+                    <option>أبها</option>
+                    <option>تبوك</option>
+                </select>
+            </div>
+
+            <!-- Districts -->
+            <div class="field-group">
+                <label class="field-label">الأحياء التي تخدمها <span class="opt">(اختياري)</span></label>
+                <div class="district-input-row">
+                    <input class="form-input" type="text" x-model="districtInput" placeholder="مثال: حي النزهة" @keydown.enter.prevent="addDistrict()">
+                    <button class="btn-add-district" type="button" @click="addDistrict()">إضافة</button>
+                </div>
+                <div class="district-tags" x-show="districts.length > 0">
+                    <template x-for="d in districts" :key="d">
+                        <div class="district-tag">
+                            <span x-text="d"></span>
+                            <button type="button" @click="removeDistrict(d)">&times;</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Service Mode -->
+            <div class="field-group">
+                <label class="field-label">طريقة تقديم الخدمة</label>
+                <div class="mode-tabs">
+                    <div class="mode-tab" :class="serviceMode === 'onsite' ? 'selected' : ''" @click="serviceMode = 'onsite'">في الموقع</div>
+                    <div class="mode-tab" :class="serviceMode === 'remote' ? 'selected' : ''" @click="serviceMode = 'remote'">عن بُعد</div>
+                    <div class="mode-tab" :class="serviceMode === 'both' ? 'selected' : ''" @click="serviceMode = 'both'">كلاهما</div>
+                </div>
+            </div>
+
+            <!-- Short Description -->
+            <div class="field-group">
+                <label class="field-label">وصف مختصر عنك <span class="req">*</span></label>
+                <textarea class="form-textarea" x-model="shortDesc"
+                    :placeholder="providerType === 'home' ? 'مثال: كهربائي معتمد بخبرة 10 سنوات في تركيب وصيانة الأنظمة الكهربائية السكنية...' :
+                                  providerType === 'consultant' ? 'مثال: مهندس معماري بخبرة في تصميم المباني السكنية والتجارية...' :
+                                  providerType === 'contractor' ? 'مثال: شركة مقاولات متخصصة في التشطيبات الراقية منذ عام 2010...' :
+                                  providerType === 'equipment' ? 'مثال: نوفر أسطولاً من المعدات الثقيلة الحديثة بأسعار تنافسية...' :
+                                  'مثال: نوفر عمالة ماهرة ومدربة في مجال البناء والتشطيبات...'">
+                </textarea>
+                <div class="field-error" x-show="errors.shortDesc" x-text="errors.shortDesc"></div>
+            </div>
+
+            <!-- Years of Experience -->
+            <div class="field-group">
+                <label class="field-label">سنوات الخبرة <span class="opt">(اختياري)</span></label>
+                <input class="form-input" type="number" x-model="yearsExp" placeholder="مثال: 5" min="0" max="50">
+            </div>
+        </div>
+
+        <!-- ─────────── STEP 4: Services ─────────── -->
+        <div class="step-panel" x-show="step === 4 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>الخدمات المقدمة</h2>
+                <p>أضف خدماتك الرئيسية بالتفاصيل والأسعار</p>
+            </div>
+
+            <div class="service-hint-box">
+                <strong>أمثلة على خدماتك:</strong>
+                <span x-text="serviceExamples"></span>
+            </div>
+
+            <div class="field-error" style="margin-bottom:0.75rem" x-show="errors.services" x-text="errors.services"></div>
+
+            <template x-for="(svc, i) in services" :key="i">
+                <div class="service-item">
+                    <div class="service-item-header">
+                        <span class="service-num" x-text="`الخدمة ${i + 1}`"></span>
+                        <button class="btn-remove-service" type="button" @click="removeService(i)" x-show="services.length > 1">
+                            <i class="fa fa-trash"></i> حذف
+                        </button>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">اسم الخدمة <span class="req">*</span></label>
+                        <input class="form-input" type="text" x-model="svc.name" placeholder="مثال: تركيب وصيانة المكيفات">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">وصف مختصر <span class="opt">(اختياري)</span></label>
+                        <textarea class="form-textarea" x-model="svc.desc" placeholder="تفاصيل إضافية عن الخدمة..." style="min-height:70px"></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">السعر ونوع التسعير</label>
+                        <div class="price-row">
+                            <input class="form-input" type="number" x-model="svc.price" placeholder="0">
+                            <select class="form-select" x-model="svc.priceType">
+                                <option value="hourly">بالساعة</option>
+                                <option value="visit">بالزيارة</option>
+                                <option value="project">بالمشروع</option>
+                                <option value="agreement">حسب الاتفاق</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <button class="btn-add-service" type="button" @click="addService()">
+                <i class="fa fa-plus"></i> إضافة خدمة أخرى
+            </button>
+
+            <p class="field-hint" style="margin-top:0.875rem;text-align:center">
+                الخدمات الأساسية فقط — يمكنك إضافة المزيد لاحقاً من لوحة التحكم
+            </p>
+        </div>
+
+        <!-- ─────────── STEP 5: Availability (skippable) ─────────── -->
+        <div class="step-panel" x-show="step === 5 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>أوقات العمل</h2>
+                <p>حدد أيام وساعات عملك المفضلة</p>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">أيام العمل</label>
+                <div class="days-grid">
+                    <template x-for="d in ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']" :key="d">
+                        <div class="day-pill" :class="availDays.includes(d) ? 'active' : ''" @click="toggleDay(d)" x-text="d"></div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="time-row">
+                <div class="field-group">
+                    <label class="field-label">وقت البداية</label>
+                    <input class="form-input" type="time" x-model="startTime">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">وقت النهاية</label>
+                    <input class="form-input" type="time" x-model="endTime">
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-lbl">
+                    خدمة الطوارئ
+                    <small>متاح للحالات العاجلة</small>
+                </div>
+                <label class="toggle-sw">
+                    <input type="checkbox" x-model="emergency">
+                    <span class="toggle-knob"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-lbl">
+                    خدمة في نفس اليوم
+                    <small>حجز بدون موعد مسبق</small>
+                </div>
+                <label class="toggle-sw">
+                    <input type="checkbox" x-model="sameDay">
+                    <span class="toggle-knob"></span>
+                </label>
+            </div>
+
+            <div class="info-box">
+                <i class="fa fa-circle-info"></i>
+                <span>يمكنك تعديل أوقات العمل في أي وقت من لوحة التحكم</span>
+            </div>
+        </div>
+
+        <!-- ─────────── STEP 6: Documents (skippable) ─────────── -->
+        <div class="step-panel" x-show="step === 6 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>المستندات والوثائق</h2>
+                <p>ساعد العملاء على الوثوق بك بتحميل مستنداتك</p>
+            </div>
+
+            <div class="upload-grid">
+                <!-- Profile photo -->
+                <div class="upload-box" :class="photoUploaded ? 'done' : ''" @click="photoUploaded = true">
+                    <div class="upload-ico">📸</div>
+                    <div class="upload-title">صورة الملف الشخصي</div>
+                    <div class="upload-sub">اختياري — تزيد الثقة بنسبة 80%</div>
+                    <div class="upload-done-txt" x-show="photoUploaded">✅ تم الرفع بنجاح</div>
+                    <div class="upload-sub" x-show="!photoUploaded" style="margin-top:0.4rem">اضغط للرفع</div>
+                </div>
+
+                <!-- National ID -->
+                <div class="upload-box" :class="idUploaded ? 'done' : ''" @click="idUploaded = true">
+                    <div class="upload-ico">🪪</div>
+                    <div class="upload-title">بطاقة الهوية الوطنية</div>
+                    <div class="upload-sub">مطلوب للتحقق من الهوية</div>
+                    <div class="upload-done-txt" x-show="idUploaded">✅ تم الرفع بنجاح</div>
+                    <div class="upload-sub" x-show="!idUploaded" style="margin-top:0.4rem">اضغط للرفع</div>
+                </div>
+
+                <!-- Dynamic 3rd doc -->
+                <div class="upload-box" :class="licenseUploaded ? 'done' : ''" @click="licenseUploaded = true">
+                    <div class="upload-ico">📄</div>
+                    <div class="upload-title" x-text="dynamicDoc3.label"></div>
+                    <div class="upload-sub" x-text="dynamicDoc3.note"></div>
+                    <div class="upload-done-txt" x-show="licenseUploaded">✅ تم الرفع بنجاح</div>
+                    <div class="upload-sub" x-show="!licenseUploaded" style="margin-top:0.4rem">اضغط للرفع</div>
+                </div>
+            </div>
+
+            <p class="upload-hint">
+                <i class="fa fa-clock" style="color:var(--primary)"></i>
+                تُراجع المستندات خلال 24 ساعة من الإرسال
+            </p>
+        </div>
+
+        <!-- ─────────── STEP 7: Review & Submit ─────────── -->
+        <div class="step-panel" x-show="step === 7 && !submitted" style="display:none">
+            <div class="step-heading">
+                <h2>مراجعة وإرسال</h2>
+                <p>تحقق من بياناتك قبل إرسال الطلب</p>
+            </div>
+
+            <!-- Completion meter -->
+            <div class="completion-meter">
+                <div class="completion-header">
+                    <div>
+                        <div class="completion-pct" x-text="`${completionPct}%`"></div>
+                        <div class="completion-label">اكتمال الملف الشخصي</div>
+                    </div>
+                    <i class="fa fa-chart-pie" style="font-size:2rem;color:var(--primary);opacity:0.4"></i>
+                </div>
+                <div class="completion-bar">
+                    <div class="completion-fill" :style="`width:${completionPct}%`"></div>
+                </div>
+                <div class="missing-list">
+                    <div class="missing-item" x-show="!photoUploaded">
+                        <i class="fa fa-circle" style="font-size:0.5rem;color:var(--warning)"></i>
+                        إضافة صورة شخصية يرفع ثقة العملاء
+                    </div>
+                    <div class="missing-item" x-show="step5Skipped">
+                        <i class="fa fa-circle" style="font-size:0.5rem;color:var(--warning)"></i>
+                        تحديد أوقات العمل يزيد فرص الحجز
+                    </div>
+                    <div class="missing-item" x-show="additionalCategories.length === 0">
+                        <i class="fa fa-circle" style="font-size:0.5rem;color:var(--warning)"></i>
+                        إضافة تخصصات أخرى يزيد فرص الظهور في البحث
+                    </div>
+                    <div class="missing-item" x-show="bestAt.length === 0">
+                        <i class="fa fa-circle" style="font-size:0.5rem;color:var(--warning)"></i>
+                        تحديد نقاط قوتك يساعد العملاء على اختيارك
+                    </div>
+                    <div class="missing-item" x-show="!idUploaded">
+                        <i class="fa fa-circle" style="font-size:0.5rem;color:var(--error)"></i>
+                        بطاقة الهوية مطلوبة للتحقق
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review cards -->
+            <div class="review-card">
+                <div class="review-card-title">معلومات الحساب</div>
+                <div class="review-row">
+                    <span class="review-key">الاسم</span>
+                    <span class="review-val" x-text="fullName || '-'"></span>
+                </div>
+                <div class="review-row">
+                    <span class="review-key">البريد الإلكتروني</span>
+                    <span class="review-val" x-text="email || '-'"></span>
+                </div>
+                <div class="review-row">
+                    <span class="review-key">نوع المزود</span>
+                    <span class="review-val" x-text="providerTypeLabel"></span>
+                </div>
+            </div>
+
+            <div class="review-card">
+                <div class="review-card-title">التخصص والموقع</div>
+                <div class="review-row">
+                    <span class="review-key">التخصص الرئيسي</span>
+                    <span class="review-val" x-text="subCategory || '-'"></span>
+                </div>
+                <div class="review-row" x-show="additionalCategories.length > 0">
+                    <span class="review-key">تخصصات إضافية</span>
+                    <span class="review-val" x-text="additionalCategories.join(' • ')"></span>
+                </div>
+                <div class="review-row" x-show="bestAt.length > 0">
+                    <span class="review-key">نقاط القوة</span>
+                    <span class="review-val" x-text="bestAt.join(' • ')"></span>
+                </div>
+                <div class="review-row">
+                    <span class="review-key">المدينة</span>
+                    <span class="review-val" x-text="city"></span>
+                </div>
+                <div class="review-row" x-show="districts.length > 0">
+                    <span class="review-key">الأحياء</span>
+                    <span class="review-val" x-text="districts.join(' • ')"></span>
+                </div>
+                <div class="review-row">
+                    <span class="review-key">طريقة الخدمة</span>
+                    <span class="review-val" x-text="serviceModeLabel"></span>
+                </div>
+            </div>
+
+            <div class="review-card">
+                <div class="review-card-title">الخدمات</div>
+                <div class="review-row">
+                    <span class="review-key">الخدمات المدرجة</span>
+                    <span class="review-val" x-text="services.filter(s => s.name).map(s => s.name).join(' • ') || '-'"></span>
+                </div>
+            </div>
+
+            <div class="review-card">
+                <div class="review-card-title">أوقات العمل</div>
+                <div class="review-row">
+                    <span class="review-key">الأيام</span>
+                    <span class="review-val" x-text="step5Skipped ? 'لم يُحدد بعد' : (availDays.join('، ') || 'لم يُحدد')"></span>
+                </div>
+                <div class="review-row" x-show="!step5Skipped">
+                    <span class="review-key">الساعات</span>
+                    <span class="review-val" x-text="`${startTime} – ${endTime}`"></span>
+                </div>
+            </div>
+
+            <div class="review-card">
+                <div class="review-card-title">المستندات</div>
+                <div class="review-row">
+                    <span class="review-key">الصورة الشخصية</span>
+                    <span class="review-val" :style="photoUploaded ? 'color:var(--success)' : 'color:var(--gray)'" x-text="photoUploaded ? '✅ تم الرفع' : 'لم يُرفع'"></span>
+                </div>
+                <div class="review-row">
+                    <span class="review-key">بطاقة الهوية</span>
+                    <span class="review-val" :style="idUploaded ? 'color:var(--success)' : 'color:var(--error)'" x-text="idUploaded ? '✅ تم الرفع' : 'لم يُرفع'"></span>
+                </div>
+                <div class="review-row">
+                    <span class="review-key" x-text="dynamicDoc3.label.replace(/^.. /,'')"></span>
+                    <span class="review-val" :style="licenseUploaded ? 'color:var(--success)' : 'color:var(--gray)'" x-text="licenseUploaded ? '✅ تم الرفع' : 'لم يُرفع'"></span>
+                </div>
+            </div>
+
+            <p class="submit-note">سيتم مراجعة حسابك وإخطارك خلال 24 ساعة</p>
+        </div>
+
+    </div><!-- end wizard-body -->
+
+    <!-- ═══════════════════ BOTTOM NAV ═══════════════════ -->
+    <div class="wizard-nav" x-show="!submitted">
+        <button class="btn-prev" x-show="step > 1" @click="goPrev()">
+            <i class="fa fa-arrow-right"></i> رجوع
+        </button>
+        <span x-show="step === 1"></span>
+
+        <button class="btn-skip" x-show="step === 5 || step === 6" @click="skipStep()">
+            <span x-text="step === 6 ? 'إكمال لاحقاً' : 'تخطي الآن'"></span>
+        </button>
+
+        <button class="btn-next" x-show="step < 7" @click="goNext()">
+            التالي <i class="fa fa-arrow-left"></i>
+        </button>
+        <button class="btn-submit-final" x-show="step === 7" @click="submitForm()">
+            إنشاء الحساب وإرسال الطلب ✓
+        </button>
+    </div>
+
+</div><!-- end wizard-wrap -->
+
+<script>
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    }
+    (function() {
+        if (localStorage.getItem('khedmah_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+        }
+    })();
+</script>
+</body>
+</html>

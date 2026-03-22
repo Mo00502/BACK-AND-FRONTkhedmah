@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المناقصة - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* Nav */
+        nav { background: white; padding: 1rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; flex-shrink: 0; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; font-size: 0.9rem; }
+        .nav-links a:hover { color: var(--primary); }
+        .back-link { display: flex; align-items: center; gap: 0.3rem; color: var(--primary) !important; font-weight: 600 !important; }
+
+        /* Container */
+        .container { max-width: 1100px; margin: 0 auto; padding: 1.75rem 5%; }
+
+        /* Breadcrumb */
+        .breadcrumb { font-size: 0.82rem; color: var(--gray); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem; }
+        .breadcrumb a { color: var(--primary); text-decoration: none; }
+
+        /* Main layout */
+        .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+
+        /* Left column — tender info */
+        .card { background: white; border-radius: 18px; padding: 1.75rem; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 1.25rem; }
+
+        /* Tender header */
+        .tender-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+        .tender-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.4rem; line-height: 1.3; }
+        .tender-org { font-size: 0.9rem; color: var(--gray); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+        .status-badge { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 10px; }
+        .status-open { background: rgba(16,185,129,0.12); color: #065f46; }
+        .status-soon { background: rgba(245,158,11,0.12); color: #92400e; }
+        .status-closed { background: rgba(239,68,68,0.1); color: #991b1b; }
+
+        /* Quick info row */
+        .info-row { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.5rem; }
+        .info-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+        .info-item .label { color: var(--gray); }
+        .info-item .value { font-weight: 600; }
+        .info-item .value.budget { color: var(--primary); font-size: 1rem; font-weight: 800; }
+
+        /* Section headings */
+        .sec-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--light); }
+
+        /* Description */
+        .description p { font-size: 0.9rem; line-height: 1.85; color: #475569; margin-bottom: 0.75rem; }
+
+        /* Scope list */
+        .scope-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+        .scope-list li { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.88rem; color: #475569; }
+        .scope-list li::before { content: '✓'; color: var(--success); font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
+
+        /* Requirements */
+        .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
+        .req-item { background: var(--light); border-radius: 10px; padding: 0.75rem 1rem; }
+        .req-item .req-label { font-size: 0.75rem; color: var(--gray); margin-bottom: 0.2rem; }
+        .req-item .req-value { font-size: 0.88rem; font-weight: 600; }
+
+        /* Attachments */
+        .attachments-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+        .attachment-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.9rem; background: var(--light); border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+        .attachment-item:hover { background: #e2e8f0; }
+        .attachment-icon { font-size: 1.4rem; }
+        .attachment-name { font-size: 0.85rem; font-weight: 600; flex: 1; }
+        .attachment-size { font-size: 0.75rem; color: var(--gray); }
+        .attachment-dl { font-size: 0.78rem; color: var(--primary); font-weight: 600; }
+
+        /* Right sidebar */
+        .sidebar-card { background: white; border-radius: 18px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 1.25rem; position: sticky; top: 5rem; }
+
+        /* Bid count — public info (NO prices) */
+        .bid-count-box { background: var(--light); border-radius: 12px; padding: 1rem; text-align: center; margin-bottom: 1.25rem; }
+        .bid-count-num { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .bid-count-label { font-size: 0.82rem; color: var(--gray); margin-top: 0.15rem; }
+        .bid-privacy-note { font-size: 0.75rem; color: var(--gray); margin-top: 0.5rem; background: rgba(2,128,144,0.07); border-radius: 8px; padding: 0.5rem 0.75rem; display: flex; align-items: flex-start; gap: 0.4rem; }
+
+        /* Deadline countdown */
+        .deadline-box { margin-bottom: 1.25rem; }
+        .deadline-label { font-size: 0.8rem; color: var(--gray); margin-bottom: 0.4rem; }
+        .deadline-date { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+        .deadline-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+        .deadline-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; }
+        .deadline-remaining { font-size: 0.78rem; color: var(--warning); font-weight: 600; margin-top: 0.35rem; }
+
+        /* Company info */
+        .company-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; }
+        .company-avatar { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+        .company-name { font-weight: 700; font-size: 0.9rem; }
+        .company-meta { font-size: 0.78rem; color: var(--gray); margin-top: 0.15rem; }
+        .company-verified { font-size: 0.72rem; color: var(--success); font-weight: 600; }
+
+        /* Submit bid CTA */
+        .btn-submit-bid { width: 100%; padding: 0.9rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-bottom: 0.75rem; }
+        .btn-submit-bid:hover { background: #026f7e; }
+        .btn-submit-bid:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-save { width: 100%; padding: 0.7rem; background: white; color: var(--primary); border: 2px solid var(--primary); border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-save:hover { background: rgba(2,128,144,0.06); }
+        .btn-chat-tender { display: block; width: 100%; padding: 0.7rem; background: transparent; color: #4338ca; border: 2px solid #4338ca; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; margin-top: 0.5rem; transition: all 0.2s; }
+        .btn-chat-tender:hover { background: rgba(67,56,202,0.06); color: #4338ca; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 1.75rem; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+        .modal-title { font-size: 1.15rem; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; background: var(--light); border: none; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .modal-info-box { background: var(--light); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1.25rem; }
+        .modal-info-box strong { color: var(--primary); }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.4rem; }
+        .form-hint { font-size: 0.75rem; color: var(--gray); margin-top: 0.25rem; }
+        .form-control { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.9rem; font-family: 'Tajawal', sans-serif; font-size: 0.9rem; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+        textarea.form-control { resize: vertical; min-height: 90px; }
+        .privacy-notice { background: rgba(2,128,144,0.07); border-right: 3px solid var(--primary); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.8rem; color: #0f4c57; margin: 1rem 0; line-height: 1.6; }
+        .modal-footer { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+        .btn-full { flex: 1; padding: 0.7rem; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; }
+        .btn-primary-full { background: var(--primary); color: white; }
+        .btn-primary-full:hover { background: #026f7e; }
+        .btn-cancel-full { background: var(--light); color: var(--dark); }
+
+        /* Success state */
+        .success-banner { background: rgba(16,185,129,0.1); border: 1.5px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .success-banner .icon { font-size: 1.4rem; }
+        .success-banner .msg { font-size: 0.88rem; font-weight: 600; color: #065f46; }
+
+        /* Privacy box in sidebar */
+        .privacy-box { background: rgba(2,128,144,0.06); border: 1px solid rgba(2,128,144,0.15); border-radius: 12px; padding: 0.875rem; text-align: center; margin: 0.875rem 0; }
+        html.dark .privacy-box { background: rgba(2,128,144,0.12); }
+        html.dark .privacy-box div:nth-child(2) { color: #e2e8f0; }
+
+        /* View bids link for tender owner */
+        .btn-my-bids-link { display: block; text-align: center; background: rgba(2,128,144,0.08); color: var(--primary); border-radius: 12px; padding: 0.65rem; text-decoration: none; font-size: 0.88rem; font-weight: 700; margin-top: 0.75rem; }
+        .btn-my-bids-link:hover { background: rgba(2,128,144,0.15); color: var(--primary); }
+        html.dark .btn-my-bids-link { background: rgba(2,128,144,0.15); color: var(--accent); }
+
+        @media (max-width: 768px) {
+            .detail-layout { grid-template-columns: 1fr; }
+            .sidebar-card { position: static; }
+            .req-grid { grid-template-columns: 1fr; }
+            .tender-header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+
+<script>
+  (function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    if (!API.isLoggedIn()) {
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="home.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="tenders.html" class="back-link">← العودة للمناقصات</a>
+            <button id="themeToggle" onclick="toggleTheme()" style="background:none;border:1.5px solid #e2e8f0;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">🌙</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="home.html">الرئيسية</a>
+        <span>/</span>
+        <a href="tenders.html">المناقصات</a>
+        <span>/</span>
+        <span id="bcTitle">تفاصيل المناقصة</span>
+    </div>
+
+    <div class="detail-layout">
+
+        <!-- ── LEFT COLUMN ── -->
+        <div>
+
+            <!-- Title + Status -->
+            <div class="card">
+                <div class="tender-header">
+                    <div>
+                        <div class="tender-title" id="tTitle">—</div>
+                        <div class="tender-org" id="tOrg">—</div>
+                        <span class="status-badge" id="tStatus">—</span>
+                    </div>
+                </div>
+
+                <!-- Quick info row -->
+                <div class="info-row">
+                    <div class="info-item">
+                        <span>📍</span>
+                        <span class="label">الموقع:</span>
+                        <span class="value" id="tCity">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span>⏰</span>
+                        <span class="label">آخر موعد:</span>
+                        <span class="value" id="tDeadline">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span>🏷️</span>
+                        <span class="label">القطاع:</span>
+                        <span class="value" id="tSector">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span>💰</span>
+                        <span class="label">الميزانية التقديرية:</span>
+                        <span class="value budget" id="tBudget">—</span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="description" style="margin-bottom:1.5rem;">
+                    <div class="sec-title">وصف المشروع</div>
+                    <div id="tDescription"></div>
+                </div>
+
+                <!-- Scope of Work -->
+                <div style="margin-bottom:1.5rem;">
+                    <div class="sec-title">نطاق العمل</div>
+                    <ul class="scope-list" id="tScope"></ul>
+                </div>
+
+                <!-- Requirements -->
+                <div>
+                    <div class="sec-title">متطلبات المناقصة</div>
+                    <div class="req-grid" id="tReqGrid"></div>
+                </div>
+            </div>
+
+            <!-- Attachments -->
+            <div class="card">
+                <div class="sec-title">📎 الملفات والمرفقات</div>
+                <div class="attachments-list" id="tAttachments"></div>
+            </div>
+
+            <!-- Additional Notes (if any) -->
+            <div class="card" id="notesCard" style="display:none;">
+                <div class="sec-title">📝 ملاحظات إضافية</div>
+                <p style="font-size:0.88rem; color:#475569; line-height:1.8;" id="tNotes"></p>
+            </div>
+
+        </div>
+
+        <!-- ── RIGHT SIDEBAR ── -->
+        <div>
+            <div class="sidebar-card">
+
+                <!-- Company Info -->
+                <div class="company-info">
+                    <div class="company-avatar" id="sCompanyInitial">—</div>
+                    <div>
+                        <div class="company-name" id="sCompanyName">—</div>
+                        <div class="company-meta" id="sCompanyMeta">—</div>
+                        <div class="company-verified">✓ جهة موثّقة</div>
+                    </div>
+                </div>
+
+                <!-- Deadline Bar -->
+                <div class="deadline-box">
+                    <div class="deadline-label">موعد انتهاء الاستقبال</div>
+                    <div class="deadline-date" id="sDeadline">—</div>
+                    <div class="deadline-bar"><div class="deadline-fill" id="sDeadlineFill" style="width:65%"></div></div>
+                    <div class="deadline-remaining" id="sDeadlineRemaining">—</div>
+                </div>
+
+                <!-- Bid Count — public, NO prices -->
+                <div class="bid-count-box">
+                    <div class="bid-count-num" id="sBidCount">—</div>
+                    <div class="bid-count-label">شركة قدّمت عروضها حتى الآن</div>
+                    <div class="bid-privacy-note">
+                        🔒 أسعار العروض سرية ولا تظهر إلا لصاحب المناقصة
+                    </div>
+                </div>
+
+                <!-- Privacy box -->
+                <div class="privacy-box">
+                    <div style="font-size:1.1rem;margin-bottom:0.35rem">🔒</div>
+                    <div style="font-size:0.78rem;font-weight:700;color:var(--dark);margin-bottom:0.2rem">أسعار العروض سرية</div>
+                    <div style="font-size:0.72rem;color:var(--gray);line-height:1.5">لا يمكن لأي مزود آخر رؤية سعر عرضك. فقط صاحب المناقصة يرى الأسعار.</div>
+                </div>
+
+                <!-- CTA -->
+                <div id="ctaArea">
+                    <button class="btn-submit-bid" id="btnSubmit" onclick="openBidModal()">تقديم عرض سعر</button>
+                    <button class="btn-save" onclick="saveTender()">🔖 حفظ المناقصة</button>
+                    <a href="tender-bids.html" class="btn-my-bids-link">📊 عرض العروض المقدمة</a>
+                    <a href="#" class="btn-chat-tender" id="btnChatTender">💬 تواصل مع الجهة</a>
+                </div>
+
+                <div id="successArea" style="display:none;">
+                    <div class="success-banner">
+                        <span class="icon">✅</span>
+                        <div class="msg">تم إرسال عرضك بنجاح<br><small style="font-weight:400;color:#065f46;">سيتواصل معك صاحب المناقصة إذا اختار عرضك</small></div>
+                    </div>
+                    <button class="btn-save" onclick="saveTender()">🔖 حفظ المناقصة</button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Bid Modal -->
+<div class="modal-overlay" id="bidModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">تقديم عرض سعر</div>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+
+        <div class="modal-info-box">
+            المناقصة: <strong id="modalTenderName">—</strong><br>
+            الجهة: <strong id="modalOrgName">—</strong>
+        </div>
+
+        <div class="privacy-notice">
+            🔒 <strong>سرية الأسعار مضمونة:</strong> لن يتمكن أي مناقص آخر من الاطلاع على قيمة عرضك. يظهر السعر فقط لصاحب المناقصة بعد انتهاء مدة الاستقبال.
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">قيمة العرض المالي (ر.س) *</label>
+            <input type="number" class="form-control" id="bidAmount" placeholder="أدخل قيمة عرضك الإجمالية">
+            <div class="form-hint">⚠️ لن تُكشف هذه القيمة لأي منافس</div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">مدة التنفيذ المقترحة *</label>
+            <input type="text" class="form-control" id="bidDuration" placeholder="مثال: 8 أشهر، 120 يوم عمل">
+        </div>
+
+        <!-- Price breakdown (optional) -->
+        <div class="form-group" id="breakdownGroup" style="display:none">
+            <label class="form-label">تفصيل السعر <span style="color:var(--gray);font-weight:400;font-size:0.78rem">(اختياري)</span></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
+                <input type="number" class="form-control" id="bidLabor" placeholder="العمالة">
+                <input type="number" class="form-control" id="bidMaterials" placeholder="المواد">
+                <input type="number" class="form-control" id="bidEquipment" placeholder="المعدات">
+            </div>
+        </div>
+        <div style="margin-bottom:0.75rem">
+            <button type="button" onclick="toggleBreakdown()" style="background:none;border:none;color:var(--primary);font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;text-decoration:underline" id="breakdownToggle">+ إضافة تفصيل السعر</button>
+        </div>
+
+        <!-- Team size -->
+        <div class="form-group">
+            <label class="form-label">حجم الفريق <span style="color:var(--gray);font-weight:400;font-size:0.78rem">(اختياري)</span></label>
+            <input type="number" class="form-control" id="bidTeamSize" placeholder="مثال: 15 شخص">
+        </div>
+
+        <!-- Start availability -->
+        <div class="form-group">
+            <label class="form-label">موعد الاستعداد للبدء <span style="color:var(--gray);font-weight:400;font-size:0.78rem">(اختياري)</span></label>
+            <select class="form-control" id="bidStartAvail">
+                <option value="">اختر...</option>
+                <option>فور التوقيع</option>
+                <option>خلال أسبوع</option>
+                <option>خلال أسبوعين</option>
+                <option>خلال شهر</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">ملخص تأهيل شركتك</label>
+            <textarea class="form-control" id="bidQualification" placeholder="اذكر خبراتك السابقة في مشاريع مشابهة، شهاداتك، وعدد الموظفين..."></textarea>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+            <label class="form-label">ملاحظات إضافية <span style="color:var(--gray);font-weight:400;font-size:0.78rem">(اختياري)</span></label>
+            <textarea class="form-control" id="bidNotes" rows="2" placeholder="افتراضات، شروط، ملاحظات أخرى..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-full btn-cancel-full" onclick="closeModal()">إلغاء</button>
+            <button class="btn-full btn-primary-full" onclick="submitBid()">إرسال العرض</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── Demo tender data ────────────────────────────────────────────────────────
+// In production this would be fetched from the API by ID.
+// Bid amounts are NEVER included in this public data — only bid count.
+const TENDERS = {
+    '1': {
+        title: 'إنشاء مبنى إداري متعدد الطوابق',
+        org: 'شركة الأفق للتطوير العقاري',
+        orgInitial: 'أ',
+        orgMeta: 'شركة مساهمة — التطوير العقاري',
+        sector: 'بناء وإنشاء',
+        status: 'open',
+        city: 'الرياض، حي العليا',
+        deadline: '15 أبريل 2024',
+        deadlinePercent: 60,
+        deadlineRemaining: 'يتبقى 28 يوماً',
+        budget: '850,000 ر.س',
+        bidCount: 12,
+        description: `
+            <p>تطلب شركة الأفق للتطوير العقاري من الشركات والمقاولين المؤهلين تقديم عروض أسعار لإنشاء مبنى إداري متعدد الطوابق في حي العليا بالرياض.</p>
+            <p>يتألف المشروع من 6 طوابق فوق الأرض وطابق تحت أرضي (موقف سيارات) بمساحة إجمالية تبلغ 4,200 م²، ويشمل التصميم مكاتب مفتوحة وقاعات اجتماعات وخدمات مشتركة.</p>
+            <p>يجب أن تمتثل الأعمال لكود البناء السعودي ومتطلبات الدفاع المدني، مع الالتزام بتوظيف نسبة لا تقل عن 30% من العمالة السعودية.</p>
+        `,
+        scope: [
+            'أعمال الحفر والبنية التحتية والأساسات',
+            'الهيكل الخرساني المسلح لجميع الطوابق',
+            'أعمال المباني والتشطيبات الخارجية (الواجهة الزجاجية)',
+            'التشطيبات الداخلية الكاملة (أرضيات، أسقف، جدران)',
+            'الأعمال الكهربائية ولوحات التوزيع وإضاءة LED',
+            'أعمال السباكة والصرف الصحي',
+            'تكييف مركزي (نظام VRF) وتهوية',
+            'أعمال الإنذار من الحريق والمرشات المائية',
+            'المصاعد الكهربائية (3 مصاعد)',
+            'موقف سيارات تحت أرضي بسعة 40 مركبة'
+        ],
+        requirements: [
+            { label: 'الفئة المطلوبة', value: 'مقاول درجة أولى' },
+            { label: 'سجل تجاري', value: 'ساري المفعول' },
+            { label: 'تصنيف الهيئة السعودية', value: 'الدرجة الأولى — مباني' },
+            { label: 'التأمين', value: 'تأمين مسؤولية مدنية ساري' },
+            { label: 'مشاريع مماثلة', value: '3 مشاريع مشابهة على الأقل' },
+            { label: 'الضمان البنكي', value: '2% من قيمة العرض' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'كراسة الشروط والمواصفات', size: '3.2 MB', ext: 'PDF' },
+            { icon: '📐', name: 'المخططات المعمارية الكاملة', size: '18.7 MB', ext: 'DWG' },
+            { icon: '📊', name: 'جداول الكميات (BOQ)', size: '1.1 MB', ext: 'XLSX' },
+            { icon: '🖼️', name: 'المخططات الإنشائية', size: '12.4 MB', ext: 'DWG' },
+            { icon: '📋', name: 'نموذج العرض المالي', size: '420 KB', ext: 'XLSX' }
+        ],
+        notes: 'يُشترط على المتقدمين حضور جلسة الإيضاح التي ستُعقد في مقر الشركة بتاريخ 25 مارس 2024 الساعة 10 صباحاً. لن تُقبل عروض الشركات الغائبة عن الجلسة.'
+    },
+    '2': {
+        title: 'تطوير نظام إدارة موارد بشرية',
+        org: 'مستشفى النور الطبي',
+        orgInitial: 'ن',
+        orgMeta: 'مستشفى خاص — قطاع الرعاية الصحية',
+        sector: 'تقنية المعلومات',
+        status: 'open',
+        city: 'جدة، حي الروضة',
+        deadline: '20 أبريل 2024',
+        deadlinePercent: 70,
+        deadlineRemaining: 'يتبقى 33 يوماً',
+        budget: '120,000 ر.س',
+        bidCount: 7,
+        description: `
+            <p>يطلب مستشفى النور الطبي من شركات البرمجيات المتخصصة تقديم عروض لتطوير نظام متكامل لإدارة الموارد البشرية مصمم خصيصاً لقطاع الرعاية الصحية.</p>
+            <p>النظام المطلوب يجب أن يدعم اللغة العربية بالكامل، وأن يتكامل مع الأنظمة المحاسبية القائمة، ويوفر تقارير متوافقة مع اشتراطات وزارة الموارد البشرية السعودية.</p>
+        `,
+        scope: [
+            'وحدة الرواتب وبدلات الإقامة والحوافز',
+            'إدارة الإجازات والغيابات والمناوبات',
+            'نظام التقييم الوظيفي السنوي والنصف سنوي',
+            'بوابة الموظف الذاتية (Self-Service Portal)',
+            'تكامل مع نظام حضور وانصراف بصمة الإصبع',
+            'تقارير متوافقة مع متطلبات التأمينات الاجتماعية (GOSI)',
+            'حوسبة سحابية مع نسخ احتياطي يومي تلقائي',
+            'تدريب الكادر الإداري واتفاقية دعم فني لسنة'
+        ],
+        requirements: [
+            { label: 'الخبرة المطلوبة', value: '3 سنوات في ERP صحي' },
+            { label: 'السجل التجاري', value: 'ساري — نشاط برمجيات' },
+            { label: 'مشاريع مشابهة', value: 'نظامان على الأقل في القطاع الصحي' },
+            { label: 'الدعم الفني', value: '12 شهراً كحد أدنى' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'وثيقة متطلبات النظام', size: '1.8 MB', ext: 'PDF' },
+            { icon: '📊', name: 'نموذج العرض الفني والمالي', size: '380 KB', ext: 'DOCX' },
+            { icon: '📋', name: 'معايير قبول النظام (UAT)', size: '210 KB', ext: 'PDF' }
+        ],
+        notes: null
+    },
+    '3': {
+        title: 'توريد وتركيب شبكة مياه لمجمع سكني',
+        org: 'المجموعة السعودية للمقاولات',
+        orgInitial: 'م',
+        orgMeta: 'شركة محدودة — المقاولات والتشييد',
+        sector: 'بناء وإنشاء',
+        status: 'soon',
+        city: 'الدمام، المنطقة الصناعية',
+        deadline: '5 أبريل 2024',
+        deadlinePercent: 85,
+        deadlineRemaining: '⚠️ يتبقى 8 أيام فقط',
+        budget: '2,300,000 ر.س',
+        bidCount: 18,
+        description: `
+            <p>تدعو المجموعة السعودية للمقاولات شركات السباكة والبنية التحتية إلى تقديم عروض لمشروع توريد وتركيب شبكة مياه رئيسية وفرعية لمجمع سكني يضم 240 وحدة سكنية في الدمام.</p>
+            <p>المشروع يشمل خطوط المياه الرئيسية، شبكات التوزيع الفرعية لكل وحدة، نظام الصرف الصحي، غرف التفتيش، وخزانات المياه المشتركة.</p>
+        `,
+        scope: [
+            'توريد وتركيب أنابيب HDPE للشبكة الرئيسية',
+            'شبكات التوزيع الداخلية لكل مبنى',
+            'نظام الصرف الصحي الكامل وغرف التفتيش',
+            'محطة ضخ المياه الرئيسية (قدرة 50 م³/ساعة)',
+            'خزانات مياه أرضية وعلوية (إجمالي 500 م³)',
+            'نظام اكتشاف التسريب وعدادات المياه الذكية',
+            'اختبارات ضغط الشبكة ووثائق تسليم المشروع'
+        ],
+        requirements: [
+            { label: 'التصنيف المطلوب', value: 'سباكة ومياه — الدرجة الثانية' },
+            { label: 'مشاريع مشابهة', value: 'مشروعان لمجمعات سكنية' },
+            { label: 'التأمين', value: 'تأمين ضد المخاطر ساري' },
+            { label: 'ضمان الأعمال', value: 'سنتان من تاريخ التسليم' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'مواصفات الشبكة الفنية', size: '2.4 MB', ext: 'PDF' },
+            { icon: '📐', name: 'مخططات التمديدات الصحية', size: '8.1 MB', ext: 'DWG' },
+            { icon: '📊', name: 'جداول الكميات المفصلة', size: '750 KB', ext: 'XLSX' }
+        ],
+        notes: 'يُلزم المتقدم بزيارة الموقع قبل تقديم العرض. يمكن التواصل مع مهندس المشروع المسؤول لتحديد موعد الزيارة.'
+    },
+    '4': {
+        title: 'توريد أجهزة طبية لعيادات التشخيص',
+        org: 'مجموعة الحياة الطبية',
+        orgInitial: 'ح',
+        orgMeta: 'مجموعة طبية — 3 عيادات في الرياض',
+        sector: 'رعاية صحية',
+        status: 'open',
+        city: 'الرياض، 3 مواقع',
+        deadline: '28 أبريل 2024',
+        deadlinePercent: 45,
+        deadlineRemaining: 'يتبقى 41 يوماً',
+        budget: '450,000 ر.س',
+        bidCount: 5,
+        description: `
+            <p>تسعى مجموعة الحياة الطبية للحصول على عروض لتوريد وتركيب وصيانة أجهزة أشعة وتشخيص متطورة لثلاث عيادات جديدة في الرياض.</p>
+            <p>يشترط أن تكون الأجهزة حاصلة على موافقة هيئة الغذاء والدواء السعودية (SFDA) وأن يكون المورد لديه مركز خدمة معتمد في المملكة.</p>
+        `,
+        scope: [
+            'جهاز أشعة سينية رقمي (Digital X-Ray) — 3 وحدات',
+            'جهاز موجات فوق صوتية (Ultrasound) طبي — 3 وحدات',
+            'جهاز رسم قلب (ECG) 12 قناة — 3 وحدات',
+            'أجهزة مراقبة المريض (Patient Monitor) — 6 وحدات',
+            'التركيب والمعايرة والتوصيل بنظام PACS',
+            'تدريب الكوادر الطبية على تشغيل الأجهزة',
+            'عقد صيانة وقائية لمدة 3 سنوات'
+        ],
+        requirements: [
+            { label: 'اعتماد SFDA', value: 'إلزامي لجميع الأجهزة' },
+            { label: 'مركز خدمة معتمد', value: 'داخل المملكة' },
+            { label: 'ضمان الأجهزة', value: '3 سنوات كحد أدنى' },
+            { label: 'قطع الغيار', value: 'متوفرة محلياً' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'المواصفات التقنية التفصيلية', size: '2.1 MB', ext: 'PDF' },
+            { icon: '📋', name: 'نموذج العرض المالي والفني', size: '290 KB', ext: 'XLSX' }
+        ],
+        notes: null
+    },
+    '5': {
+        title: 'تجهيز مختبرات حاسوب لمدارس ابتدائية',
+        org: 'إدارة التعليم بمكة المكرمة',
+        orgInitial: 'ت',
+        orgMeta: 'جهة حكومية — وزارة التعليم',
+        sector: 'تعليم',
+        status: 'open',
+        city: 'مكة المكرمة، 8 مدارس',
+        deadline: '10 مايو 2024',
+        deadlinePercent: 35,
+        deadlineRemaining: 'يتبقى 53 يوماً',
+        budget: '180,000 ر.س',
+        bidCount: 3,
+        description: `
+            <p>تدعو إدارة التعليم بمكة المكرمة الموردين المؤهلين لتقديم عروض لتوريد وتركيب وتشغيل 8 مختبرات حاسوب متكاملة في 8 مدارس ابتدائية حكومية.</p>
+            <p>يجب أن تتوافق الأجهزة والبرمجيات مع المناهج الدراسية لوزارة التعليم، وأن يكون المورد قادراً على توفير الدعم الفني لمدة لا تقل عن سنتين.</p>
+        `,
+        scope: [
+            'توريد وتركيب 30 جهاز حاسوب لكل مختبر (240 جهاز إجمالاً)',
+            'شبكة LAN داخلية وواي فاي لكل مختبر',
+            'جهاز عرض تفاعلي (Interactive Board) لكل مختبر',
+            'تركيب نظام UPS لحماية الأجهزة',
+            'تحميل البرمجيات التعليمية المعتمدة',
+            'طاولات وكراسي مدرسية مريحة (30 طقم/مختبر)',
+            'دعم فني ميداني لمدة سنتين'
+        ],
+        requirements: [
+            { label: 'الخبرة', value: 'تجهيز مختبرات حكومية سابقة' },
+            { label: 'ضمان الأجهزة', value: '3 سنوات' },
+            { label: 'الدعم الفني', value: 'مهندس متاح خلال 24 ساعة' },
+            { label: 'الالتزام بالتوطين', value: 'موظفون سعوديون بالدعم الفني' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'كراسة الشروط والمواصفات', size: '1.4 MB', ext: 'PDF' },
+            { icon: '📊', name: 'جدول الكميات والأسعار', size: '310 KB', ext: 'XLSX' },
+            { icon: '📋', name: 'قائمة البرمجيات المطلوبة', size: '180 KB', ext: 'PDF' }
+        ],
+        notes: null
+    },
+    '6': {
+        title: 'تركيب منظومة طاقة شمسية لمصنع صناعي',
+        org: 'الشركة الوطنية للطاقة المتجددة',
+        orgInitial: 'و',
+        orgMeta: 'شركة مساهمة — الطاقة المتجددة',
+        sector: 'طاقة وبيئة',
+        status: 'soon',
+        city: 'الرياض، المنطقة الصناعية الثانية',
+        deadline: '8 أبريل 2024',
+        deadlinePercent: 82,
+        deadlineRemaining: '⚠️ يتبقى 11 يوماً',
+        budget: '920,000 ر.س',
+        bidCount: 9,
+        description: `
+            <p>تدعو الشركة الوطنية للطاقة المتجددة الشركات المتخصصة في الطاقة الشمسية لتقديم عروض لتصميم وتوريد وتركيب واختبار منظومة طاقة شمسية متكاملة لمصنع في المنطقة الصناعية الثانية بالرياض.</p>
+            <p>الهدف من المشروع تغطية 60% من احتياجات المصنع الكهربائية باستخدام الطاقة الشمسية مع ربط المنظومة بالشبكة الكهربائية الوطنية.</p>
+        `,
+        scope: [
+            'تصميم منظومة شمسية بقدرة 500 كيلوواط ذروة',
+            'توريد وتركيب الألواح الشمسية على سطح المصنع',
+            'العواكس الكهربائية (Inverters) والتوصيلات',
+            'ربط المنظومة بنظام كهرباء المصنع والشبكة الوطنية',
+            'نظام مراقبة وإدارة الطاقة (Energy Monitoring)',
+            'اختبار وتشغيل المنظومة وتوثيق الكفاءة',
+            'ضمان الأداء والصيانة لمدة 5 سنوات'
+        ],
+        requirements: [
+            { label: 'اعتماد الشبكة', value: 'موافقة شركة الكهرباء (SEC)' },
+            { label: 'مشاريع مشابهة', value: '3 مشاريع تجارية/صناعية' },
+            { label: 'شهادات الجودة', value: 'ISO 9001 + IEC معتمد' },
+            { label: 'ضمان الألواح', value: '25 سنة أداء' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'دراسة الجدوى الفنية والاقتصادية', size: '3.8 MB', ext: 'PDF' },
+            { icon: '📐', name: 'مخططات الموقع وحمل الكهرباء', size: '5.2 MB', ext: 'DWG' },
+            { icon: '📊', name: 'نموذج العرض الفني والمالي', size: '460 KB', ext: 'XLSX' }
+        ],
+        notes: 'يُشترط على المتقدمين تقديم نموذج محاكاة لأداء المنظومة (PVSyst أو ما يعادله) ضمن ملفات العرض الفني.'
+    },
+    '7': {
+        title: 'تطوير تطبيق جوال لخدمات التوصيل',
+        org: 'شركة سريع للخدمات اللوجستية',
+        orgInitial: 'س',
+        orgMeta: 'شركة ذات مسؤولية محدودة — اللوجستيات',
+        sector: 'تقنية المعلومات',
+        status: 'closed',
+        city: 'جدة',
+        deadline: '1 مارس 2024',
+        deadlinePercent: 100,
+        deadlineRemaining: 'انتهى استقبال العروض',
+        budget: '75,000 ر.س',
+        bidCount: 15,
+        description: `
+            <p>طلبت شركة سريع للخدمات اللوجستية من شركات تطوير التطبيقات تقديم عروض لتصميم وتطوير تطبيق جوال متكامل لخدمات التوصيل السريع.</p>
+            <p>المناقصة مغلقة ولا تقبل عروضاً جديدة. يمكن الاطلاع على تفاصيل المشروع للمرجعية.</p>
+        `,
+        scope: [
+            'تطبيق iOS و Android للعملاء وللسائقين',
+            'لوحة تحكم إدارية (Web Dashboard)',
+            'نظام تتبع الطلبات في الوقت الفعلي (GPS)',
+            'بوابة دفع إلكتروني متعددة (Moyasar)',
+            'نظام تقييم للسائقين والعملاء',
+            'إشعارات Push و SMS للحالات المختلفة'
+        ],
+        requirements: [
+            { label: 'الخبرة', value: '3 تطبيقات تجارية سابقة' },
+            { label: 'التقنية المطلوبة', value: 'React Native / Flutter' },
+            { label: 'الضمان', value: '6 أشهر بعد الإطلاق' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'وثيقة متطلبات النظام', size: '1.2 MB', ext: 'PDF' }
+        ],
+        notes: null
+    },
+    '8': {
+        title: 'أعمال التشطيبات الداخلية لفيلا سكنية',
+        org: 'مؤسسة الديار للمقاولات',
+        orgInitial: 'د',
+        orgMeta: 'مؤسسة فردية — المقاولات السكنية',
+        sector: 'بناء وإنشاء',
+        status: 'open',
+        city: 'المدينة المنورة، حي الإسكان',
+        deadline: '2 مايو 2024',
+        deadlinePercent: 40,
+        deadlineRemaining: 'يتبقى 45 يوماً',
+        budget: '340,000 ر.س',
+        bidCount: 4,
+        description: `
+            <p>تطلب مؤسسة الديار للمقاولات تقديم عروض لتنفيذ أعمال التشطيبات الداخلية الكاملة لفيلا سكنية من طابقين بمساحة 650 م² في المدينة المنورة.</p>
+            <p>يشترط أن تكون المواد المستخدمة من الفئة الأولى، وأن يلتزم المقاول بالجداول الزمنية ومعايير الجودة المتفق عليها.</p>
+        `,
+        scope: [
+            'أعمال الجبس والتسوية للجدران والأسقف',
+            'تركيب باركيه خشبي في غرف النوم وبهو المدخل',
+            'سيراميك وبورسلان عالي الجودة (دورات المياه، المطبخ)',
+            'دهانات داخلية كاملة (طلاء + ألوان حسب الاختيار)',
+            'أعمال الخشب (أبواب، خزائن مدمجة، ديكورات)',
+            'تركيب الإضاءة الداخلية (شامل المصابيح LED)',
+            'أعمال المطبخ (تركيب رخام العدادات وتمديدات المطبخ)'
+        ],
+        requirements: [
+            { label: 'الخبرة', value: '5 سنوات في التشطيبات السكنية' },
+            { label: 'مشاريع مشابهة', value: '10 فيلات أو أكثر' },
+            { label: 'الضمان', value: 'سنة على الأعمال التنفيذية' },
+            { label: 'بدء التنفيذ', value: 'خلال أسبوعين من الترسية' }
+        ],
+        attachments: [
+            { icon: '📄', name: 'جدول أعمال التشطيبات', size: '890 KB', ext: 'PDF' },
+            { icon: '🖼️', name: 'التصاميم الداخلية (3D)', size: '22 MB', ext: 'PDF' },
+            { icon: '📊', name: 'جدول كميات المواد', size: '520 KB', ext: 'XLSX' }
+        ],
+        notes: 'يجب على المقاول الفائز توفير عينات من المواد للاعتماد قبل بدء التنفيذ.'
+    }
+};
+
+// ─── Load tender data from URL param ────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const tenderId = params.get('id') || '1';
+const data = TENDERS[tenderId] || TENDERS['1'];
+
+function loadTender() {
+    // Breadcrumb
+    document.getElementById('bcTitle').textContent = data.title;
+    document.title = data.title + ' - Khedmah';
+
+    // Header
+    document.getElementById('tTitle').textContent = data.title;
+    document.getElementById('tOrg').innerHTML = '🏢 ' + data.org;
+
+    const statusEl = document.getElementById('tStatus');
+    if (data.status === 'open') { statusEl.className = 'status-badge status-open'; statusEl.textContent = '🟢 مفتوح'; }
+    else if (data.status === 'soon') { statusEl.className = 'status-badge status-soon'; statusEl.textContent = '🟡 يغلق قريباً'; }
+    else { statusEl.className = 'status-badge status-closed'; statusEl.textContent = '🔴 مغلق'; }
+
+    // Info row
+    document.getElementById('tCity').textContent = data.city;
+    document.getElementById('tDeadline').textContent = data.deadline;
+    document.getElementById('tSector').textContent = data.sector;
+    document.getElementById('tBudget').textContent = data.budget;
+
+    // Description
+    document.getElementById('tDescription').innerHTML = data.description;
+
+    // Scope
+    const scopeEl = document.getElementById('tScope');
+    data.scope.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        scopeEl.appendChild(li);
+    });
+
+    // Requirements
+    const reqGrid = document.getElementById('tReqGrid');
+    data.requirements.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'req-item';
+        div.innerHTML = `<div class="req-label">${r.label}</div><div class="req-value">${r.value}</div>`;
+        reqGrid.appendChild(div);
+    });
+
+    // Attachments
+    const attEl = document.getElementById('tAttachments');
+    data.attachments.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'attachment-item';
+        div.innerHTML = `
+            <span class="attachment-icon">${a.icon}</span>
+            <span class="attachment-name">${a.name}</span>
+            <span class="attachment-size">${a.size}</span>
+            <span class="attachment-dl">⬇ ${a.ext}</span>`;
+        div.onclick = () => showToast(`جارٍ تحميل "${a.name}" ...`);
+        attEl.appendChild(div);
+    });
+
+    // Notes
+    if (data.notes) {
+        document.getElementById('notesCard').style.display = 'block';
+        document.getElementById('tNotes').textContent = data.notes;
+    }
+
+    // Sidebar
+    document.getElementById('sCompanyInitial').textContent = data.orgInitial;
+    document.getElementById('sCompanyName').textContent = data.org;
+    document.getElementById('sCompanyMeta').textContent = data.orgMeta;
+    document.getElementById('sDeadline').textContent = data.deadline;
+    document.getElementById('sDeadlineFill').style.width = data.deadlinePercent + '%';
+    document.getElementById('sDeadlineRemaining').textContent = data.deadlineRemaining;
+    document.getElementById('sBidCount').textContent = data.bidCount;
+
+    // Disable bidding if closed
+    if (data.status === 'closed') {
+        document.getElementById('btnSubmit').disabled = true;
+        document.getElementById('btnSubmit').textContent = 'المناقصة مغلقة';
+    }
+
+    // Modal info
+    document.getElementById('modalTenderName').textContent = data.title;
+    document.getElementById('modalOrgName').textContent = data.org;
+
+    // Wire chat button to this tender's conversation
+    const chatBtn = document.getElementById('btnChatTender');
+    if (chatBtn) chatBtn.href = `chat.html?type=tender&id=${tenderId}`;
+
+    // Wire bids link to pass tenderId
+    const bidsLink = document.querySelector('.btn-my-bids-link');
+    if (bidsLink) bidsLink.href = `tender-bids.html?tenderId=${tenderId}`;
+}
+
+loadTender();
+
+// ─── Bid Modal ───────────────────────────────────────────────────────────────
+function openBidModal() {
+    document.getElementById('bidModal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('bidModal').classList.remove('show');
+}
+
+async function submitBid() {
+    const amt = document.getElementById('bidAmount').value.trim();
+    const dur = document.getElementById('bidDuration').value.trim();
+    if (!amt) { showToast('يرجى إدخال قيمة العرض المالي'); return; }
+    if (!dur) { showToast('يرجى تحديد مدة التنفيذ المقترحة'); return; }
+    const submitBtn = document.querySelector('#bidModal .btn-full.btn-primary-full');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'جاري الإرسال...'; }
+    const isUUID = tenderId.includes('-') && tenderId.length > 10;
+    if (isUUID) {
+        try {
+            await API.tenders.bid(tenderId, { amount: parseFloat(amt), timeline: dur, notes: document.getElementById('bidNotes')?.value || '' });
+        } catch(err) {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إرسال العرض'; }
+            showToast('❌ ' + API.errorMsg(err));
+            return;
+        }
+    }
+    closeModal();
+    document.getElementById('ctaArea').style.display = 'none';
+    document.getElementById('successArea').style.display = 'block';
+    const countEl = document.getElementById('sBidCount');
+    countEl.textContent = parseInt(countEl.textContent) + 1;
+    showToast('✅ تم إرسال عرضك بنجاح — سيتواصل معك صاحب المناقصة');
+}
+
+function saveTender() {
+    showToast('🔖 تم حفظ المناقصة في قائمتك');
+}
+
+function showToast(msg) {
+    let t = document.getElementById('pageToast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'pageToast';
+        t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.9rem;z-index:9999;font-family:Tajawal,sans-serif;transition:opacity 0.3s;pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+function toggleBreakdown() {
+    const g = document.getElementById('breakdownGroup');
+    const t = document.getElementById('breakdownToggle');
+    const visible = g.style.display !== 'none';
+    g.style.display = visible ? 'none' : 'block';
+    t.textContent = visible ? '+ إضافة تفصيل السعر' : '- إخفاء تفصيل السعر';
+}
+
+// Close modal on overlay click
+document.getElementById('bidModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('bidModal')) closeModal();
+});
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+// Set correct theme toggle icon on load
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+});
+</script>
+</body>
+</html>

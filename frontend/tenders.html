@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المناقصات - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        /* Nav */
+        nav { background: white; padding: 1rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; flex-shrink: 0; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; font-size: 0.9rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .btn-post { background: var(--primary); color: white !important; padding: 0.45rem 1.1rem; border-radius: 10px; font-weight: 600 !important; }
+        .btn-post:hover { background: #026f7e !important; }
+        .avatar-btn { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
+
+        /* Page header */
+        .page-header { background: white; border-bottom: 1px solid #e2e8f0; padding: 1.25rem 5%; }
+        .page-header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+        .page-title { font-size: 1.3rem; font-weight: 800; }
+        .page-title span { color: var(--primary); }
+        .page-subtitle { font-size: 0.85rem; color: var(--gray); margin-top: 0.2rem; }
+        .header-search { display: flex; align-items: center; gap: 0; background: var(--light); border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden; max-width: 360px; flex: 1; }
+        .header-search input { flex: 1; border: none; background: transparent; padding: 0.5rem 1rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; }
+        .header-search button { background: var(--primary); border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; font-family: 'Tajawal', sans-serif; white-space: nowrap; }
+
+        /* Layout */
+        .page-layout { max-width: 1200px; margin: 0 auto; padding: 1.5rem 5%; display: flex; gap: 1.5rem; }
+
+        /* Filters Sidebar */
+        .filters-sidebar { width: 230px; flex-shrink: 0; }
+        .filter-panel { background: white; border-radius: 16px; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        .filter-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .filter-clear { font-size: 0.75rem; color: var(--primary); cursor: pointer; font-weight: 500; }
+        .filter-option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; cursor: pointer; }
+        .filter-option input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+        .filter-option label { font-size: 0.85rem; cursor: pointer; flex: 1; }
+        .filter-option .count { font-size: 0.72rem; color: var(--gray); }
+        .range-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .range-input { flex: 1; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.4rem 0.6rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; width: 0; }
+        .range-input:focus { border-color: var(--primary); }
+        .filter-select { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.45rem 0.7rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; background: white; margin-top: 0.5rem; }
+
+        /* Results Area */
+        .results-area { flex: 1; min-width: 0; }
+        .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .results-count { font-size: 0.9rem; color: var(--gray); }
+        .results-count strong { color: var(--dark); }
+        .sort-select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.45rem 0.85rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; background: white; cursor: pointer; }
+
+        /* Tender Cards */
+        .tenders-list { display: flex; flex-direction: column; gap: 1rem; }
+        .tender-card { background: white; border-radius: 16px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.06); transition: box-shadow 0.2s, transform 0.2s; }
+        .tender-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .tender-card.hidden { display: none; }
+        .tc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+        .tc-info { flex: 1; min-width: 0; }
+        .tc-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+        .tc-title a { text-decoration: none; color: inherit; }
+        .tc-title a:hover { color: var(--primary); }
+        .tc-org { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.4rem; }
+        .tc-desc { font-size: 0.85rem; color: var(--gray); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .tc-side { flex-shrink: 0; text-align: end; }
+        .tc-budget { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .tc-budget small { font-size: 0.72rem; font-weight: 400; color: var(--gray); display: block; }
+        .status-badge { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 8px; margin-top: 0.4rem; }
+        .status-open { background: rgba(16,185,129,0.12); color: #065f46; }
+        .status-soon { background: rgba(245,158,11,0.12); color: #92400e; }
+        .status-closed { background: rgba(239,68,68,0.1); color: #991b1b; }
+        .tc-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.78rem; color: var(--gray); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; align-items: center; }
+        .tc-meta span { display: flex; align-items: center; gap: 0.3rem; }
+        .tc-meta .spacer { flex: 1; }
+        .btn-bid { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 0.45rem 1.1rem; font-family: 'Tajawal', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+        .btn-bid:hover { background: #026f7e; }
+        .btn-bid:disabled { background: #94a3b8; cursor: not-allowed; }
+        .sector-tag { background: var(--light); border-radius: 6px; padding: 0.15rem 0.55rem; font-size: 0.72rem; color: var(--gray); }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.75rem; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.15rem; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; background: var(--light); border: none; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.4rem; }
+        .form-control { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.9rem; font-family: 'Tajawal', sans-serif; font-size: 16px; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+        textarea.form-control { resize: vertical; min-height: 90px; }
+        .modal-footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-full { flex: 1; padding: 0.7rem; border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: none; }
+        .btn-submit { background: var(--primary); color: white; }
+        .btn-submit:hover { background: #026f7e; }
+        .btn-cancel { background: var(--light); color: var(--dark); }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--gray); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .empty-state p { font-size: 0.95rem; }
+
+        /* Theme Toggle */
+        .theme-toggle { width: 34px; height: 34px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .theme-toggle:hover { background: var(--light); }
+
+        /* Dark Mode */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark nav { background: #1e293b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a.active { color: var(--primary); }
+        html.dark .page-header { background: #1e293b; border-color: #334155; }
+        html.dark .header-search { background: #0f172a; border-color: #334155; }
+        html.dark .header-search input { color: #e2e8f0; }
+        html.dark .filter-panel { background: #1e293b; }
+        html.dark .filter-option label { color: #cbd5e1; }
+        html.dark .filter-select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark .range-input { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .sort-select { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark .tender-card { background: #1e293b; }
+        html.dark .tc-meta { border-color: #334155; }
+        html.dark .sector-tag { background: #0f172a; color: #94a3b8; }
+        html.dark .modal { background: #1e293b; }
+        html.dark .form-control { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark .form-control:focus { border-color: var(--primary); }
+        html.dark .btn-cancel { background: #334155; color: #e2e8f0; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        /* Post tender nav button */
+        .btn-post-tender { background: var(--success); color: white; padding: 0.45rem 1rem; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 700; }
+        html.dark .btn-post-tender { background: #059669; }
+
+        /* Status badges for tender cards */
+        .badge-new { background: rgba(2,128,144,0.1); color: var(--primary); font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 8px; }
+        .badge-closing { background: rgba(245,158,11,0.12); color: #92400e; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 8px; }
+        .badge-closed { background: rgba(239,68,68,0.1); color: #991b1b; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 8px; }
+
+        /* View bids button */
+        .btn-view-bids { background: rgba(2,128,144,0.1); color: var(--primary); border-radius: 10px; padding: 0.45rem 0.875rem; text-decoration: none; font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
+
+        @media (max-width: 768px) {
+            .filters-sidebar { display: none; }
+            .page-layout { flex-direction: column; }
+        }
+    </style>
+</head>
+<script>
+  (function() {
+    if (localStorage.getItem('khedmah_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    if (!API.isLoggedIn()) {
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
+
+<body>
+<script src="js/api.js"></script>
+    <nav>
+        <div class="nav-content">
+            <a href="home.html" class="logo">KHEDMAH</a>
+            <div class="nav-links">
+                <a href="search-services.html">الخدمات</a>
+                <a href="tenders.html" class="active">المناقصات</a>
+                <a href="equipment.html">المعدات</a>
+                <a href="consultations.html">الاستشارات</a>
+                <a href="tender-create.html" class="btn-post-tender">+ نشر مناقصة</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="customer-dashboard.html" class="avatar-btn">م</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div class="page-header-inner">
+            <div>
+                <div class="page-title">المناقصات <span>والعطاءات</span></div>
+                <div class="page-subtitle">ابحث عن مناقصات مفتوحة وقدّم عروضك مباشرة</div>
+            </div>
+            <div class="header-search">
+                <input type="text" id="searchInput" placeholder="🔍 ابحث في المناقصات..." oninput="applyFilters()">
+                <button onclick="applyFilters()">بحث</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-layout">
+        <!-- Filters -->
+        <aside class="filters-sidebar">
+            <div class="filter-panel">
+                <div class="filter-title">القطاع <span class="filter-clear" onclick="clearFilters()">مسح الكل</span></div>
+                <div class="filter-option"><input type="checkbox" id="s1" data-filter="sector" value="بناء" onchange="applyFilters()"><label for="s1">🏗️ بناء وإنشاء</label><span class="count">14</span></div>
+                <div class="filter-option"><input type="checkbox" id="s2" data-filter="sector" value="تقنية" onchange="applyFilters()"><label for="s2">💻 تقنية المعلومات</label><span class="count">9</span></div>
+                <div class="filter-option"><input type="checkbox" id="s3" data-filter="sector" value="صحة" onchange="applyFilters()"><label for="s3">🏥 رعاية صحية</label><span class="count">6</span></div>
+                <div class="filter-option"><input type="checkbox" id="s4" data-filter="sector" value="تعليم" onchange="applyFilters()"><label for="s4">📚 تعليم</label><span class="count">5</span></div>
+                <div class="filter-option"><input type="checkbox" id="s5" data-filter="sector" value="طاقة" onchange="applyFilters()"><label for="s5">⚡ طاقة وبيئة</label><span class="count">7</span></div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">الحالة</div>
+                <div class="filter-option"><input type="checkbox" id="st1" data-filter="status" value="open" onchange="applyFilters()"><label for="st1">🟢 مفتوح</label></div>
+                <div class="filter-option"><input type="checkbox" id="st2" data-filter="status" value="soon" onchange="applyFilters()"><label for="st2">🟡 يغلق قريبًا</label></div>
+                <div class="filter-option"><input type="checkbox" id="st3" data-filter="status" value="closed" onchange="applyFilters()"><label for="st3">🔴 مغلق</label></div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">الميزانية (ر.س)</div>
+                <div class="range-row">
+                    <input type="number" id="budgetMin" class="range-input" placeholder="من" oninput="applyFilters()">
+                    <span style="color:var(--gray)">—</span>
+                    <input type="number" id="budgetMax" class="range-input" placeholder="إلى" oninput="applyFilters()">
+                </div>
+            </div>
+
+            <div class="filter-panel">
+                <div class="filter-title">المدينة</div>
+                <select class="filter-select" id="cityFilter" onchange="applyFilters()">
+                    <option value="">جميع المدن</option>
+                    <option value="الرياض">الرياض</option>
+                    <option value="جدة">جدة</option>
+                    <option value="الدمام">الدمام</option>
+                    <option value="مكة المكرمة">مكة المكرمة</option>
+                    <option value="المدينة المنورة">المدينة المنورة</option>
+                </select>
+            </div>
+        </aside>
+
+        <!-- Results -->
+        <div class="results-area">
+            <div class="results-header">
+                <div class="results-count">عرض <strong id="visibleCount">8</strong> من <strong>8</strong> مناقصة</div>
+                <select class="sort-select" id="sortSelect" onchange="sortTenders()">
+                    <option value="newest">الأحدث أولاً</option>
+                    <option value="budget_high">الميزانية: الأعلى</option>
+                    <option value="budget_low">الميزانية: الأقل</option>
+                    <option value="deadline">أقرب موعد انتهاء</option>
+                </select>
+            </div>
+
+            <div class="tenders-list" id="tendersList">
+
+                <div class="tender-card"
+                     data-sector="بناء" data-status="open" data-budget="850000"
+                     data-city="الرياض" data-date="2024-03-10" data-deadline="2025-04-30">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=1">إنشاء مبنى إداري متعدد الطوابق</a> <span class="badge-new">جديد</span></div>
+                            <div class="tc-org">🏢 شركة الأفق للتطوير العقاري</div>
+                            <div class="tc-desc">مطلوب مقاول متخصص لبناء مبنى إداري من 6 طوابق بمساحة 4,200 م² في حي العليا بالرياض، يشمل الأعمال المدنية والكهربائية والميكانيكية.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">850,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-open">مفتوح</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 الرياض</span>
+                        <span>⏰ ينتهي: 15 أبريل 2024</span>
+                        <span>👥 12 عرض</span>
+                        <span class="sector-tag">بناء</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=1" class="btn-bid">عرض التفاصيل</a>
+                        <a href="tender-bids.html" class="btn-view-bids">📊 العروض (12)</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="تقنية" data-status="open" data-budget="120000"
+                     data-city="جدة" data-date="2024-03-09" data-deadline="2025-03-25">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=2">تطوير نظام إدارة موارد بشرية</a> <span class="badge-closing">⏰ ينتهي قريباً</span></div>
+                            <div class="tc-org">🏥 مستشفى النور الطبي</div>
+                            <div class="tc-desc">تطوير وتطبيق نظام متكامل لإدارة الموارد البشرية يشمل الرواتب، الإجازات، التقييم السنوي، وبوابة الموظف الذاتية.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">120,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-open">مفتوح</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 جدة</span>
+                        <span>⏰ ينتهي: 20 أبريل 2024</span>
+                        <span>👥 7 عروض</span>
+                        <span class="sector-tag">تقنية</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=2" class="btn-bid">عرض التفاصيل</a>
+                        <a href="tender-bids.html" class="btn-view-bids">📊 العروض (8)</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="بناء" data-status="soon" data-budget="2300000"
+                     data-city="الدمام" data-date="2024-03-08" data-deadline="2025-05-15">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=3">توريد وتركيب شبكة مياه لمجمع سكني</a></div>
+                            <div class="tc-org">🏗️ المجموعة السعودية للمقاولات</div>
+                            <div class="tc-desc">مشروع توريد وتركيب شبكة مياه رئيسية وفرعية لمجمع سكني يضم 240 وحدة سكنية في الدمام.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">2,300,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-soon">يغلق قريبًا</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 الدمام</span>
+                        <span>⏰ ينتهي: 5 أبريل 2024</span>
+                        <span>👥 18 عرض</span>
+                        <span class="sector-tag">بناء</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=3" class="btn-bid">عرض التفاصيل</a>
+                        <a href="tender-bids.html" class="btn-view-bids">📊 العروض (5)</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="صحة" data-status="closed" data-budget="450000"
+                     data-city="الرياض" data-date="2024-03-07" data-deadline="2024-03-28">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=4">توريد أجهزة طبية لعيادات التشخيص</a> <span class="badge-closed">مغلقة</span></div>
+                            <div class="tc-org">🏥 مجموعة الحياة الطبية</div>
+                            <div class="tc-desc">توريد وتركيب وصيانة أجهزة أشعة وتشخيص متطورة لثلاث عيادات في الرياض وفق المواصفات المرفقة.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">450,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-closed">مغلقة</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 الرياض</span>
+                        <span>⏰ انتهى: 28 مارس 2024</span>
+                        <span>👥 5 عروض</span>
+                        <span class="sector-tag">صحة</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=4" class="btn-bid" disabled style="background:#94a3b8;pointer-events:none;">مغلق</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="تعليم" data-status="open" data-budget="180000"
+                     data-city="مكة المكرمة" data-date="2024-03-06">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=5">تجهيز مختبرات حاسوب لمدارس ابتدائية</a></div>
+                            <div class="tc-org">📚 إدارة التعليم بمكة المكرمة</div>
+                            <div class="tc-desc">توريد وتركيب 8 مختبرات حاسوب مع الأجهزة والشبكات والبرمجيات التعليمية في 8 مدارس ابتدائية حكومية.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">180,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-open">مفتوح</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 مكة المكرمة</span>
+                        <span>⏰ ينتهي: 10 مايو 2024</span>
+                        <span>👥 3 عروض</span>
+                        <span class="sector-tag">تعليم</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=5" class="btn-bid">عرض التفاصيل</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="طاقة" data-status="soon" data-budget="920000"
+                     data-city="الرياض" data-date="2024-03-05">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=6">تركيب منظومة طاقة شمسية لمصنع صناعي</a></div>
+                            <div class="tc-org">⚡ الشركة الوطنية للطاقة المتجددة</div>
+                            <div class="tc-desc">تصميم وتوريد وتركيب واختبار منظومة طاقة شمسية بقدرة 500 كيلوواط لمصنع في المنطقة الصناعية بالرياض.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">920,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-soon">يغلق قريبًا</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 الرياض</span>
+                        <span>⏰ ينتهي: 8 أبريل 2024</span>
+                        <span>👥 9 عروض</span>
+                        <span class="sector-tag">طاقة</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=6" class="btn-bid">عرض التفاصيل</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="تقنية" data-status="closed" data-budget="75000"
+                     data-city="جدة" data-date="2024-03-04">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=7">تطوير تطبيق جوال لخدمات التوصيل</a></div>
+                            <div class="tc-org">🛒 شركة سريع للخدمات اللوجستية</div>
+                            <div class="tc-desc">تصميم وتطوير تطبيق iOS و Android مع لوحة تحكم للإدارة، يشمل تتبع الطلبات وبوابة دفع إلكتروني.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">75,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-closed">مغلق</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 جدة</span>
+                        <span>⏰ انتهى: 1 مارس 2024</span>
+                        <span>👥 15 عرض</span>
+                        <span class="sector-tag">تقنية</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=7" class="btn-bid" style="background:#94a3b8;pointer-events:none;">مغلق</a>
+                    </div>
+                </div>
+
+                <div class="tender-card"
+                     data-sector="بناء" data-status="open" data-budget="340000"
+                     data-city="المدينة المنورة" data-date="2024-03-03">
+                    <div class="tc-header">
+                        <div class="tc-info">
+                            <div class="tc-title"><a href="tender-detail.html?id=8">أعمال التشطيبات الداخلية لفيلا سكنية</a></div>
+                            <div class="tc-org">🏠 مؤسسة الديار للمقاولات</div>
+                            <div class="tc-desc">تنفيذ أعمال التشطيبات الداخلية لفيلا سكنية من طابقين بمساحة 650 م² في المدينة المنورة، تشمل الدهانات والسيراميك والجبس.</div>
+                        </div>
+                        <div class="tc-side">
+                            <div class="tc-budget">340,000 ر.س<small>الميزانية التقديرية</small></div>
+                            <span class="status-badge status-open">مفتوح</span>
+                        </div>
+                    </div>
+                    <div class="tc-meta">
+                        <span>📍 المدينة المنورة</span>
+                        <span>⏰ ينتهي: 2 مايو 2024</span>
+                        <span>👥 4 عروض</span>
+                        <span class="sector-tag">بناء</span>
+                        <span class="spacer"></span>
+                        <a href="tender-detail.html?id=8" class="btn-bid">عرض التفاصيل</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="icon">🔍</div>
+                <p>لا توجد مناقصات تطابق معايير البحث</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Tender Modal -->
+    <div class="modal-overlay" id="postModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">نشر مناقصة جديدة</div>
+                <button class="modal-close" onclick="closeModal('postModal')">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">عنوان المناقصة *</label>
+                <input type="text" class="form-control" placeholder="وصف موجز للمشروع">
+            </div>
+            <div class="form-group">
+                <label class="form-label">القطاع *</label>
+                <select class="form-control">
+                    <option value="">اختر القطاع</option>
+                    <option>بناء وإنشاء</option>
+                    <option>تقنية المعلومات</option>
+                    <option>رعاية صحية</option>
+                    <option>تعليم</option>
+                    <option>طاقة وبيئة</option>
+                    <option>خدمات عامة</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الميزانية التقديرية (ر.س) *</label>
+                <input type="number" class="form-control" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">تاريخ انتهاء الاستقبال *</label>
+                <input type="date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">المدينة *</label>
+                <select class="form-control">
+                    <option>الرياض</option><option>جدة</option><option>الدمام</option>
+                    <option>مكة المكرمة</option><option>المدينة المنورة</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">وصف المناقصة والمتطلبات *</label>
+                <textarea class="form-control" placeholder="اشرح المشروع بالتفصيل..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full btn-cancel" onclick="closeModal('postModal')">إلغاء</button>
+                <button class="btn-full btn-submit" onclick="submitPost()">نشر المناقصة</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            const budgetMin = parseFloat(document.getElementById('budgetMin').value) || 0;
+            const budgetMax = parseFloat(document.getElementById('budgetMax').value) || Infinity;
+            const city = document.getElementById('cityFilter').value;
+            const sectors = [...document.querySelectorAll('[data-filter="sector"]:checked')].map(el => el.value);
+            const statuses = [...document.querySelectorAll('[data-filter="status"]:checked')].map(el => el.value);
+            const cards = document.querySelectorAll('.tender-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const sector = card.dataset.sector;
+                const status = card.dataset.status;
+                const budget = parseFloat(card.dataset.budget);
+                const cardCity = card.dataset.city;
+                const text = card.textContent.toLowerCase();
+                const matchQ = !q || text.includes(q);
+                const matchSector = sectors.length === 0 || sectors.includes(sector);
+                const matchStatus = statuses.length === 0 || statuses.includes(status);
+                const matchBudget = budget >= budgetMin && budget <= budgetMax;
+                const matchCity = !city || cardCity === city;
+                if (matchQ && matchSector && matchStatus && matchBudget && matchCity) {
+                    card.classList.remove('hidden'); visible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+            document.getElementById('visibleCount').textContent = visible;
+            document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        function sortTenders() {
+            const sort = document.getElementById('sortSelect').value;
+            const list = document.getElementById('tendersList');
+            const cards = [...list.querySelectorAll('.tender-card')];
+            cards.sort((a, b) => {
+                if (sort === 'newest') return new Date(b.dataset.date) - new Date(a.dataset.date);
+                if (sort === 'budget_high') return parseFloat(b.dataset.budget) - parseFloat(a.dataset.budget);
+                if (sort === 'budget_low') return parseFloat(a.dataset.budget) - parseFloat(b.dataset.budget);
+                if (sort === 'deadline') {
+                    const dateA = a.getAttribute('data-deadline') || '9999';
+                    const dateB = b.getAttribute('data-deadline') || '9999';
+                    return dateA.localeCompare(dateB);
+                }
+                return 0;
+            });
+            cards.forEach(c => list.appendChild(c));
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('[data-filter]').forEach(el => el.checked = false);
+            document.getElementById('budgetMin').value = '';
+            document.getElementById('budgetMax').value = '';
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        function openPostModal() {
+            document.getElementById('postModal').classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function submitPost() {
+            closeModal('postModal');
+            showToast('تم نشر المناقصة بنجاح ✅');
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.9rem;z-index:9999;font-family:Tajawal,sans-serif;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('show'); });
+        });
+
+        // Role-aware dashboard link
+        document.addEventListener('DOMContentLoaded', function() {
+            const role = API.auth.getRole();
+            const btn = document.querySelector('.avatar-btn');
+            if (btn && role === 'provider') btn.href = 'provider-dashboard.html';
+
+            // Load real tenders from API and append to list
+            API.tenders.list({ limit: 20 }).then(res => {
+                const items = res.data || res.items || (Array.isArray(res) ? res : []);
+                if (!items.length) return;
+                const list = document.getElementById('tendersList');
+                const statusMap = { OPEN: 'open', CLOSED: 'closed', AWARDED: 'closed', CANCELLED: 'closed' };
+                items.forEach(t => {
+                    const id = t.id;
+                    if (list.querySelector(`[data-api-id="${id}"]`)) return;
+                    const card = document.createElement('div');
+                    card.className = 'tender-card';
+                    card.dataset.apiId = id;
+                    card.dataset.sector = t.category || '';
+                    card.dataset.status = statusMap[t.status] || 'open';
+                    card.dataset.budget = t.budget || 0;
+                    card.dataset.city = t.city || '';
+                    card.dataset.date = t.createdAt || '';
+                    card.dataset.deadline = t.deadline || '';
+                    card.innerHTML = `
+                        <div style="padding:1.25rem">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap">
+                                <div>
+                                    <div style="font-weight:700;font-size:1rem;margin-bottom:0.25rem">${t.title || 'مناقصة'}</div>
+                                    <div style="font-size:0.82rem;color:var(--gray)">🏢 ${t.company?.name || 'شركة'} &nbsp;•&nbsp; 📍 ${t.city || ''} &nbsp;•&nbsp; 🏷️ ${t.category || ''}</div>
+                                </div>
+                                <span style="background:#dcfce7;color:#166534;padding:0.25rem 0.75rem;border-radius:999px;font-size:0.75rem;font-weight:600;white-space:nowrap">${t.status === 'OPEN' ? '🟢 مفتوح' : '🔴 مغلق'}</span>
+                            </div>
+                            <p style="font-size:0.88rem;color:var(--gray);margin:0.75rem 0 0">${(t.description || '').slice(0, 120)}${t.description?.length > 120 ? '...' : ''}</p>
+                            <div style="display:flex;gap:1rem;margin-top:0.875rem;flex-wrap:wrap">
+                                <span style="font-size:0.8rem;color:var(--primary);font-weight:600">💰 ${Number(t.budget || 0).toLocaleString('ar-SA')} ر.س</span>
+                                ${t.deadline ? `<span style="font-size:0.8rem;color:var(--gray)">⏰ الإغلاق: ${t.deadline.split('T')[0]}</span>` : ''}
+                            </div>
+                            <div style="margin-top:1rem;text-align:left">
+                                <a href="tender-detail.html?id=${id}" style="background:var(--primary);color:white;padding:0.45rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض التفاصيل</a>
+                            </div>
+                        </div>`;
+                    list.appendChild(card);
+                });
+                applyFilters();
+            }).catch(() => {});
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقييم العميل - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --warning: #F59E0B;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, rgba(2, 195, 154, 0.1) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .rating-container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+            animation: slideUp 0.6s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .rating-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 2.5rem 2rem;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .rating-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .rating-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        
+        .rating-body {
+            padding: 2.5rem;
+        }
+        
+        .customer-info {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .customer-avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .customer-details h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+        
+        .service-type {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+        
+        .rating-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+        
+        .required-badge {
+            background: var(--warning);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        /* Star Rating */
+        .stars-input {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+        
+        .star-btn {
+            background: none;
+            border: none;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            filter: grayscale(100%);
+            opacity: 0.3;
+        }
+        
+        .star-btn:hover,
+        .star-btn.active {
+            filter: grayscale(0%);
+            opacity: 1;
+            transform: scale(1.2);
+        }
+        
+        .rating-label {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            min-height: 2rem;
+        }
+        
+        /* Criteria Checkboxes */
+        .criteria-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .criteria-item {
+            background: var(--light);
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .criteria-item:hover {
+            background: rgba(2, 195, 154, 0.1);
+        }
+        
+        .criteria-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .criteria-item label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        /* Comment */
+        .comment-box {
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            border: 2px solid var(--light);
+            border-radius: 15px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+        
+        .comment-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(2, 128, 144, 0.1);
+        }
+        
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+        
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(2, 128, 144, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .info-notice {
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(2, 128, 144, 0.05);
+            border-radius: 10px;
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .section-card, html.dark .stats-card, html.dark .service-card, html.dark .bank-card, html.dark .schedule-card, html.dark .avail-card, html.dark .request-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="number"], html.dark input[type="date"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; }
+        html.dark .table th, html.dark table th { background: #0f172a; color: #94a3b8; }
+        html.dark .table td, html.dark table td { border-color: #334155; }
+        html.dark .modal, html.dark .modal-content, html.dark .modal-box { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .modal-overlay, html.dark .overlay { background: rgba(0,0,0,0.6); }
+        html.dark .day-label, html.dark .time-label, html.dark .slot-label { color: #94a3b8; }
+        html.dark .slot-btn { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .slot-btn.available { background: rgba(2,195,154,0.15); color: #02C39A; border-color: #02C39A; }
+        html.dark .badge, html.dark .tag, html.dark .chip, html.dark .status-badge { background: #0f172a; }
+        html.dark .empty-state { background: #1e293b; color: #94a3b8; }
+        html.dark .bank-logo, html.dark .card-preview { background: #0f172a; }
+        html.dark .stars span, html.dark .star { color: #94a3b8; }
+        html.dark .stars span.selected, html.dark .star.active { color: #f59e0b; }
+
+        /* Rate customer-specific dark overrides */
+        html.dark .rating-container { background: #1e293b !important; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        html.dark .rating-body { background: #1e293b; }
+        html.dark .customer-info { background: #0f172a; }
+        html.dark .customer-details h3 { color: #e2e8f0; }
+        html.dark .service-type { color: #94a3b8; }
+        html.dark .section-title { color: #e2e8f0; }
+        html.dark .criteria-item { background: #0f172a; }
+        html.dark .criteria-item:hover { background: rgba(2,195,154,0.08); }
+        html.dark .criteria-item label { color: #cbd5e1; }
+        html.dark .comment-box { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .comment-box::placeholder { color: #64748b; }
+        html.dark .info-notice { background: rgba(2,128,144,0.08); color: #94a3b8; }
+
+        .theme-toggle { position: absolute; top: 1rem; left: 1rem; width: 36px; height: 36px; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 10px; background: rgba(255,255,255,0.15); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; background: rgba(0,0,0,0.3); color: #e2e8f0; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'provider') window.location.href = 'customer-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+    <div class="rating-container">
+        <div class="rating-header">
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <div class="header-icon">👥</div>
+            <h2>قيّم العميل</h2>
+            <p>ساعدنا في تحسين جودة العملاء</p>
+        </div>
+
+        <div class="rating-body">
+            <!-- Customer Info -->
+            <div class="customer-info">
+                <div class="customer-avatar">م</div>
+                <div class="customer-details">
+                    <h3>محمد أحمد</h3>
+                    <div class="service-type">🔧 إصلاح تسريب مياه - 5 فبراير 2026</div>
+                </div>
+            </div>
+
+            <form id="customerRatingForm">
+                <!-- Overall Rating -->
+                <div class="rating-section">
+                    <div class="section-title">
+                        <span class="required-badge">مطلوب</span>
+                        التقييم الإجمالي
+                    </div>
+                    <div class="rating-label" id="ratingLabel">اختر تقييمك</div>
+                    <div class="stars-input" id="overallStars">
+                        <button type="button" class="star-btn" data-rating="1">⭐</button>
+                        <button type="button" class="star-btn" data-rating="2">⭐</button>
+                        <button type="button" class="star-btn" data-rating="3">⭐</button>
+                        <button type="button" class="star-btn" data-rating="4">⭐</button>
+                        <button type="button" class="star-btn" data-rating="5">⭐</button>
+                    </div>
+                </div>
+
+                <!-- Customer Behavior Criteria -->
+                <div class="rating-section">
+                    <div class="section-title">سلوك العميل</div>
+                    <div class="criteria-list">
+                        <div class="criteria-item">
+                            <input type="checkbox" id="respectful" name="criteria">
+                            <label for="respectful">✅ محترم في التعامل</label>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" id="clear" name="criteria">
+                            <label for="clear">💬 واضح في شرح المشكلة</label>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" id="ontime" name="criteria">
+                            <label for="ontime">⏰ ملتزم بالموعد</label>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" id="payment" name="criteria">
+                            <label for="payment">💰 الدفع سريع وسهل</label>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="checkbox" id="location" name="criteria">
+                            <label for="location">📍 الموقع واضح وسهل الوصول</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendation -->
+                <div class="rating-section">
+                    <div class="section-title">
+                        <span class="required-badge">مطلوب</span>
+                        هل توصي بهذا العميل؟
+                    </div>
+                    <div class="criteria-list">
+                        <div class="criteria-item">
+                            <input type="radio" id="recommend-yes" name="recommend" value="yes" required>
+                            <label for="recommend-yes">👍 نعم، عميل ممتاز</label>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="radio" id="recommend-maybe" name="recommend" value="maybe">
+                            <label for="recommend-maybe">🤔 ربما</label>
+                        </div>
+                        <div class="criteria-item">
+                            <input type="radio" id="recommend-no" name="recommend" value="no">
+                            <label for="recommend-no">👎 لا أوصي</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comment -->
+                <div class="rating-section">
+                    <div class="section-title">ملاحظات إضافية (اختياري)</div>
+                    <textarea 
+                        class="comment-box" 
+                        id="comment" 
+                        placeholder="أي ملاحظات تود إضافتها..."
+                        maxlength="300"
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                    إرسال التقييم
+                </button>
+
+                <div class="info-notice">
+                    💡 هذا التقييم يساعد مزودي الخدمات الآخرين في معرفة جودة العملاء
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Read URL params
+        (function() {
+            const p = new URLSearchParams(location.search);
+            const service = p.get('service') ? decodeURIComponent(p.get('service')) : null;
+            const reqId = p.get('requestId') || null;
+            if (service || reqId) {
+                const serviceTypeEl = document.querySelector('.service-type');
+                if (serviceTypeEl) {
+                    const label = service || 'خدمة';
+                    const id = reqId ? ` — ${reqId}` : '';
+                    serviceTypeEl.textContent = `🔧 ${label}${id}`;
+                }
+            }
+        })();
+
+        let overallRating = 0;
+
+        const ratingLabels = {
+            1: 'عميل صعب 😞',
+            2: 'يحتاج تحسين 😕',
+            3: 'مقبول 😐',
+            4: 'عميل جيد 😊',
+            5: 'عميل ممتاز 🤩'
+        };
+
+        // Overall Rating
+        const overallStars = document.querySelectorAll('#overallStars .star-btn');
+        const ratingLabel = document.getElementById('ratingLabel');
+        const submitBtn = document.getElementById('submitBtn');
+
+        overallStars.forEach(star => {
+            star.addEventListener('click', () => {
+                const rating = parseInt(star.dataset.rating);
+                overallRating = rating;
+                
+                overallStars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+                
+                ratingLabel.textContent = ratingLabels[rating];
+                checkFormValidity();
+            });
+        });
+
+        // Check recommendation selection
+        document.querySelectorAll('input[name="recommend"]').forEach(radio => {
+            radio.addEventListener('change', checkFormValidity);
+        });
+
+        function checkFormValidity() {
+            const hasRating = overallRating > 0;
+            const hasRecommendation = document.querySelector('input[name="recommend"]:checked');
+            
+            if (hasRating && hasRecommendation) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        // Form submission
+        document.getElementById('customerRatingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const recommendation = document.querySelector('input[name="recommend"]:checked')?.value || '';
+            const comment = document.getElementById('comment').value;
+            const reqId = new URLSearchParams(location.search).get('requestId') || '';
+
+            submitBtn.innerHTML = 'جاري الإرسال...';
+            submitBtn.disabled = true;
+            try {
+                await API.reviews.create(reqId, { score: overallRating, comment: comment.trim(), recommendation });
+                submitBtn.innerHTML = '✓ تم إرسال التقييم';
+                submitBtn.style.background = '#10B981';
+                setTimeout(() => { window.location.href = 'provider-dashboard.html'; }, 1200);
+            } catch(err) {
+                submitBtn.innerHTML = 'إرسال التقييم';
+                submitBtn.disabled = false;
+                API.toast('❌ ' + API.errorMsg(err));
+            }
+        });
+    </script>
+</body>
+</html>

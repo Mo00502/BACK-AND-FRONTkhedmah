@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحادثات - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #028090; --accent: #02C39A;
+            --dark: #1E293B; --light: #F8FAFC; --white: #FFFFFF;
+            --gray: #64748B; --success: #10B981; --warning: #F59E0B; --error: #EF4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Nav */
+        nav { background: white; padding: 0.75rem 5%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 100; flex-shrink: 0; }
+        .nav-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.7rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; font-size: 0.88rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .avatar-btn { width: 34px; height: 34px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; text-decoration: none; font-size: 0.82rem; }
+
+        /* Chat Layout */
+        .chat-layout { flex: 1; display: flex; overflow: hidden; }
+
+        /* ── Sidebar ── */
+        .sidebar { width: 300px; background: white; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-top { padding: 1rem; border-bottom: 1px solid #f1f5f9; }
+        .sidebar-title { font-weight: 800; font-size: 1rem; margin-bottom: 0.65rem; display: flex; align-items: center; justify-content: space-between; }
+        .compose-btn { width: 28px; height: 28px; background: var(--primary); border: none; border-radius: 8px; cursor: pointer; color: white; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+        .search-box { display: flex; align-items: center; background: var(--light); border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.4rem 0.7rem; gap: 0.4rem; }
+        .search-box input { flex: 1; border: none; background: transparent; font-family: 'Tajawal', sans-serif; font-size: 0.85rem; outline: none; }
+
+        /* Module filter tabs */
+        .module-tabs { display: flex; gap: 0.35rem; padding: 0.65rem 1rem; border-bottom: 1px solid #f1f5f9; overflow-x: auto; }
+        .module-tab { padding: 0.3rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; border: 1.5px solid #e2e8f0; background: white; color: var(--gray); transition: all 0.15s; }
+        .module-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .module-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* Contacts list */
+        .contacts-list { flex: 1; overflow-y: auto; }
+        .section-label { font-size: 0.7rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; padding: 0.6rem 1rem 0.3rem; background: var(--light); }
+        .contact-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f8fafc; position: relative; }
+        .contact-item:hover { background: #f8fafc; }
+        .contact-item.active { background: rgba(2,128,144,0.07); border-right: 3px solid var(--primary); }
+        .c-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; position: relative; }
+        .c-online { position: absolute; bottom: 1px; left: 1px; width: 10px; height: 10px; background: var(--success); border-radius: 50%; border: 2px solid white; }
+        .c-info { flex: 1; min-width: 0; }
+        .c-name { font-weight: 600; font-size: 0.88rem; display: flex; align-items: center; gap: 0.35rem; }
+        .c-type-badge { font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 700; }
+        .badge-service { background: rgba(2,128,144,0.12); color: #026f7e; }
+        .badge-tender { background: rgba(79,70,229,0.12); color: #4338ca; }
+        .badge-consult { background: rgba(124,58,237,0.12); color: #6d28d9; }
+        .badge-equip { background: rgba(5,150,105,0.12); color: #047857; }
+        .c-preview { font-size: 0.77rem; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.1rem; }
+        .c-ctx { font-size: 0.7rem; color: var(--gray); opacity: 0.7; }
+        .c-meta { text-align: left; flex-shrink: 0; }
+        .c-time { font-size: 0.7rem; color: var(--gray); }
+        .unread { background: var(--primary); color: white; font-size: 0.65rem; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; margin-top: 3px; margin-right: auto; }
+
+        /* ── Chat Window ── */
+        .chat-window { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Chat header */
+        .chat-header { background: white; padding: 0.85rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.85rem; flex-shrink: 0; }
+        .ch-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+        .ch-info { flex: 1; }
+        .ch-name { font-weight: 700; font-size: 0.95rem; }
+        .ch-status { font-size: 0.75rem; color: var(--success); }
+        .ch-actions { display: flex; gap: 0.5rem; }
+        .icon-btn { width: 36px; height: 36px; background: var(--light); border: none; border-radius: 9px; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; text-decoration: none; }
+        .icon-btn:hover { background: #e2e8f0; }
+
+        /* Context banner — changes per module type */
+        .ctx-banner { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1.25rem; font-size: 0.8rem; border-bottom: 1px solid; flex-shrink: 0; }
+        .ctx-banner.service { background: rgba(2,128,144,0.07); border-color: rgba(2,128,144,0.15); color: #026f7e; }
+        .ctx-banner.tender { background: rgba(79,70,229,0.07); border-color: rgba(79,70,229,0.15); color: #4338ca; }
+        .ctx-banner.consult { background: rgba(124,58,237,0.07); border-color: rgba(124,58,237,0.15); color: #6d28d9; }
+        .ctx-banner.equip { background: rgba(5,150,105,0.07); border-color: rgba(5,150,105,0.15); color: #047857; }
+        .ctx-banner strong { font-weight: 700; }
+        .ctx-banner a { font-weight: 600; margin-right: auto; color: inherit; text-decoration: none; opacity: 0.85; }
+        .ctx-banner a:hover { opacity: 1; text-decoration: underline; }
+
+        /* Messages area */
+        .messages-area { flex: 1; overflow-y: auto; padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.65rem; background: #f8fafc; }
+        .day-sep { text-align: center; font-size: 0.72rem; color: var(--gray); margin: 0.25rem 0; position: relative; }
+        .day-sep::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e2e8f0; }
+        .day-sep span { background: #f8fafc; padding: 0 0.75rem; position: relative; z-index: 1; }
+        .sys-msg { text-align: center; font-size: 0.75rem; color: var(--gray); background: rgba(100,116,139,0.1); border-radius: 20px; padding: 0.3rem 0.9rem; align-self: center; max-width: 80%; }
+        .message { display: flex; gap: 0.5rem; max-width: 72%; }
+        .message.out { align-self: flex-start; flex-direction: row-reverse; }
+        .message.in { align-self: flex-end; }
+        .m-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; align-self: flex-end; }
+        .m-body { display: flex; flex-direction: column; gap: 2px; }
+        .m-bubble { padding: 0.55rem 0.85rem; border-radius: 16px; font-size: 0.86rem; line-height: 1.55; max-width: 100%; word-break: break-word; }
+        .out .m-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+        .in .m-bubble { background: white; color: var(--dark); box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-bottom-left-radius: 4px; }
+        .m-time { font-size: 0.67rem; color: var(--gray); }
+        .out .m-time { text-align: right; color: rgba(255,255,255,0.65); }
+        /* File / image attachments */
+        .m-file { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 0.5rem 0.75rem; margin-top: 0.25rem; font-size: 0.8rem; cursor: pointer; }
+        .in .m-file { background: var(--light); }
+        .m-img { max-width: 220px; border-radius: 10px; margin-top: 0.3rem; display: block; background: #e2e8f0; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border-radius: 10px; overflow: hidden; }
+        /* Location bubble */
+        .m-location { background: rgba(255,255,255,0.12); border-radius: 10px; padding: 0.5rem 0.75rem; margin-top: 0.25rem; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+        .in .m-location { background: var(--light); color: var(--primary); }
+        /* Voice note */
+        .m-voice { display: flex; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.15); border-radius: 20px; padding: 0.4rem 0.75rem; margin-top: 0.25rem; min-width: 160px; cursor: pointer; }
+        .in .m-voice { background: var(--light); }
+        .voice-play { width: 28px; height: 28px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; flex-shrink: 0; }
+        .in .voice-play { background: var(--primary); }
+        .voice-waveform { flex: 1; height: 24px; display: flex; align-items: center; gap: 2px; }
+        .voice-bar { width: 3px; background: rgba(255,255,255,0.4); border-radius: 2px; }
+        .in .voice-bar { background: var(--primary); opacity: 0.4; }
+        .voice-dur { font-size: 0.7rem; opacity: 0.7; }
+        /* Typing indicator */
+        .typing-indicator { display: none; align-self: flex-end; }
+        .typing-indicator.show { display: flex; }
+        .typing-bubble { background: white; border-radius: 16px; border-bottom-left-radius: 4px; padding: 0.6rem 0.9rem; box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; gap: 4px; align-items: center; }
+        .typing-dot { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; animation: typingBounce 1.2s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+        /* ── Input Area ── */
+        .input-area { background: white; padding: 0.85rem 1.25rem; border-top: 1px solid #e2e8f0; flex-shrink: 0; }
+        /* Quick replies */
+        .quick-replies { display: flex; gap: 0.4rem; overflow-x: auto; margin-bottom: 0.65rem; padding-bottom: 0.1rem; }
+        .quick-reply { background: var(--light); border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 0.25rem 0.75rem; font-size: 0.78rem; font-family: 'Tajawal', sans-serif; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+        .quick-reply:hover { border-color: var(--primary); color: var(--primary); background: rgba(2,128,144,0.05); }
+        /* Input row */
+        .input-row { display: flex; align-items: flex-end; gap: 0.6rem; }
+        .input-wrap { flex: 1; background: var(--light); border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 0.55rem 0.8rem; display: flex; align-items: flex-end; gap: 0.5rem; transition: border-color 0.2s; }
+        .input-wrap:focus-within { border-color: var(--primary); }
+        .msg-input { flex: 1; border: none; background: transparent; font-family: 'Tajawal', sans-serif; font-size: 0.88rem; resize: none; outline: none; max-height: 100px; line-height: 1.5; }
+        /* Attachment menu trigger */
+        .attach-menu-wrap { position: relative; }
+        .attach-trigger { background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.55; transition: opacity 0.2s; padding: 2px 3px; }
+        .attach-trigger:hover { opacity: 0.9; }
+        .attach-menu { display: none; position: absolute; bottom: 120%; right: 0; background: white; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 0.5rem; min-width: 180px; z-index: 50; }
+        .attach-menu.open { display: block; }
+        .attach-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.85rem; border-radius: 10px; cursor: pointer; font-size: 0.85rem; transition: background 0.15s; }
+        .attach-item:hover { background: var(--light); }
+        .attach-ico { font-size: 1.2rem; width: 28px; text-align: center; }
+        /* Action buttons */
+        .voice-btn, .send-btn { width: 42px; height: 42px; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.2s; flex-shrink: 0; }
+        .voice-btn { background: var(--light); color: var(--gray); }
+        .voice-btn:hover { background: #e2e8f0; }
+        .send-btn { background: var(--primary); color: white; }
+        .send-btn:hover { background: #026f7e; }
+
+        /* ── Empty state (no active chat) ── */
+        .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gray); gap: 0.75rem; }
+        .chat-empty .ico { font-size: 3.5rem; }
+        .chat-empty h3 { font-size: 1rem; font-weight: 700; color: var(--dark); }
+        .chat-empty p { font-size: 0.85rem; text-align: center; max-width: 280px; }
+
+        /* Dark mode */
+        html.dark body { background: #0f172a; color: #e2e8f0; }
+        html.dark nav { background: #1e293b; }
+        html.dark .sidebar { background: #1e293b; border-color: #334155; }
+        html.dark .sidebar-top { border-color: #334155; }
+        html.dark .module-tabs { border-color: #334155; }
+        html.dark .module-tab { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark .section-label { background: #0f172a; color: #64748b; }
+        html.dark .contact-item:hover { background: #0f172a; }
+        html.dark .contact-item.active { background: rgba(2,128,144,0.12); }
+        html.dark .c-preview, html.dark .c-time { color: #64748b; }
+        html.dark .chat-header { background: #1e293b; border-color: #334155; }
+        html.dark .messages-area { background: #0f172a; }
+        html.dark .day-sep::before { background: #334155; }
+        html.dark .day-sep span { background: #0f172a; }
+        html.dark .in .m-bubble { background: #1e293b; color: #e2e8f0; }
+        html.dark .in .m-file, html.dark .in .m-voice { background: #334155; }
+        html.dark .in .m-location { background: #334155; }
+        html.dark .input-area { background: #1e293b; border-color: #334155; }
+        html.dark .input-wrap { background: #0f172a; border-color: #334155; }
+        html.dark .msg-input { color: #e2e8f0; }
+        html.dark .quick-reply { background: #0f172a; border-color: #334155; color: #94a3b8; }
+        html.dark .quick-reply:hover { border-color: var(--primary); color: var(--primary); }
+        html.dark .icon-btn { background: #334155; color: #e2e8f0; }
+        html.dark .voice-btn { background: #334155; color: #94a3b8; }
+        html.dark .attach-menu { background: #1e293b; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        html.dark .attach-item:hover { background: #334155; }
+        html.dark .search-box { background: #0f172a; border-color: #334155; }
+        html.dark .search-box input { color: #e2e8f0; }
+        html.dark .contact-item { border-color: #1e293b; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    if (!API.isLoggedIn()) { window.location.href = 'login.html'; }
+    if (localStorage.getItem('khedmah_theme') === 'dark') document.documentElement.classList.add('dark');
+</script>
+
+<nav>
+    <div class="nav-content">
+        <a href="INDEX.html" class="logo">KHEDMAH</a>
+        <div class="nav-links">
+            <a href="customer-dashboard.html">لوحة التحكم</a>
+            <a href="customer-notifications.html">الإشعارات</a>
+            <a href="chat.html" class="active">💬 المحادثات</a>
+            <a href="customer-dashboard.html" class="avatar-btn">م</a>
+        </div>
+    </div>
+</nav>
+
+<div class="chat-layout">
+
+    <!-- ── Sidebar ── -->
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <div class="sidebar-title">
+                المحادثات
+                <button class="compose-btn" title="محادثة جديدة" onclick="showToast('سيتم إضافة هذه الميزة قريباً')">✏️</button>
+            </div>
+            <div class="search-box">
+                <span style="opacity:.5;font-size:.9rem">🔍</span>
+                <input type="text" placeholder="بحث في المحادثات..." oninput="filterContacts(this.value)">
+            </div>
+        </div>
+
+        <!-- Module filter tabs -->
+        <div class="module-tabs">
+            <button class="module-tab active" onclick="filterByModule('all', this)">الكل</button>
+            <button class="module-tab" onclick="filterByModule('service', this)">🔧 الخدمات</button>
+            <button class="module-tab" onclick="filterByModule('tender', this)">📋 المناقصات</button>
+            <button class="module-tab" onclick="filterByModule('consult', this)">💼 الاستشارات</button>
+            <button class="module-tab" onclick="filterByModule('equip', this)">🏗️ المعدات</button>
+        </div>
+
+        <div class="contacts-list" id="contactsList">
+
+            <!-- Services conversations -->
+            <div class="section-label" data-section="service">🔧 الخدمات</div>
+
+            <div class="contact-item active" data-module="service" data-conv="service-1" onclick="openConv('service-1', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#028090,#02C39A)">خ<div class="c-online"></div></div>
+                <div class="c-info">
+                    <div class="c-name">خالد العمري <span class="c-type-badge badge-service">خدمة</span></div>
+                    <div class="c-preview">سأصل خلال 10 دقائق إن شاء الله 🚗</div>
+                    <div class="c-ctx">طلب KH-0451 · صيانة تكييف مركزي</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">3:45 م</div>
+                    <div class="unread">2</div>
+                </div>
+            </div>
+
+            <div class="contact-item" data-module="service" data-conv="service-2" onclick="openConv('service-2', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)">أ</div>
+                <div class="c-info">
+                    <div class="c-name">أحمد السباك <span class="c-type-badge badge-service">خدمة</span></div>
+                    <div class="c-preview">تم إصلاح التسريب. هل أنت في المنزل؟</div>
+                    <div class="c-ctx">طلب KH-0448 · إصلاح تسريب مياه</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">أمس</div>
+                </div>
+            </div>
+
+            <div class="contact-item" data-module="service" data-conv="service-3" onclick="openConv('service-3', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)">ف</div>
+                <div class="c-info">
+                    <div class="c-name">فهد الكهربائي <span class="c-type-badge badge-service">خدمة</span></div>
+                    <div class="c-preview">شكراً لثقتك، تقييمك يسعدني 🙏</div>
+                    <div class="c-ctx">طلب KH-0440 · تركيب لوحة كهربائية</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">منذ 3 أيام</div>
+                </div>
+            </div>
+
+            <!-- Tenders conversations -->
+            <div class="section-label" data-section="tender">📋 المناقصات</div>
+
+            <div class="contact-item" data-module="tender" data-conv="tender-1" onclick="openConv('tender-1', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#4f46e5,#818cf8)">أ<div class="c-online"></div></div>
+                <div class="c-info">
+                    <div class="c-name">شركة الأفق العقارية <span class="c-type-badge badge-tender">مناقصة</span></div>
+                    <div class="c-preview">هل يمكنكم توفير ضمان بنكي مبدئي؟</div>
+                    <div class="c-ctx">مناقصة #1 · إنشاء مبنى إداري</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">11:20 ص</div>
+                    <div class="unread">1</div>
+                </div>
+            </div>
+
+            <div class="contact-item" data-module="tender" data-conv="tender-2" onclick="openConv('tender-2', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#6366f1,#a5b4fc)">م</div>
+                <div class="c-info">
+                    <div class="c-name">مستشفى النور الطبي <span class="c-type-badge badge-tender">مناقصة</span></div>
+                    <div class="c-preview">هل نظامكم يدعم التكامل مع GOSI؟</div>
+                    <div class="c-ctx">مناقصة #2 · نظام موارد بشرية</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">أمس</div>
+                </div>
+            </div>
+
+            <!-- Consultations conversations -->
+            <div class="section-label" data-section="consult">💼 الاستشارات</div>
+
+            <div class="contact-item" data-module="consult" data-conv="consult-1" onclick="openConv('consult-1', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">ر<div class="c-online"></div></div>
+                <div class="c-info">
+                    <div class="c-name">م. ريم الشهري <span class="c-type-badge badge-consult">استشارة</span></div>
+                    <div class="c-preview">أرسلت لك الخطة الأمنية في المرفق</div>
+                    <div class="c-ctx">استشارة #4 · أمن سيبراني وبنية تحتية</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">2:00 م</div>
+                </div>
+            </div>
+
+            <!-- Equipment conversations -->
+            <div class="section-label" data-section="equip">🏗️ المعدات</div>
+
+            <div class="contact-item" data-module="equip" data-conv="equip-1" onclick="openConv('equip-1', this)">
+                <div class="c-avatar" style="background:linear-gradient(135deg,#059669,#34d399)">ن</div>
+                <div class="c-info">
+                    <div class="c-name">مؤسسة النخبة للمعدات <span class="c-type-badge badge-equip">معدات</span></div>
+                    <div class="c-preview">الحفار سيصل للموقع الساعة 7 صباحاً</div>
+                    <div class="c-ctx">إيجار · حفار هيدروليكي 20 طن</div>
+                </div>
+                <div class="c-meta">
+                    <div class="c-time">8:30 ص</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Chat Window ── -->
+    <div class="chat-window" id="chatWindow">
+
+        <!-- Default empty state (replaced when a conv opens) -->
+        <div class="chat-empty" id="emptyState">
+            <div class="ico">💬</div>
+            <h3>اختر محادثة للبدء</h3>
+            <p>جميع محادثاتك في الخدمات، المناقصات، الاستشارات، والمعدات في مكان واحد</p>
+        </div>
+
+        <!-- Chat content (hidden until a conv is selected) -->
+        <div id="activeChatArea" style="display:none; flex:1; display:none; flex-direction:column; overflow:hidden;">
+
+            <div class="chat-header" id="chatHeader">
+                <div class="ch-avatar" id="chAvatar" style="background:linear-gradient(135deg,#028090,#02C39A)">خ</div>
+                <div class="ch-info">
+                    <div class="ch-name" id="chName">—</div>
+                    <div class="ch-status" id="chStatus">● متصل الآن</div>
+                </div>
+                <div class="ch-actions">
+                    <a href="#" class="icon-btn" id="chCtxLink" title="عرض السياق">📋</a>
+                    <button class="icon-btn" title="بحث في المحادثة" onclick="showToast('البحث في الرسائل قريباً')">🔍</button>
+                    <button class="icon-btn" title="خيارات أخرى" onclick="showToast('خيارات إضافية قريباً')">⋮</button>
+                </div>
+            </div>
+
+            <div class="ctx-banner service" id="ctxBanner">
+                <span id="ctxIcon">🔧</span>
+                <span id="ctxText">—</span>
+                <a href="#" id="ctxLink">عرض التفاصيل ←</a>
+            </div>
+
+            <div class="messages-area" id="messagesArea"></div>
+
+            <!-- Typing indicator -->
+            <div class="typing-indicator in" id="typingIndicator" style="padding:0 1.25rem 0.5rem;">
+                <div class="m-avatar" id="typingAvatar" style="background:linear-gradient(135deg,#028090,#02C39A)">خ</div>
+                <div class="typing-bubble">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <!-- Quick replies (context-aware) -->
+                <div class="quick-replies" id="quickReplies"></div>
+
+                <div class="input-row">
+                    <div class="input-wrap">
+                        <!-- Attachment menu -->
+                        <div class="attach-menu-wrap">
+                            <button class="attach-trigger" onclick="toggleAttachMenu(event)" title="إرفاق">📎</button>
+                            <div class="attach-menu" id="attachMenu">
+                                <div class="attach-item" onclick="sendAttachment('image')"><span class="attach-ico">🖼️</span> صورة أو فيديو</div>
+                                <div class="attach-item" onclick="sendAttachment('file')"><span class="attach-ico">📄</span> ملف أو مستند</div>
+                                <div class="attach-item" onclick="sendAttachment('location')"><span class="attach-ico">📍</span> موقعي الحالي</div>
+                                <div class="attach-item" onclick="sendAttachment('contact')"><span class="attach-ico">👤</span> بطاقة تواصل</div>
+                            </div>
+                        </div>
+                        <textarea
+                            class="msg-input"
+                            id="msgInput"
+                            placeholder="اكتب رسالة..."
+                            rows="1"
+                            onkeydown="handleKey(event)"
+                            oninput="autoResize(this)"
+                        ></textarea>
+                        <button class="attach-trigger" onclick="showToast('ميزة الرموز التعبيرية قريباً')">😊</button>
+                    </div>
+                    <button class="voice-btn" id="voiceBtn" onclick="sendVoiceNote()" title="رسالة صوتية">🎙️</button>
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── Conversation data ───────────────────────────────────────────────────────
+const CONVS = {
+    'service-1': {
+        peer: 'خالد العمري',
+        initial: 'خ',
+        avatarGrad: 'linear-gradient(135deg,#028090,#02C39A)',
+        status: '● متصل الآن',
+        ctxClass: 'service',
+        ctxIcon: '🔧',
+        ctxText: 'الطلب KH-0451 · صيانة تكييف مركزي · اليوم 3:00 م',
+        ctxLink: 'order-tracking.html',
+        ctxLinkLabel: 'تتبع الطلب ←',
+        quickReplies: ['شكراً', 'على الطريق؟', 'كم الوقت المتوقع؟', 'هل تحتاج أدوات إضافية؟'],
+        messages: [
+            { type: 'day', text: 'اليوم' },
+            { type: 'sys', text: '📋 تم قبول الطلب وتعيين المزود خالد العمري' },
+            { from: 'in', text: 'السلام عليكم، أنا خالد سأكون المزود الخاص بطلب صيانة التكييف. يسعدني خدمتك اليوم 🙏', time: '2:30 م' },
+            { from: 'out', text: 'وعليكم السلام، أهلاً خالد. التكييف موجود في غرفة المعيشة الرئيسية', time: '2:32 م ✓✓' },
+            { from: 'in', text: 'حسناً، هل الوصول للوحدة الخارجية متاح من السطح أم من الجانب؟', time: '2:33 م' },
+            { from: 'out', text: 'من السطح، الباب غير مقفل', time: '2:35 م ✓✓' },
+            { from: 'in', img: '🖼️', imgLabel: 'صورة الجهاز الخارجي', time: '2:40 م' },
+            { from: 'in', text: 'هذه صورة لمشكلة التسريب في اللوحة. يحتاج الفلتر للتغيير أيضاً. سأضيف 25 ريال للقطعة.', time: '2:41 م' },
+            { from: 'out', text: 'لا مشكلة، تفضل', time: '2:42 م ✓✓' },
+            { from: 'in', text: 'ممتاز. أنا الآن في الطريق، سأصل خلال 10 دقائق إن شاء الله 🚗', time: '3:45 م' },
+            { type: 'sys', text: '📍 المزود في الطريق إليك' },
+        ]
+    },
+    'service-2': {
+        peer: 'أحمد السباك',
+        initial: 'أ',
+        avatarGrad: 'linear-gradient(135deg,#0ea5e9,#38bdf8)',
+        status: '● متصل الآن',
+        ctxClass: 'service',
+        ctxIcon: '🔧',
+        ctxText: 'الطلب KH-0448 · إصلاح تسريب مياه تحت المغسلة',
+        ctxLink: 'order-tracking.html',
+        ctxLinkLabel: 'تتبع الطلب ←',
+        quickReplies: ['موجود في المنزل', 'شكراً جزيلاً', 'كم التكلفة النهائية؟'],
+        messages: [
+            { type: 'day', text: 'أمس' },
+            { type: 'sys', text: '📋 تم قبول الطلب وتعيين أحمد السباك' },
+            { from: 'in', text: 'مرحباً، أنا أحمد. وصلت للموقع وفحصت الخط. التسريب في وصلة الصرف تحت المغسلة.', time: '10:15 ص' },
+            { from: 'out', text: 'حسناً، هل تحتاج قطعة بديلة؟', time: '10:17 ص ✓✓' },
+            { from: 'in', voice: true, dur: '0:23', time: '10:19 ص' },
+            { from: 'in', text: 'نعم، أحتاج وصلة PVC مقاس ¾ إنش. سأحضرها من المحل القريب وأعود خلال 20 دقيقة.', time: '10:20 ص' },
+            { from: 'out', text: 'تفضل، أنا انتظرك', time: '10:21 ص ✓✓' },
+            { from: 'in', location: true, loc: 'حي النرجس، الرياض', time: '10:45 ص' },
+            { from: 'in', text: 'تم إصلاح التسريب بالكامل والمياه تعمل بشكل طبيعي. هل أنت في المنزل لتتأكد؟', time: '11:30 ص' },
+        ]
+    },
+    'service-3': {
+        peer: 'فهد الكهربائي',
+        initial: 'ف',
+        avatarGrad: 'linear-gradient(135deg,#f59e0b,#fbbf24)',
+        status: '⚫ آخر ظهور: منذ 3 أيام',
+        ctxClass: 'service',
+        ctxIcon: '⚡',
+        ctxText: 'الطلب KH-0440 · تركيب لوحة كهربائية رئيسية · مكتمل',
+        ctxLink: 'customer-invoice.html',
+        ctxLinkLabel: 'عرض الفاتورة ←',
+        quickReplies: ['تم التقييم', 'سأطلب خدمتك مجدداً'],
+        messages: [
+            { type: 'day', text: 'منذ 3 أيام' },
+            { type: 'sys', text: '🎉 اكتملت الخدمة بنجاح' },
+            { from: 'in', text: 'تم تركيب اللوحة الكهربائية الجديدة ومحمي التيار (GFCI) في جميع المنافذ. كل شيء شُغِّل واختُبر بنجاح ✅', time: '5:00 م' },
+            { from: 'out', text: 'ممتاز، شكراً على العمل الاحترافي فهد', time: '5:02 م ✓✓' },
+            { from: 'in', file: true, fileName: 'تقرير الفحص الكهربائي.pdf', fileSize: '410 KB', time: '5:03 م' },
+            { from: 'in', text: 'هذا تقرير الفحص الكهربائي لضمان السلامة. احتفظ به للمرجعية 📋', time: '5:04 م' },
+            { from: 'out', text: 'جزاك الله خيراً، سأقيّمك بأعلى تقييم 🌟', time: '5:06 م ✓✓' },
+            { from: 'in', text: 'شكراً لثقتك بخدماتنا، يسعدنا خدمتك دائماً 🙏', time: '5:07 م' },
+        ]
+    },
+    'tender-1': {
+        peer: 'شركة الأفق العقارية',
+        initial: 'أ',
+        avatarGrad: 'linear-gradient(135deg,#4f46e5,#818cf8)',
+        status: '● متصل الآن',
+        ctxClass: 'tender',
+        ctxIcon: '📋',
+        ctxText: 'مناقصة #1 · إنشاء مبنى إداري متعدد الطوابق',
+        ctxLink: 'tender-detail.html?id=1',
+        ctxLinkLabel: 'تفاصيل المناقصة ←',
+        quickReplies: ['سنرسل المستندات المطلوبة', 'يمكننا تلبية المتطلبات', 'كم مهلة التسليم؟'],
+        messages: [
+            { type: 'day', text: 'اليوم' },
+            { type: 'sys', text: '📋 فتح قناة تواصل لمناقصة إنشاء مبنى إداري' },
+            { from: 'in', text: 'مرحباً، شركة الأفق للتطوير العقاري. اطلعنا على ملف شركتكم في المنصة. لدينا سؤال حول خبرتكم في المباني الزجاجية.', time: '9:00 ص' },
+            { from: 'out', text: 'أهلاً بكم، نعم نحن متخصصون في الواجهات الزجاجية وعملنا على 6 مشاريع مشابهة في الرياض والدمام.', time: '9:05 ص ✓✓' },
+            { from: 'in', file: true, fileName: 'قائمة المشاريع المرجعية.pdf', fileSize: '2.1 MB', time: '9:08 ص' },
+            { from: 'in', text: 'هل يمكنكم الاطلاع على ملف المشاريع وتأكيد إمكانية تلبية المواصفات الواردة في كراسة الشروط؟', time: '9:09 ص' },
+            { from: 'out', text: 'شكراً، سنراجع الملف ونرد عليكم خلال ساعتين بعد تقييم المتطلبات الفنية.', time: '9:12 ص ✓✓' },
+            { from: 'in', text: 'ممتاز. وسؤال آخر: هل يمكنكم توفير ضمان بنكي مبدئي بنسبة 2% من قيمة العرض عند التقديم؟', time: '11:20 ص' },
+        ]
+    },
+    'tender-2': {
+        peer: 'مستشفى النور الطبي',
+        initial: 'م',
+        avatarGrad: 'linear-gradient(135deg,#6366f1,#a5b4fc)',
+        status: '⚫ آخر ظهور: أمس',
+        ctxClass: 'tender',
+        ctxIcon: '📋',
+        ctxText: 'مناقصة #2 · تطوير نظام إدارة موارد بشرية',
+        ctxLink: 'tender-detail.html?id=2',
+        ctxLinkLabel: 'تفاصيل المناقصة ←',
+        quickReplies: ['نعم، النظام يدعم GOSI', 'سنرسل عرضاً فنياً مفصلاً'],
+        messages: [
+            { type: 'day', text: 'أمس' },
+            { type: 'sys', text: '📋 فتح قناة تواصل لمناقصة نظام إدارة الموارد البشرية' },
+            { from: 'in', text: 'مرحباً، نحن مستشفى النور. لدينا استفسار فني مهم قبل مراجعة عروض الأسعار.', time: '10:00 ص' },
+            { from: 'out', text: 'أهلاً، تفضلوا.', time: '10:03 ص ✓✓' },
+            { from: 'in', text: 'هل نظامكم يدعم التكامل المباشر مع بوابة التأمينات الاجتماعية (GOSI) لاحتساب الاشتراكات تلقائياً؟', time: '10:05 ص' },
+            { from: 'out', text: 'نعم، نظامنا يدعم التكامل مع GOSI بشكل كامل ويحتسب الاشتراكات تلقائياً ويولّد تقارير الدفع الشهرية.', time: '10:10 ص ✓✓' },
+            { from: 'in', text: 'ممتاز. وهل تدعمون التكامل مع نظام Oracle الموجود حالياً لديكم؟', time: '10:14 ص' },
+        ]
+    },
+    'consult-1': {
+        peer: 'م. ريم الشهري',
+        initial: 'ر',
+        avatarGrad: 'linear-gradient(135deg,#7c3aed,#a78bfa)',
+        status: '● متصل الآن',
+        ctxClass: 'consult',
+        ctxIcon: '💼',
+        ctxText: 'استشارة #4 · أمن سيبراني وبنية تحتية — جلسة الساعة 4:00 م',
+        ctxLink: 'consultations.html',
+        ctxLinkLabel: 'تفاصيل الاستشارة ←',
+        quickReplies: ['شكراً على الخطة', 'هل يمكن شرح النقطة الثالثة؟', 'متى موعد الجلسة القادمة؟'],
+        messages: [
+            { type: 'day', text: 'اليوم' },
+            { type: 'sys', text: '💼 بدأت جلسة استشارة الأمن السيبراني' },
+            { from: 'in', text: 'أهلاً، أنا ريم. سعيدة بعملنا معاً. قبل الجلسة أرسل لك ملخص ما سنغطيه اليوم.', time: '1:30 م' },
+            { from: 'out', text: 'أهلاً م. ريم، شكراً. أنا مستعد.', time: '1:32 م ✓✓' },
+            { from: 'in', file: true, fileName: 'أجندة الجلسة الاستشارية.pdf', fileSize: '320 KB', time: '1:33 م' },
+            { from: 'in', text: 'سنبدأ بتقييم البنية التحتية الحالية لديكم ثم ننتقل لتحديد الثغرات الأمنية وأولويات المعالجة.', time: '1:35 م' },
+            { from: 'out', text: 'ممتاز. هل ستحتاجين صلاحية وصول لشبكتنا خلال الجلسة؟', time: '1:38 م ✓✓' },
+            { from: 'in', text: 'نعم، سأحتاج قراءة فقط للـ network topology. هل يمكنك تصدير المخطط كـ PDF؟', time: '1:40 م' },
+            { from: 'out', file: true, fileName: 'مخطط الشبكة الداخلية.pdf', fileSize: '1.8 MB', time: '1:45 م' },
+            { from: 'in', text: 'شكراً. لاحظت 3 نقاط ضعف رئيسية. أرسلت لك الخطة الأمنية الكاملة الآن.', time: '2:00 م' },
+            { from: 'in', file: true, fileName: 'الخطة الأمنية الشاملة v1.pdf', fileSize: '2.4 MB', time: '2:01 م' },
+        ]
+    },
+    'equip-1': {
+        peer: 'مؤسسة النخبة للمعدات',
+        initial: 'ن',
+        avatarGrad: 'linear-gradient(135deg,#059669,#34d399)',
+        status: '⚫ آخر ظهور: الساعة 8:30 ص',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · حفار هيدروليكي 20 طن · 5-10 أبريل 2024',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً على التأكيد', 'ما الوثائق المطلوبة؟', 'هل يأتي مع مشغّل؟'],
+        messages: [
+            { type: 'day', text: 'اليوم' },
+            { type: 'sys', text: '🏗️ تم تأكيد حجز الحفار الهيدروليكي 20 طن' },
+            { from: 'in', text: 'مرحباً، أنا محمد من مؤسسة النخبة. تم استلام طلب الحجز من 5-10 أبريل.', time: '8:00 ص' },
+            { from: 'out', text: 'أهلاً محمد. نعم، المشروع في المنطقة الصناعية بالرياض.', time: '8:05 ص ✓✓' },
+            { from: 'in', text: 'ممتاز. هل تحتاج المشغّل أيضاً أم لديكم مشغّل معتمد؟', time: '8:10 ص' },
+            { from: 'out', text: 'نحتاج المشغّل معه.', time: '8:12 ص ✓✓' },
+            { from: 'in', text: 'تمام، سيكون معه مشغّل خبرة 8 سنوات. ستُضاف 180 ر.س/يوم إضافية. هل موافق؟', time: '8:15 ص' },
+            { from: 'out', text: 'نعم، موافق.', time: '8:18 ص ✓✓' },
+            { from: 'in', location: true, loc: 'موقع الانطلاق — المنطقة الصناعية الثانية', time: '8:20 ص' },
+            { from: 'in', text: 'الحفار سيصل للموقع الساعة 7:00 صباحاً يوم 5 أبريل. يرجى توفير الوصول للبوابة الرئيسية.', time: '8:30 ص' },
+        ]
+    },
+    'service-4': {
+        peer: 'فهد النجار',
+        initial: 'ف',
+        avatarGrad: 'linear-gradient(135deg,#8B5CF6,#a78bfa)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'service',
+        ctxIcon: '🔧',
+        ctxText: 'خدمة نجارة · فهد النجار',
+        ctxLink: 'search-services.html',
+        ctxLinkLabel: 'عرض الخدمة ←',
+        quickReplies: ['شكراً', 'ما الأبعاد المتاحة؟', 'كم مدة التركيب؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً! خبرة 12 سنة في أعمال النجارة والأبواب', time: '9:00' },
+            { from: 'me', text: 'أحتاج تركيب باب خشبي', time: '9:10' },
+            { from: 'them', text: 'ممتاز، ما أبعاد الفتحة؟', time: '9:11' }
+        ]
+    },
+    'service-5': {
+        peer: 'عبدالرحمن المحمود',
+        initial: 'ع',
+        avatarGrad: 'linear-gradient(135deg,#02C39A,#028090)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'service',
+        ctxIcon: '🔧',
+        ctxText: 'خدمة تكييف · عبدالرحمن المحمود',
+        ctxLink: 'search-services.html',
+        ctxLinkLabel: 'عرض الخدمة ←',
+        quickReplies: ['شكراً', 'متى يمكنك الحضور؟', 'ما تكلفة تعبئة الغاز؟'],
+        messages: [
+            { from: 'them', text: 'مرحباً! متخصص في صيانة وتركيب التكييف', time: '10:30' },
+            { from: 'me', text: 'التكييف لا يبرد جيداً', time: '10:35' },
+            { from: 'them', text: 'غالباً يحتاج تعبئة غاز، يمكنني الحضور اليوم', time: '10:36' }
+        ]
+    },
+    'consult-2': {
+        peer: 'م. سارة العمري',
+        initial: 'س',
+        avatarGrad: 'linear-gradient(135deg,#8B5CF6,#a78bfa)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'consult',
+        ctxIcon: '💼',
+        ctxText: 'استشارة · م. سارة العمري · مهندسة مدنية',
+        ctxLink: 'consultations.html',
+        ctxLinkLabel: 'تفاصيل الاستشارة ←',
+        quickReplies: ['شكراً', 'ما التكاليف المتوقعة؟', 'متى موعد الجلسة؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً، كيف يمكنني مساعدتك في مشروعك؟', time: '10:00' },
+            { from: 'me', text: 'أحتاج استشارة في تصميم الأساسات', time: '10:02' },
+            { from: 'them', text: 'بالتأكيد، يمكنني مساعدتك. هل يمكنك إرسال التصاميم الأولية؟', time: '10:03' }
+        ]
+    },
+    'consult-3': {
+        peer: 'م. خالد الدوسري',
+        initial: 'خ',
+        avatarGrad: 'linear-gradient(135deg,#F59E0B,#fbbf24)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'consult',
+        ctxIcon: '💼',
+        ctxText: 'استشارة · م. خالد الدوسري · مهندس كهربائي',
+        ctxLink: 'consultations.html',
+        ctxLinkLabel: 'تفاصيل الاستشارة ←',
+        quickReplies: ['شكراً', 'أرسل المخططات', 'متى موعد المراجعة؟'],
+        messages: [
+            { from: 'them', text: 'مرحباً! أنا هنا للمساعدة في الاستشارات الكهربائية', time: '09:30' },
+            { from: 'me', text: 'أحتاج مراجعة لوحة التوزيع الكهربائية', time: '09:32' },
+            { from: 'them', text: 'حسناً، أرسل لي المخططات وسأراجعها', time: '09:34' }
+        ]
+    },
+    'consult-4': {
+        peer: 'م. نورة السعيد',
+        initial: 'ن',
+        avatarGrad: 'linear-gradient(135deg,#EC4899,#f9a8d4)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'consult',
+        ctxIcon: '💼',
+        ctxText: 'استشارة · م. نورة السعيد · مصممة داخلية',
+        ctxLink: 'consultations.html',
+        ctxLinkLabel: 'تفاصيل الاستشارة ←',
+        quickReplies: ['شكراً', 'أرسل الصور', 'ما الميزانية المناسبة؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً! سعيدة بتواصلك معي 😊', time: '14:00' },
+            { from: 'me', text: 'أريد استشارة لتصميم غرفة المعيشة', time: '14:02' },
+            { from: 'them', text: 'رائع! ما هي مساحة الغرفة ونمط التصميم المفضل؟', time: '14:03' }
+        ]
+    },
+    'consult-5': {
+        peer: 'م. عبدالرحمن القحطاني',
+        initial: 'ع',
+        avatarGrad: 'linear-gradient(135deg,#10B981,#34d399)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'consult',
+        ctxIcon: '💼',
+        ctxText: 'استشارة · م. عبدالرحمن القحطاني · مدير مشاريع',
+        ctxLink: 'consultations.html',
+        ctxLinkLabel: 'تفاصيل الاستشارة ←',
+        quickReplies: ['شكراً', 'ما الجدول الزمني؟', 'كم التكلفة المتوقعة؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً، أنا متخصص في إدارة مشاريع البناء', time: '11:00' },
+            { from: 'me', text: 'أحتاج خطة لإدارة مشروع تجاري', time: '11:05' },
+            { from: 'them', text: 'ممتاز، كم المدة المتوقعة وحجم المشروع؟', time: '11:06' }
+        ]
+    },
+    'consult-6': {
+        peer: 'أ. منى الشمري',
+        initial: 'م',
+        avatarGrad: 'linear-gradient(135deg,#6366F1,#818cf8)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'consult',
+        ctxIcon: '💼',
+        ctxText: 'استشارة · أ. منى الشمري · مستشارة قانونية',
+        ctxLink: 'consultations.html',
+        ctxLinkLabel: 'تفاصيل الاستشارة ←',
+        quickReplies: ['شكراً', 'متى تنتهين من المراجعة؟', 'هل هناك ملاحظات؟'],
+        messages: [
+            { from: 'them', text: 'مرحباً، كيف يمكنني مساعدتك؟', time: '15:00' },
+            { from: 'me', text: 'أحتاج مراجعة عقد مقاولة', time: '15:02' },
+            { from: 'them', text: 'بالتأكيد، أرسل لي العقد وسأراجعه خلال 24 ساعة', time: '15:03' }
+        ]
+    },
+    'equip-2': {
+        peer: 'الحسين للمعدات',
+        initial: 'ح',
+        avatarGrad: 'linear-gradient(135deg,#F59E0B,#fbbf24)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · رافعة شوكية 5 طن · الحسين للمعدات',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'هل يشمل المشغل؟', 'ما شروط الإيجار؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً، رافعة شوكية 5 طن متاحة للإيجار', time: '08:00' },
+            { from: 'me', text: 'ما السعر اليومي؟', time: '08:05' },
+            { from: 'them', text: 'السعر 350 ريال/يوم شامل المشغل', time: '08:06' }
+        ]
+    },
+    'equip-3': {
+        peer: 'شركة المعدات الحديثة',
+        initial: 'ش',
+        avatarGrad: 'linear-gradient(135deg,#8B5CF6,#a78bfa)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · بوم ترك 35 متر · شركة المعدات الحديثة',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'هل يشمل الوقود؟', 'ما مدة الحجز المتاحة؟'],
+        messages: [
+            { from: 'them', text: 'مرحباً، لدينا بوم ترك 35 متر متاح', time: '09:00' },
+            { from: 'me', text: 'هل يشمل السعر الوقود؟', time: '09:10' },
+            { from: 'them', text: 'لا، الوقود على العميل. السعر 1200 ريال/يوم', time: '09:11' }
+        ]
+    },
+    'equip-4': {
+        peer: 'الوطنية للمعدات',
+        initial: 'و',
+        avatarGrad: 'linear-gradient(135deg,#10B981,#34d399)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · مولد كهربائي 500 كيلو · الوطنية للمعدات',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'ما الحد الأدنى للإيجار؟', 'هل يشمل الصيانة؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً بك! مولد كهربائي 500 كيلو متاح', time: '10:00' },
+            { from: 'me', text: 'كم يوم أقصى مدة الإيجار؟', time: '10:15' },
+            { from: 'them', text: 'يمكن الإيجار شهرياً بسعر مخفض 8000 ريال/شهر', time: '10:16' }
+        ]
+    },
+    'equip-5': {
+        peer: 'الخليج للآليات',
+        initial: 'خ',
+        avatarGrad: 'linear-gradient(135deg,#EF4444,#f87171)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · شاحنة قلابة 20 طن · الخليج للآليات',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'متى تتاح؟', 'ما السعر الأسبوعي؟'],
+        messages: [
+            { from: 'them', text: 'مرحباً، تمتلك شاحنة قلابة 20 طن', time: '07:30' },
+            { from: 'me', text: 'هل متاحة هذا الأسبوع؟', time: '07:45' },
+            { from: 'them', text: 'نعم متاحة من الأحد القادم', time: '07:46' }
+        ]
+    },
+    'equip-6': {
+        peer: 'النجم للمعدات',
+        initial: 'ن',
+        avatarGrad: 'linear-gradient(135deg,#028090,#02C39A)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · كومباكتور أرضية · النجم للمعدات',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'ما الحد الأدنى للإيجار؟', 'هل يأتي مع مشغل؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً! كومباكتور أرضية متاح للإيجار', time: '11:00' },
+            { from: 'me', text: 'ما الحد الأدنى للإيجار؟', time: '11:20' },
+            { from: 'them', text: 'الحد الأدنى يومان، السعر 280 ريال/يوم', time: '11:21' }
+        ]
+    },
+    'equip-7': {
+        peer: 'الصقر للآليات',
+        initial: 'ص',
+        avatarGrad: 'linear-gradient(135deg,#02C39A,#028090)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · رافعة برجية · الصقر للآليات',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'هل يشمل التركيب؟', 'ما مدة التركيب؟'],
+        messages: [
+            { from: 'them', text: 'مرحباً! لدينا رافعة برجية للإيجار', time: '08:00' },
+            { from: 'me', text: 'هل تشمل خدمة التركيب والتفكيك؟', time: '08:30' },
+            { from: 'them', text: 'نعم، التركيب والتفكيك مشمولان في السعر', time: '08:31' }
+        ]
+    },
+    'equip-8': {
+        peer: 'العربية للمعدات',
+        initial: 'ع',
+        avatarGrad: 'linear-gradient(135deg,#F59E0B,#fbbf24)',
+        status: '⚫ آخر ظهور: اليوم',
+        ctxClass: 'equip',
+        ctxIcon: '🏗️',
+        ctxText: 'إيجار · خلاطة خرسانة 9 م³ · العربية للمعدات',
+        ctxLink: 'equipment.html',
+        ctxLinkLabel: 'تفاصيل المعدة ←',
+        quickReplies: ['شكراً', 'هل يشمل التوصيل؟', 'ما السعر الأسبوعي؟'],
+        messages: [
+            { from: 'them', text: 'أهلاً، خلاطة خرسانة 9 متر مكعب متاحة', time: '06:00' },
+            { from: 'me', text: 'هل تقدمون خدمة التوصيل للموقع؟', time: '06:30' },
+            { from: 'them', text: 'نعم، التوصيل متاح داخل الرياض مجاناً', time: '06:31' }
+        ]
+    },
+
+    // ── Support / Dispute thread (routed from service-confirmation "Report Issue") ──
+    'support-1': {
+        peer: 'دعم خدمة العملاء',
+        initial: 'د',
+        avatarGrad: 'linear-gradient(135deg,#EF4444,#dc2626)',
+        status: '● متصل الآن',
+        ctxClass: 'service',
+        ctxIcon: '🛡️',
+        ctxText: 'نزاع / بلاغ — فريق الدعم',
+        ctxLink: 'customer-dashboard.html',
+        ctxLinkLabel: 'لوحة التحكم ←',
+        quickReplies: ['لم تكتمل الخدمة', 'المزود لم يحضر', 'جودة العمل سيئة', 'مشكلة في المواد'],
+        messages: [
+            { from: 'them', text: 'مرحباً، وصلنا بلاغك. فريق الدعم معك الآن لحل المشكلة في أسرع وقت.', time: new Date().toLocaleTimeString('ar', {hour:'2-digit',minute:'2-digit'}) },
+            { from: 'them', text: 'يرجى شرح المشكلة بالتفصيل وسنعمل على حلها فوراً.', time: new Date().toLocaleTimeString('ar', {hour:'2-digit',minute:'2-digit'}) }
+        ]
+    }
+};
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let activeConv = null;
+
+// ─── Init from URL params ─────────────────────────────────────────────────────
+// Accepts: ?type=service&requestId=REQ-001001&providerId=khalid-001
+//          ?type=support&requestId=REQ-001001
+//          ?type=tender&id=tender-1
+//          ?type=service&id=1  (legacy)
+function initFromURL() {
+    const p        = new URLSearchParams(window.location.search);
+    const type     = p.get('type');
+    const id       = p.get('id') || p.get('providerId');
+    const reqId    = p.get('requestId');
+
+    // Helper: open a conv and highlight its contact item
+    function openByKey(convKey) {
+        const el = document.querySelector(`[data-conv="${convKey}"]`);
+        if (el) {
+            document.querySelectorAll('.contact-item').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        }
+        openConv(convKey, el);
+    }
+
+    // 1. Try exact key: type + '-' + id (legacy / numeric IDs)
+    if (type && id) {
+        const exactKey = type + '-' + id;
+        if (CONVS[exactKey]) { openByKey(exactKey); return; }
+    }
+
+    // 2. Support type — always route to support-1
+    if (type === 'support') {
+        // Patch context text with requestId if available
+        if (reqId && CONVS['support-1']) {
+            CONVS['support-1'].ctxText = 'نزاع / بلاغ — طلب #' + reqId;
+            CONVS['support-1'].ctxLink = 'service-confirmation.html?requestId=' + reqId;
+            CONVS['support-1'].ctxLinkLabel = 'تفاصيل الطلب ←';
+            // Prepend a system-style message if pending issue stored
+            try {
+                const pending = JSON.parse(localStorage.getItem('khedmah_pending_issue') || 'null');
+                if (pending && pending.issues && pending.issues.length) {
+                    CONVS['support-1'].messages.unshift({
+                        from: 'me',
+                        text: 'المشاكل المبلغ عنها:\n• ' + pending.issues.join('\n• '),
+                        time: new Date().toLocaleTimeString('ar', {hour:'2-digit',minute:'2-digit'})
+                    });
+                    localStorage.removeItem('khedmah_pending_issue');
+                }
+            } catch(e) {}
+        }
+        openByKey('support-1');
+        return;
+    }
+
+    // 3. Service type with requestId — map known IDs; create new thread for new requests
+    if (type === 'service' && reqId) {
+        const reqMap = {
+            'REQ-001001': 'service-1',
+            'REQ-001002': 'service-2',
+            'REQ-Q001':   'service-3',
+            'REQ-Q002':   'service-4',
+        };
+        const mappedKey = reqMap[reqId];
+        if (mappedKey && CONVS[mappedKey]) { openByKey(mappedKey); return; }
+
+        // ── New request arriving from quote-request → payment-escrow ──
+        const paid          = p.get('paid') === '1';
+        const service       = p.get('service') ? decodeURIComponent(p.get('service')) : 'خدمة';
+        const serviceAmount = p.get('serviceAmount') || '0';
+        const materialsEst  = p.get('materialsEst')  || '0';
+        const now           = new Date();
+        const timeStr       = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        const convKey       = 'live-' + reqId;
+
+        CONVS[convKey] = {
+            peer:         'منصة خدمة (جارٍ التعيين)',
+            initial:      'م',
+            avatarGrad:   'linear-gradient(135deg,#028090,#02C39A)',
+            status:       '● جارٍ البحث عن مزود...',
+            ctxClass:     'ctx-service',
+            ctxIcon:      '🔧',
+            ctxText:      service + ' — طلب #' + reqId,
+            ctxLink:      'order-tracking.html?requestId=' + encodeURIComponent(reqId)
+                          + '&service=' + encodeURIComponent(service)
+                          + '&serviceAmount=' + serviceAmount
+                          + '&materialsEst=' + materialsEst,
+            ctxLinkLabel: 'تتبع الطلب →',
+            messages: [
+                { type: 'sys', text: '— تم إنشاء المحادثة —' },
+                { type: 'sys', text: paid ? '✅ تم استلام الدفع · المبلغ محجوز في الضمان' : '⏳ في انتظار تأكيد الدفع' },
+                { from: 'in', text: 'مرحباً! وصل طلبك رقم ' + reqId + ' للخدمة: ' + service + '. جارٍ تعيين أفضل مزود متاح في منطقتك...', time: timeStr },
+            ],
+            quickReplies: ['شكراً', 'متى يصل المزود؟', 'هل يمكن تغيير الموعد؟'],
+        };
+
+        // Inject contact item at top of sidebar
+        const contactList = document.querySelector('.contacts-list');
+        if (contactList) {
+            const newItem = document.createElement('div');
+            newItem.className = 'contact-item active';
+            newItem.dataset.module = 'service';
+            newItem.dataset.conv   = convKey;
+            newItem.onclick = function() { openConv(convKey, this); };
+            newItem.innerHTML = `
+                <div class="c-avatar" style="background:linear-gradient(135deg,#028090,#02C39A)">م<div class="c-online"></div></div>
+                <div class="c-info">
+                    <div class="c-name">مزود الخدمة <span class="c-type-badge badge-service">جديد</span></div>
+                    <div class="c-preview">جارٍ تعيين مزود...</div>
+                    <div class="c-ctx">${service} · ${reqId}</div>
+                </div>
+                <div class="c-meta"><div class="c-time">${timeStr}</div></div>`;
+            contactList.querySelectorAll('.contact-item').forEach(c => c.classList.remove('active'));
+            contactList.prepend(newItem);
+        }
+
+        openByKey(convKey);
+
+        // Simulate provider accepting after 3s
+        setTimeout(() => {
+            const cd = CONVS[convKey];
+            if (!cd) return;
+            cd.status = '● قبل المزود — في الطريق';
+            cd.peer   = 'فهد الكهربائي';
+            cd.initial = 'ف';
+            cd.avatarGrad = 'linear-gradient(135deg,#f59e0b,#fbbf24)';
+            if (activeConv === convKey) {
+                document.getElementById('chName').textContent   = 'فهد الكهربائي';
+                document.getElementById('chStatus').textContent = '● قبل المزود — في الطريق';
+                document.getElementById('chStatus').style.color = '#10b981';
+                document.getElementById('chAvatar').style.background = cd.avatarGrad;
+                document.getElementById('chAvatar').textContent = 'ف';
+            }
+            const nowR  = new Date();
+            const timeR = String(nowR.getHours()).padStart(2,'0') + ':' + String(nowR.getMinutes()).padStart(2,'0');
+            renderMessage({
+                from: 'in',
+                text: 'قبلت طلبك! أنا فهد الكهربائي. سأصل إليك خلال 12 دقيقة. يمكنك تتبع موقعي الآن من الرابط أعلاه 📍',
+                time: timeR,
+            }, cd);
+            const msgArea = document.getElementById('messagesArea');
+            if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+            // Update sidebar contact preview
+            const sideItem = document.querySelector(`[data-conv="${convKey}"] .c-preview`);
+            if (sideItem) sideItem.textContent = 'قبلت طلبك! في الطريق إليك...';
+            const sideAvatar = document.querySelector(`[data-conv="${convKey}"] .c-avatar`);
+            if (sideAvatar) { sideAvatar.style.background = cd.avatarGrad; sideAvatar.childNodes[0].textContent = 'ف'; }
+        }, 3000);
+
+        return;
+    }
+
+    // 4. Tender with requestId / tenderId
+    if (type === 'tender' && reqId) {
+        openByKey('tender-1');
+        return;
+    }
+
+    // 5. Fallback: open first conv
+    const first = document.querySelector('.contact-item');
+    if (first) {
+        openConv(first.dataset.conv, first);
+    }
+}
+
+// ─── Open conversation ────────────────────────────────────────────────────────
+function openConv(convKey, el) {
+    if (el) {
+        document.querySelectorAll('.contact-item').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        const badge = el.querySelector('.unread');
+        if (badge) badge.remove();
+    }
+
+    const data = CONVS[convKey];
+    if (!data) return;
+    activeConv = convKey;
+
+    // Show chat area, hide empty state
+    document.getElementById('emptyState').style.display = 'none';
+    const area = document.getElementById('activeChatArea');
+    area.style.display = 'flex';
+    area.style.flexDirection = 'column';
+    area.style.overflow = 'hidden';
+    area.style.flex = '1';
+
+    // Update header
+    const av = document.getElementById('chAvatar');
+    av.style.background = data.avatarGrad;
+    av.textContent = data.initial;
+    document.getElementById('chName').textContent = data.peer;
+    document.getElementById('chStatus').textContent = data.status;
+    document.getElementById('chStatus').style.color = data.status.startsWith('●') ? '#10b981' : '#94a3b8';
+
+    // Update context banner
+    const banner = document.getElementById('ctxBanner');
+    banner.className = 'ctx-banner ' + data.ctxClass;
+    document.getElementById('ctxIcon').textContent = data.ctxIcon;
+    document.getElementById('ctxText').textContent = data.ctxText;
+    document.getElementById('ctxLink').href = data.ctxLink;
+    document.getElementById('ctxLink').textContent = data.ctxLinkLabel;
+    document.getElementById('chCtxLink').href = data.ctxLink;
+
+    // Update typing avatar
+    document.getElementById('typingAvatar').style.background = data.avatarGrad;
+    document.getElementById('typingAvatar').textContent = data.initial;
+
+    // Render messages
+    const msgArea = document.getElementById('messagesArea');
+    msgArea.innerHTML = '';
+    data.messages.forEach(m => renderMessage(m, data));
+    msgArea.scrollTop = msgArea.scrollHeight;
+
+    // Quick replies
+    renderQuickReplies(data.quickReplies);
+}
+
+// ─── Render a message ────────────────────────────────────────────────────────
+function renderMessage(m, data) {
+    const area = document.getElementById('messagesArea');
+
+    if (m.type === 'day') {
+        const el = document.createElement('div');
+        el.className = 'day-sep';
+        el.innerHTML = `<span>${m.text}</span>`;
+        area.appendChild(el); return;
+    }
+    if (m.type === 'sys') {
+        const el = document.createElement('div');
+        el.className = 'sys-msg';
+        el.textContent = m.text;
+        area.appendChild(el); return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message ' + m.from;
+
+    let inner = '';
+    if (m.from === 'in') {
+        inner += `<div class="m-avatar" style="background:${data.avatarGrad}">${data.initial}</div>`;
+    }
+    inner += '<div class="m-body">';
+
+    if (m.text) {
+        inner += `<div class="m-bubble">${escHtml(m.text)}</div>`;
+    }
+    if (m.img) {
+        inner += `<div class="m-img">${m.img}</div>`;
+        inner += `<div class="m-bubble" style="font-size:.75rem;opacity:.8">${m.imgLabel || 'صورة'}</div>`;
+    }
+    if (m.file) {
+        inner += `<div class="m-bubble"><div class="m-file" onclick="showToast('جارٍ فتح ${escHtml(m.fileName)}...')">📄 <span>${escHtml(m.fileName)}</span> <span style="opacity:.7;font-size:.72rem">${m.fileSize}</span> <span style="opacity:.7;font-size:.75rem">⬇</span></div></div>`;
+    }
+    if (m.voice) {
+        const bars = Array.from({length:18}, (_, i) => {
+            const h = 6 + Math.sin(i * 0.7) * 8 + Math.random() * 6;
+            return `<div class="voice-bar" style="height:${h}px"></div>`;
+        }).join('');
+        inner += `<div class="m-bubble"><div class="m-voice"><div class="voice-play">▶</div><div class="voice-waveform">${bars}</div><span class="voice-dur">${m.dur || '0:15'}</span></div></div>`;
+    }
+    if (m.location) {
+        inner += `<div class="m-bubble"><div class="m-location" onclick="showToast('فتح الخريطة...')">📍 ${escHtml(m.loc || 'الموقع الحالي')}</div></div>`;
+    }
+    inner += `<div class="m-time">${m.time}</div>`;
+    inner += '</div>';
+
+    wrapper.innerHTML = inner;
+    area.appendChild(wrapper);
+}
+
+// ─── Quick replies ────────────────────────────────────────────────────────────
+function renderQuickReplies(replies) {
+    const el = document.getElementById('quickReplies');
+    el.innerHTML = '';
+    (replies || []).forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-reply';
+        btn.textContent = r;
+        btn.onclick = () => { document.getElementById('msgInput').value = r; document.getElementById('msgInput').focus(); };
+        el.appendChild(btn);
+    });
+}
+
+// ─── Send message ─────────────────────────────────────────────────────────────
+// Real conversation ID when user navigates from a service request with UUID
+let _realConvId = null;
+
+async function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const data = CONVS[activeConv];
+    const now = new Date();
+    const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + (now.getHours() < 12 ? ' ص' : ' م') + ' ✓';
+
+    renderMessage({ from: 'out', text, time }, data);
+    document.getElementById('messagesArea').scrollTop = 999999;
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Send via real API if we have a real conversation
+    if (_realConvId) {
+        API.chat.send(_realConvId, { content: text }).catch(() => {});
+        return; // Real messages arrive back via Socket.io
+    }
+
+    // Demo auto-reply fallback
+    const typingEl = document.getElementById('typingIndicator');
+    typingEl.classList.add('show');
+    setTimeout(() => {
+        typingEl.classList.remove('show');
+        const replies = {
+            service: ['حسناً، شكراً على التوضيح 👍', 'تم الاستلام، سأتواصل معك عند الوصول', 'جيد، سأكون هناك قريباً إن شاء الله'],
+            tender:  ['سنراجع طلبكم ونرد في أقرب وقت', 'شكراً، هل يمكنكم إرسال وثائق التأهيل؟', 'تم استلام ملاحظاتكم، سنوافيكم بالرد غداً'],
+            consult: ['بالتأكيد، سأوضح ذلك في الجلسة القادمة', 'شكراً على الملاحظة، سأرسل تفاصيل إضافية', 'ممتاز، لديك فهم جيد للمتطلبات'],
+            equip:   ['تمام، سنضمن توفر المعدة في الموعد المحدد', 'حسناً، سنرسل وثائق الاستلام قبل يوم', 'شكراً، تواصل معنا لأي استفسار']
+        };
+        const type = activeConv ? activeConv.split('-')[0] : 'service';
+        const pool = replies[type] || replies.service;
+        const reply = pool[Math.floor(Math.random() * pool.length)];
+        renderMessage({ from: 'in', text: reply, time: String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + (now.getHours() < 12 ? ' ص' : ' م') }, data);
+        document.getElementById('messagesArea').scrollTop = 999999;
+    }, 1800);
+}
+
+// ─── Attachment simulation ───────────────────────────────────────────────────
+function sendAttachment(type) {
+    closeAttachMenu();
+    const data = CONVS[activeConv];
+    const now = new Date();
+    const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + (now.getHours() < 12 ? ' ص' : ' م') + ' ✓';
+    if (type === 'image') {
+        renderMessage({ from: 'out', img: '🖼️', imgLabel: 'صورة من الكاميرا', time }, data);
+    } else if (type === 'file') {
+        renderMessage({ from: 'out', file: true, fileName: 'مستند مرفق.pdf', fileSize: '1.2 MB', time }, data);
+    } else if (type === 'location') {
+        renderMessage({ from: 'out', location: true, loc: 'موقعي الحالي — الرياض', time }, data);
+    } else if (type === 'contact') {
+        renderMessage({ from: 'out', text: '👤 بطاقة التواصل: مستخدم كيدمة — م: 0501234567', time }, data);
+    }
+    document.getElementById('messagesArea').scrollTop = 999999;
+}
+
+function sendVoiceNote() {
+    const data = CONVS[activeConv];
+    const now = new Date();
+    const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + (now.getHours() < 12 ? ' ص' : ' م') + ' ✓';
+    renderMessage({ from: 'out', voice: true, dur: '0:08', time }, data);
+    document.getElementById('messagesArea').scrollTop = 999999;
+    showToast('🎙️ تم إرسال الرسالة الصوتية');
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function toggleAttachMenu(e) {
+    e.stopPropagation();
+    document.getElementById('attachMenu').classList.toggle('open');
+}
+function closeAttachMenu() { document.getElementById('attachMenu').classList.remove('open'); }
+document.addEventListener('click', closeAttachMenu);
+
+function filterByModule(mod, btn) {
+    document.querySelectorAll('.module-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.contact-item').forEach(c => {
+        c.style.display = (mod === 'all' || c.dataset.module === mod) ? '' : 'none';
+    });
+    document.querySelectorAll('.section-label').forEach(s => {
+        s.style.display = (mod === 'all' || s.dataset.section === mod) ? '' : 'none';
+    });
+}
+
+function filterContacts(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.contact-item').forEach(c => {
+        const text = c.textContent.toLowerCase();
+        c.style.display = !q || text.includes(q) ? '' : 'none';
+    });
+}
+
+function showToast(msg) {
+    let t = document.getElementById('chatToast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'chatToast';
+        t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:.65rem 1.25rem;border-radius:12px;font-size:.85rem;z-index:9999;font-family:Tajawal,sans-serif;transition:opacity .3s;pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.opacity = '1';
+    clearTimeout(t._t); t._t = setTimeout(() => t.style.opacity = '0', 2800);
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+initFromURL();
+
+// ─── Real-time: try to connect Socket.io if token available ──────────────────
+(async function initRealTime() {
+    const token = localStorage.getItem('khedmah_access_token');
+    if (!token) return;
+
+    // Try to resolve requestId → real conversation ID
+    const p = new URLSearchParams(location.search);
+    const reqId = p.get('requestId');
+    if (reqId && reqId.includes('-') && reqId.length > 10) {
+        // Looks like a real UUID — load or create conversation
+        try {
+            const convs = await API.chat.conversations();
+            const list = convs?.items ?? convs ?? [];
+            const found = list.find(c => c.requestId === reqId || c.serviceRequestId === reqId);
+            if (found) {
+                _realConvId = found.id;
+            } else if (reqId) {
+                // Create conversation for this request
+                const created = await API.chat.create({ requestId: reqId });
+                _realConvId = created?.id || null;
+            }
+        } catch(e) { /* fallback to demo */ }
+    }
+
+    // Connect Socket.io
+    const BASE = (window.KHEDMAH_API_URL || 'http://localhost:3000').replace(/\/api\/v1\/?$/, '');
+    if (!window.io) return; // Socket.io CDN not loaded
+    const socket = io(BASE, { auth: { token }, transports: ['websocket', 'polling'] });
+
+    socket.on('connect', () => {
+        if (_realConvId) socket.emit('join', { conversationId: _realConvId });
+    });
+
+    socket.on('new_message', (msg) => {
+        if (!msg || msg.conversationId !== _realConvId) return;
+        const isMine = msg.senderId === API.auth.currentUser()?.id;
+        if (isMine) return; // already rendered optimistically
+        const data = CONVS[activeConv] || {};
+        const now = new Date(msg.createdAt || Date.now());
+        const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        renderMessage({ from: 'in', text: msg.content, time }, data);
+        document.getElementById('messagesArea').scrollTop = 999999;
+    });
+})();
+</script>
+<script defer src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</body>
+</html>

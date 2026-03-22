@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الحساب البنكي - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 5%;
+        }
+        
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-header p {
+            color: var(--gray);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .earnings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .earning-box {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .earning-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .earning-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        
+        .notice {
+            background: rgba(2, 128, 144, 0.05);
+            border-right: 4px solid var(--primary);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .notice h4 {
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+        }
+        
+        .notice ul {
+            list-style: none;
+            display: grid;
+            gap: 0.5rem;
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+        
+        .notice li::before {
+            content: '✓ ';
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border: 2px solid var(--light);
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(2, 128, 144, 0.1);
+        }
+        
+        .banks-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .bank-option {
+            padding: 1rem;
+            border: 2px solid var(--light);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .bank-option:hover {
+            border-color: var(--accent);
+            background: rgba(2, 195, 154, 0.05);
+        }
+        
+        .bank-option.selected {
+            border-color: var(--primary);
+            background: rgba(2, 128, 144, 0.05);
+        }
+        
+        .bank-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .bank-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(2, 128, 144, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .banks-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .earnings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .section-card, html.dark .stats-card, html.dark .service-card, html.dark .bank-card, html.dark .schedule-card, html.dark .avail-card, html.dark .request-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="number"], html.dark input[type="date"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; }
+        html.dark .table th, html.dark table th { background: #0f172a; color: #94a3b8; }
+        html.dark .table td, html.dark table td { border-color: #334155; }
+        html.dark .modal, html.dark .modal-content, html.dark .modal-box { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .modal-overlay, html.dark .overlay { background: rgba(0,0,0,0.6); }
+        html.dark .day-label, html.dark .time-label, html.dark .slot-label { color: #94a3b8; }
+        html.dark .slot-btn { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .slot-btn.available { background: rgba(2,195,154,0.15); color: #02C39A; border-color: #02C39A; }
+        html.dark .badge, html.dark .tag, html.dark .chip, html.dark .status-badge { background: #0f172a; }
+        html.dark .empty-state { background: #1e293b; color: #94a3b8; }
+        html.dark .bank-logo, html.dark .card-preview { background: #0f172a; }
+        html.dark .stars span, html.dark .star { color: #94a3b8; }
+        html.dark .stars span.selected, html.dark .star.active { color: #f59e0b; }
+
+        /* Bank settings-specific dark overrides */
+        html.dark .earning-box { background: #0f172a; }
+        html.dark .earning-label { color: #94a3b8; }
+        html.dark .notice { background: rgba(2,128,144,0.08); border-color: rgba(2,128,144,0.3); }
+        html.dark .notice ul { color: #94a3b8; }
+        html.dark .form-group input { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .bank-option { border-color: #334155; background: #0f172a; }
+        html.dark .bank-option:hover { border-color: var(--accent); background: rgba(2,195,154,0.08); }
+        html.dark .bank-option.selected { border-color: var(--primary); background: rgba(2,128,144,0.1); }
+        html.dark .bank-name { color: #cbd5e1; }
+        html.dark .card h2 { border-bottom-color: #334155; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; font-size: 0.95rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        html.dark .nav-links a { color: #94a3b8; }
+        html.dark .nav-links a:hover, html.dark .nav-links a.active { color: #02C39A; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            color: var(--primary); font-weight: 600; font-size: 0.9rem;
+            text-decoration: none; margin-bottom: 1.25rem;
+        }
+        .back-btn:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<script src="js/api.js"></script>
+<script>
+    (function() {
+        const demo = localStorage.getItem('khedmah_demo');
+        if (!demo) { window.location.href = 'login.html'; return; }
+        try {
+            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+            if (u.role && u.role !== 'provider') window.location.href = 'customer-dashboard.html';
+        } catch(e) {}
+    })();
+</script>
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div class="nav-links">
+                <a href="provider-dashboard.html">لوحة التحكم</a>
+                <a href="provider-manage-services.html">خدماتي</a>
+                <a href="provider-availability.html">التوفر</a>
+                <a href="provider-bank-settings.html" class="active" style="color:var(--primary);font-weight:700;">الحساب البنكي</a>
+                <a href="provider-wallet.html">💰 المحفظة</a>
+                <a href="chat.html">المحادثات</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <div style="font-weight: 600;">أحمد السباك المحترف</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="provider-dashboard.html" class="back-btn">← العودة للوحة التحكم</a>
+        <div class="page-header">
+            <h1>إعدادات الحساب البنكي 🏦</h1>
+            <p>أضف معلوماتك البنكية لاستلام الأموال فوراً</p>
+        </div>
+
+        <!-- Earnings Summary -->
+        <div class="earnings-grid">
+            <div class="earning-box">
+                <div class="earning-label">الرصيد المتاح</div>
+                <div class="earning-value">1,450 ريال</div>
+            </div>
+            <div class="earning-box">
+                <div class="earning-label">قيد التحويل</div>
+                <div class="earning-value">350 ريال</div>
+            </div>
+            <div class="earning-box">
+                <div class="earning-label">إجمالي الأرباح</div>
+                <div class="earning-value">12,800 ريال</div>
+            </div>
+        </div>
+
+        <!-- Bank Account Form -->
+        <div class="card">
+            <h2>المعلومات البنكية</h2>
+
+            <div class="notice">
+                <h4>💡 معلومات مهمة</h4>
+                <ul>
+                    <li>التحويل فوري بعد تأكيد العميل إتمام الخدمة</li>
+                    <li>لا يوجد حد أدنى للسحب</li>
+                    <li>بدون رسوم تحويل</li>
+                    <li>آمن ومحمي 100%</li>
+                    <li>دعم كامل لجميع البنوك السعودية والبنوك الرقمية</li>
+                </ul>
+            </div>
+
+            <form id="bankForm">
+                <!-- Bank Selection -->
+                <div class="form-group">
+                    <label>اختر البنك <span style="color: red;">*</span></label>
+                    <div class="banks-grid">
+                        <!-- Traditional Banks -->
+                        <div class="bank-option" data-bank="alrajhi">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الراجحي</div>
+                        </div>
+                        <div class="bank-option" data-bank="alinma">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الإنماء</div>
+                        </div>
+                        <div class="bank-option" data-bank="alahli">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الأهلي</div>
+                        </div>
+                        <div class="bank-option" data-bank="riyadbank">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الرياض</div>
+                        </div>
+                        <div class="bank-option" data-bank="samba">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">سامبا SNB</div>
+                        </div>
+                        <div class="bank-option" data-bank="anb">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">العربي الوطني</div>
+                        </div>
+                        <div class="bank-option" data-bank="sab">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">ساب</div>
+                        </div>
+                        <div class="bank-option" data-bank="albilad">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">البلاد</div>
+                        </div>
+                        <div class="bank-option" data-bank="aljazira">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الجزيرة</div>
+                        </div>
+                        <div class="bank-option" data-bank="awal">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الأول</div>
+                        </div>
+                        <div class="bank-option" data-bank="saib">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">الاستثمار</div>
+                        </div>
+                        <div class="bank-option" data-bank="bsf">
+                            <div class="bank-icon">🏦</div>
+                            <div class="bank-name">السعودي الفرنسي</div>
+                        </div>
+                        
+                        <!-- Digital Banks -->
+                        <div class="bank-option" data-bank="stcpay">
+                            <div class="bank-icon">📱</div>
+                            <div class="bank-name">STC Pay</div>
+                        </div>
+                        <div class="bank-option" data-bank="urpay">
+                            <div class="bank-icon">📱</div>
+                            <div class="bank-name">Urpay</div>
+                        </div>
+                        <div class="bank-option" data-bank="d360">
+                            <div class="bank-icon">💳</div>
+                            <div class="bank-name">D360</div>
+                        </div>
+                        <div class="bank-option" data-bank="neobank">
+                            <div class="bank-icon">💳</div>
+                            <div class="bank-name">Neo Bank</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Name -->
+                <div class="form-group">
+                    <label for="accountName">اسم صاحب الحساب <span style="color: red;">*</span></label>
+                    <input type="text" id="accountName" placeholder="كما هو مسجل في البنك" required>
+                </div>
+
+                <!-- IBAN -->
+                <div class="form-group">
+                    <label for="iban">رقم الآيبان (IBAN) <span style="color: red;">*</span></label>
+                    <input 
+                        type="text" 
+                        id="iban" 
+                        placeholder="SA0000000000000000000000"
+                        maxlength="24"
+                        style="font-family: monospace; font-size: 1.1rem;"
+                        required
+                    >
+                    <div style="font-size: 0.85rem; color: var(--gray); margin-top: 0.5rem;">
+                        💡 يبدأ بـ SA ويتكون من 24 رقم (يمكنك الحصول عليه من تطبيق البنك)
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    💾 حفظ الحساب البنكي
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedBank = null;
+        
+        const bankNames = {
+            'alrajhi': 'مصرف الراجحي',
+            'alinma': 'بنك الإنماء',
+            'alahli': 'البنك الأهلي السعودي',
+            'riyadbank': 'بنك الرياض',
+            'samba': 'سامبا (SNB)',
+            'anb': 'البنك العربي الوطني',
+            'sab': 'البنك السعودي البريطاني (ساب)',
+            'albilad': 'بنك البلاد',
+            'aljazira': 'بنك الجزيرة',
+            'awal': 'البنك الأول',
+            'saib': 'البنك السعودي للاستثمار',
+            'bsf': 'البنك السعودي الفرنسي',
+            'stcpay': 'STC Pay',
+            'urpay': 'Urpay',
+            'd360': 'D360 Bank',
+            'neobank': 'Neo Bank'
+        };
+
+        // Bank selection
+        document.querySelectorAll('.bank-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.bank-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.classList.add('selected');
+                selectedBank = this.dataset.bank;
+            });
+        });
+
+        // IBAN formatting
+        document.getElementById('iban').addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (!value.startsWith('SA')) {
+                value = 'SA' + value.replace(/^SA/, '');
+            }
+            e.target.value = value;
+        });
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+
+        // Form submission
+        document.getElementById('bankForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!selectedBank) {
+                alert('⚠️ الرجاء اختيار البنك');
+                return;
+            }
+
+            const accountName = document.getElementById('accountName').value;
+            const iban = document.getElementById('iban').value;
+
+            if (!accountName.trim()) {
+                alert('⚠️ اسم صاحب الحساب مطلوب');
+                document.getElementById('accountName').focus();
+                return;
+            }
+
+            if (!iban.startsWith('SA') || iban.length !== 24) {
+                alert('⚠️ رقم الآيبان غير صحيح\nيجب أن يبدأ بـ SA ويتكون من 24 حرف');
+                return;
+            }
+
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري الحفظ...';
+            try {
+                await API.providers.updateBank({ bankName: bankNames[selectedBank] || selectedBank, iban, accountName });
+                API.toast('✅ تم حفظ الحساب البنكي بنجاح!', 'success');
+            } catch(err) {
+                API.toast('❌ ' + API.errorMsg(err));
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 حفظ الحساب البنكي';
+            }
+        });
+    </script>
+</body>
+</html>

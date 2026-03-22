@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <script>(function(){if(localStorage.getItem("khedmah_theme")==="dark")document.documentElement.classList.add("dark")})()</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المزود - Khedmah</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #028090;
+            --secondary: #00A896;
+            --accent: #02C39A;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+            --gray: #64748B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); color: var(--dark); min-height: 100vh; }
+
+        input, select, textarea { font-size: 16px; }
+
+        /* Nav */
+        nav {
+            background: white; padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--gray); font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .avatar-btn {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; cursor: pointer; text-decoration: none;
+        }
+
+        /* Container */
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 5%; }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e40af 100%);
+            border-radius: 20px;
+            padding: 2rem 2.5rem;
+            color: white;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .welcome-left { display: flex; align-items: center; gap: 1.25rem; }
+        .provider-avatar-lg {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 800; font-size: 1.6rem;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .welcome-text h2 { font-size: 1.5rem; font-weight: 800; }
+        .welcome-text p { opacity: 0.8; font-size: 0.9rem; margin-top: 0.2rem; }
+        .provider-status {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4);
+            border-radius: 20px; padding: 0.25rem 0.75rem;
+            font-size: 0.78rem; margin-top: 0.4rem;
+            color: #6ee7b7;
+        }
+        .status-dot { width: 7px; height: 7px; background: var(--success); border-radius: 50%; }
+        .welcome-right { text-align: center; }
+        .rating-big { font-size: 2.5rem; font-weight: 800; }
+        .rating-sub { font-size: 0.78rem; opacity: 0.7; }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white; border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .stat-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0;
+        }
+        .stat-icon.teal { background: rgba(2,128,144,0.1); }
+        .stat-icon.green { background: rgba(16,185,129,0.1); }
+        .stat-icon.amber { background: rgba(245,158,11,0.1); }
+        .stat-icon.blue { background: rgba(59,130,246,0.1); }
+        .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--dark); line-height: 1; }
+        .stat-label { font-size: 0.8rem; color: var(--gray); margin-top: 0.25rem; }
+
+        /* Section */
+        .section { margin-bottom: 2rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .section-title { font-size: 1.1rem; font-weight: 700; }
+        .section-link { color: var(--primary); font-size: 0.85rem; text-decoration: none; font-weight: 600; }
+
+        /* Quick actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .quick-btn {
+            background: white; border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center; text-decoration: none; color: var(--dark);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .quick-btn:hover { border-color: var(--primary); box-shadow: 0 4px 20px rgba(2,128,144,0.15); }
+        .quick-btn .qb-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .quick-btn .qb-label { font-size: 0.83rem; font-weight: 600; }
+
+        /* Request cards */
+        .requests-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .request-card {
+            background: white; border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 1rem;
+            transition: box-shadow 0.2s;
+        }
+        .request-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .req-icon { width: 50px; height: 50px; background: rgba(2,128,144,0.08); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+        .req-info { flex: 1; min-width: 0; }
+        .req-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .req-meta { color: var(--gray); font-size: 0.8rem; }
+        .req-meta span { margin-left: 0.75rem; }
+        .req-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+        .badge { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-new { background: rgba(139,92,246,0.12); color: #5b21b6; }
+        .badge-progress { background: rgba(245,158,11,0.15); color: #b45309; }
+        .badge-completed { background: rgba(16,185,129,0.15); color: #065f46; }
+
+        .btn-sm {
+            padding: 0.4rem 0.9rem; border-radius: 10px;
+            font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; border: none; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #026f7e; }
+        .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn-outline:hover { background: rgba(2,128,144,0.06); }
+        .btn-ghost { background: var(--light); color: var(--gray); }
+        .btn-ghost:hover { background: #e2e8f0; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+
+        .empty-state {
+            text-align: center; padding: 2.5rem 1rem; color: var(--gray);
+            background: white; border-radius: 16px; border: 2px dashed #e2e8f0;
+        }
+        .empty-state .emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* Earnings panel */
+        .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+        .panel { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow: hidden; }
+        .panel-header { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+        .panel-title { font-weight: 700; font-size: 0.95rem; }
+        .panel-body { padding: 1.25rem; }
+
+        .earning-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9; }
+        .earning-row:last-child { border-bottom: none; }
+        .earning-label { font-size: 0.85rem; color: var(--gray); }
+        .earning-value { font-weight: 700; }
+        .earning-value.big { font-size: 1.5rem; color: var(--primary); }
+
+        .wallet-total { text-align: center; padding: 1rem 0; }
+        .wallet-amount { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .wallet-sub { font-size: 0.8rem; color: var(--gray); margin-top: 0.25rem; }
+        .withdraw-btn {
+            width: 100%; margin-top: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; border: none; border-radius: 12px;
+            padding: 0.75rem; font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+        }
+        .withdraw-btn:hover { opacity: 0.9; }
+
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+            .welcome-banner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── Dark Mode ── */
+        html.dark body { background: #0f172a !important; color: #e2e8f0; }
+        html.dark nav, html.dark .sidebar, html.dark aside { background: #1e293b !important; border-color: #334155; }
+        html.dark .card, html.dark .section-card, html.dark .stats-card, html.dark .service-card, html.dark .bank-card, html.dark .schedule-card, html.dark .avail-card, html.dark .request-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .sidebar-link, html.dark .nav-link { color: #94a3b8; }
+        html.dark .sidebar-link:hover, html.dark .sidebar-link.active { background: rgba(2,128,144,0.15); color: #02C39A; }
+        html.dark .form-control, html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="number"], html.dark input[type="date"], html.dark select, html.dark textarea { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        html.dark .form-control::placeholder, html.dark input::placeholder { color: #64748b; }
+        html.dark .form-label, html.dark label { color: #cbd5e1; }
+        html.dark .divider, html.dark hr { border-color: #334155; }
+        html.dark .table, html.dark table { color: #e2e8f0; }
+        html.dark .table th, html.dark table th { background: #0f172a; color: #94a3b8; }
+        html.dark .table td, html.dark table td { border-color: #334155; }
+        html.dark .modal, html.dark .modal-content, html.dark .modal-box { background: #1e293b !important; color: #e2e8f0; }
+        html.dark .modal-overlay, html.dark .overlay { background: rgba(0,0,0,0.6); }
+        html.dark .day-label, html.dark .time-label, html.dark .slot-label { color: #94a3b8; }
+        html.dark .slot-btn { background: #0f172a; color: #94a3b8; border-color: #334155; }
+        html.dark .slot-btn.available { background: rgba(2,195,154,0.15); color: #02C39A; border-color: #02C39A; }
+        html.dark .badge, html.dark .tag, html.dark .chip, html.dark .status-badge { background: #0f172a; }
+        html.dark .empty-state { background: #1e293b; color: #94a3b8; }
+        html.dark .bank-logo, html.dark .card-preview { background: #0f172a; }
+        html.dark .stars span, html.dark .star { color: #94a3b8; }
+        html.dark .stars span.selected, html.dark .star.active { color: #f59e0b; }
+
+        /* Dashboard-specific dark overrides */
+        html.dark .stat-card { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .stat-value { color: #e2e8f0; }
+        html.dark .quick-btn { background: #1e293b !important; color: #e2e8f0; border-color: #334155; }
+        html.dark .quick-btn:hover { border-color: var(--primary); }
+        html.dark .panel { background: #1e293b !important; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        html.dark .panel-header { border-bottom-color: #334155; }
+        html.dark .earning-row { border-bottom-color: #334155; }
+        html.dark .earning-label { color: #94a3b8; }
+        html.dark .btn-ghost { background: #0f172a; color: #94a3b8; }
+        html.dark .btn-ghost:hover { background: #334155; }
+
+        .theme-toggle { width: 36px; height: 36px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        html.dark .theme-toggle { border-color: #334155; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <script>
+        // Auth guard — must be logged in AND have provider role
+        (function() {
+            const demo = localStorage.getItem('khedmah_demo');
+            if (!demo) { window.location.href = 'login.html'; return; }
+            try {
+                const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                if (u.role && u.role !== 'provider') {
+                    window.location.href = u.role === 'customer' ? 'customer-dashboard.html' : 'login.html';
+                }
+            } catch(e) {}
+        })();
+    </script>
+
+    <nav>
+        <div class="nav-content">
+            <a href="INDEX.html" class="logo">KHEDMAH</a>
+            <div class="nav-links">
+                <a href="provider-dashboard.html" class="active">لوحة التحكم</a>
+                <a href="provider-manage-services.html">خدماتي</a>
+                <a href="provider-availability.html">التوفر</a>
+                <a href="chat.html">المحادثات</a>
+                <a href="provider-wallet.html" class="nav-link">💰 المحفظة</a>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <a href="provider-dashboard.html" class="avatar-btn">خ</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <div class="welcome-left">
+                <div class="provider-avatar-lg">خ</div>
+                <div class="welcome-text">
+                    <h2>أهلاً، خالد العمري 👋</h2>
+                    <p>مزود خدمات — كهرباء وصيانة عامة • الرياض</p>
+                    <div class="provider-status">
+                        <span class="status-dot"></span>
+                        متاح الآن
+                    </div>
+                </div>
+            </div>
+            <div class="welcome-right">
+                <div class="rating-big">4.8 ⭐</div>
+                <div class="rating-sub">بناءً على 47 تقييم</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon teal">🔄</div>
+                <div>
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">طلب جارٍ</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon amber">📬</div>
+                <div>
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">طلبات جديدة</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div>
+                    <div class="stat-value">127</div>
+                    <div class="stat-label">خدمة مكتملة</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">💰</div>
+                <div>
+                    <div class="stat-value">3,240</div>
+                    <div class="stat-label">أرباح هذا الشهر (ر.س)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-title" style="margin-bottom:1rem">روابط سريعة</div>
+            <div class="quick-actions">
+                <a href="provider-manage-services.html" class="quick-btn">
+                    <div class="qb-icon">🔧</div>
+                    <div class="qb-label">خدماتي</div>
+                </a>
+                <a href="provider-availability.html" class="quick-btn">
+                    <div class="qb-icon">📅</div>
+                    <div class="qb-label">جدول التوفر</div>
+                </a>
+                <a href="provider-bank-settings.html" class="quick-btn">
+                    <div class="qb-icon">🏦</div>
+                    <div class="qb-label">الحساب البنكي</div>
+                </a>
+                <a href="chat.html" class="quick-btn">
+                    <div class="qb-icon">💬</div>
+                    <div class="qb-label">المحادثات</div>
+                </a>
+                <a href="referral-program.html" class="quick-btn">
+                    <div class="qb-icon">🎁</div>
+                    <div class="qb-label">برنامج الإحالة</div>
+                </a>
+                <a href="provider-wallet.html" class="quick-btn">
+                    <div class="qb-icon">💰</div>
+                    <div class="qb-label">المحفظة</div>
+                </a>
+                <a href="tenders.html" class="quick-btn">
+                    <div class="qb-icon">📋</div>
+                    <div class="qb-label">المناقصات</div>
+                </a>
+                <a href="equipment.html" class="quick-btn">
+                    <div class="qb-icon">🏗️</div>
+                    <div class="qb-label">المعدات</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- New Requests -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">طلبات جديدة تنتظر ردك <span style="background:rgba(139,92,246,0.12);color:#5b21b6;padding:2px 8px;border-radius:10px;font-size:0.8rem;margin-right:6px;">3</span></div>
+            </div>
+            <div class="requests-list" id="newRequestsList">
+                <div class="request-card" data-req-id="REQ-P001" data-service="تمديد كهربائي">
+                    <div class="req-icon">🔌</div>
+                    <div class="req-info">
+                        <div class="req-name">تمديد كهربائي — 3 غرف</div>
+                        <div class="req-meta">
+                            <span>📍 الرياض — حي الملقا</span>
+                            <span>📅 الأحد 15 مارس، 10 ص</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-new">جديد</span>
+                    <div class="req-actions">
+                        <button class="btn-sm btn-primary" onclick="acceptRequest(this)">✅ قبول</button>
+                        <button class="btn-sm btn-ghost" onclick="dismissRequest(this)">رفض</button>
+                    </div>
+                </div>
+                <div class="request-card" data-req-id="REQ-P002" data-service="صيانة لوحة كهربائية">
+                    <div class="req-icon">🔧</div>
+                    <div class="req-info">
+                        <div class="req-name">صيانة لوحة كهربائية</div>
+                        <div class="req-meta">
+                            <span>📍 الرياض — حي العليا</span>
+                            <span>📅 الاثنين 16 مارس، 2 م</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-new">جديد</span>
+                    <div class="req-actions">
+                        <button class="btn-sm btn-primary" onclick="acceptRequest(this)">✅ قبول</button>
+                        <button class="btn-sm btn-ghost" onclick="dismissRequest(this)">رفض</button>
+                    </div>
+                </div>
+                <div class="request-card" data-req-id="REQ-P003" data-service="تركيب إضاءة LED">
+                    <div class="req-icon">💡</div>
+                    <div class="req-info">
+                        <div class="req-name">تركيب إضاءة LED خارجية</div>
+                        <div class="req-meta">
+                            <span>📍 الرياض — حي الروضة</span>
+                            <span>📅 الثلاثاء 17 مارس، 9 ص</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-new">جديد</span>
+                    <div class="req-actions">
+                        <button class="btn-sm btn-primary" onclick="acceptRequest(this)">✅ قبول</button>
+                        <button class="btn-sm btn-ghost" onclick="dismissRequest(this)">رفض</button>
+                    </div>
+                </div>
+                <div id="newRequestsEmpty" class="empty-state" style="display:none;">
+                    <div class="emoji">📭</div>
+                    <p>لا توجد طلبات جديدة حالياً</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active + Earnings -->
+        <div class="two-col section">
+            <!-- Active Orders -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">الطلبات الجارية</div>
+                </div>
+                <div class="panel-body" style="padding:0.75rem 1.25rem">
+                    <div class="request-card" data-req-id="REQ-001001" data-service="صيانة تكييف" style="box-shadow:none;padding:1rem 0;border-bottom:1px solid #f1f5f9;border-radius:0">
+                        <div class="req-icon">🔧</div>
+                        <div class="req-info">
+                            <div class="req-name">صيانة تكييف مركزي</div>
+                            <div class="req-meta">
+                                <span>محمد أحمد</span>
+                                <span>📅 اليوم، 3:00 م</span>
+                            </div>
+                        </div>
+                        <span class="badge badge-progress">جارٍ</span>
+                        <div class="req-actions">
+                            <a href="chat.html?type=service&requestId=REQ-001001" class="btn-sm btn-outline">💬</a>
+                            <button class="btn-sm btn-success" onclick="completeWork(this)">اكتمل ✓</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Earnings / Wallet -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">💰 محفظتي</div>
+                </div>
+                <div class="panel-body">
+                    <div class="wallet-total">
+                        <div class="wallet-amount">1,840 ر.س</div>
+                        <div class="wallet-sub">الرصيد المتاح للسحب</div>
+                    </div>
+                    <div class="earning-row">
+                        <span class="earning-label">أرباح هذا الشهر</span>
+                        <span class="earning-value">3,240 ر.س</span>
+                    </div>
+                    <div class="earning-row">
+                        <span class="earning-label">في الضمان (قيد الإفراج)</span>
+                        <span class="earning-value" style="color:var(--warning)">450 ر.س</span>
+                    </div>
+                    <div class="earning-row">
+                        <span class="earning-label">إجمالي الأرباح</span>
+                        <span class="earning-value" style="color:var(--success)">38,420 ر.س</span>
+                    </div>
+                    <button class="withdraw-btn" onclick="window.location.href='provider-wallet.html'">💳 طلب سحب</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        /* ── Dashboard Data Loader ───────────────────────────────────────────── */
+        (async function initDashboard() {
+            if (!API.isLoggedIn()) return;
+            try {
+                const [userRes, newReqsRes, activeReqsRes, walletRes, earningsRes] = await Promise.allSettled([
+                    API.auth.me(),
+                    API.requests.list({ status: 'PENDING_QUOTE', limit: 20 }),
+                    API.requests.list({ status: 'IN_PROGRESS', limit: 10 }),
+                    API.wallet.balance(),
+                    API.providers.myEarnings(),
+                ]);
+
+                // Welcome banner
+                if (userRes.status === 'fulfilled') {
+                    const u = userRes.value;
+                    const name = u.profile?.nameAr || u.username || 'مزود';
+                    document.querySelector('.welcome-text h2').textContent = 'أهلاً، ' + name + ' 👋';
+                    const city = u.providerProfile?.city || '';
+                    const specialty = u.providerProfile?.specialty || 'مزود خدمة';
+                    document.querySelector('.welcome-text p').textContent = specialty + (city ? ' • ' + city : '');
+                    document.querySelector('.provider-avatar-lg').textContent = name.charAt(0);
+                    document.querySelector('.avatar-btn').textContent = name.charAt(0);
+                    const rating = u.providerProfile?.ratingAvg;
+                    const ratingCount = u.providerProfile?.ratingCount || 0;
+                    if (rating != null) {
+                        document.querySelector('.rating-big').textContent = Number(rating).toFixed(1) + ' ⭐';
+                        document.querySelector('.rating-sub').textContent = 'بناءً على ' + ratingCount + ' تقييم';
+                    }
+                }
+
+                // Stats
+                const newItems   = newReqsRes.status   === 'fulfilled' ? (newReqsRes.value?.items   ?? newReqsRes.value   ?? []) : [];
+                const activeItems = activeReqsRes.status === 'fulfilled' ? (activeReqsRes.value?.items ?? activeReqsRes.value ?? []) : [];
+                const statCards  = document.querySelectorAll('.stat-value');
+                if (statCards[0]) statCards[0].textContent = activeItems.length;
+                if (statCards[1]) statCards[1].textContent = newItems.length;
+
+                // Monthly earnings stat
+                if (earningsRes.status === 'fulfilled' && statCards[3]) {
+                    const e = earningsRes.value;
+                    statCards[3].textContent = Number(e.thisMonth ?? 0).toLocaleString('ar-SA');
+                    if (statCards[2]) statCards[2].textContent = e.completedCount ?? '—';
+                }
+
+                // Wallet panel
+                if (walletRes.status === 'fulfilled') {
+                    const w = walletRes.value;
+                    document.querySelector('.wallet-amount').textContent = Number(w.balance ?? 0).toLocaleString('ar-SA') + ' ر.س';
+                    const rows = document.querySelectorAll('.earning-value');
+                    if (rows[1]) rows[1].textContent = Number(w.heldBalance ?? 0).toLocaleString('ar-SA') + ' ر.س';
+                }
+                if (earningsRes.status === 'fulfilled') {
+                    const e = earningsRes.value;
+                    const rows = document.querySelectorAll('.earning-value');
+                    if (rows[0]) rows[0].textContent = Number(e.thisMonth ?? 0).toLocaleString('ar-SA') + ' ر.س';
+                    if (rows[2]) rows[2].textContent = Number(e.totalEarnings ?? 0).toLocaleString('ar-SA') + ' ر.س';
+                }
+
+                // New requests list
+                renderNewRequests(newItems);
+
+                // Active jobs
+                renderActiveJobs(activeItems);
+
+            } catch(e) { /* silent */ }
+        })();
+
+        function renderNewRequests(items) {
+            const list = document.getElementById('newRequestsList');
+            if (!items.length) {
+                list.innerHTML = `<div class="empty-state"><div class="emoji">📭</div><p>لا توجد طلبات جديدة حالياً</p></div>`;
+                return;
+            }
+            const icons = { electrical: '🔌', plumbing: '🔧', ac: '❄️', cleaning: '🧹', painting: '🎨' };
+            list.innerHTML = items.map(r => {
+                const icon = icons[(r.serviceCategory || '').toLowerCase()] || '🔧';
+                const dateStr = r.scheduledAt ? new Date(r.scheduledAt).toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+                return `<div class="request-card" data-req-id="${r.id}" data-service="${r.serviceTitle || r.title || 'خدمة'}">
+                    <div class="req-icon">${icon}</div>
+                    <div class="req-info">
+                        <div class="req-name">${r.serviceTitle || r.title || 'طلب خدمة'}</div>
+                        <div class="req-meta">
+                            <span>📍 ${r.city || r.location || ''}</span>
+                            ${dateStr ? `<span>📅 ${dateStr}</span>` : ''}
+                        </div>
+                    </div>
+                    <span class="badge badge-new">جديد</span>
+                    <div class="req-actions">
+                        <button class="btn-sm btn-primary" onclick="acceptRequest(this)">✅ قبول</button>
+                        <button class="btn-sm btn-ghost" onclick="dismissRequest(this)">رفض</button>
+                    </div>
+                </div>`;
+            }).join('');
+            const countEl = document.querySelector('.section-title span');
+            if (countEl) countEl.textContent = items.length;
+        }
+
+        function renderActiveJobs(items) {
+            const panel = document.querySelector('.panel-body[style*="padding:0.75rem"]');
+            if (!panel) return;
+            if (!items.length) {
+                panel.innerHTML = `<div class="empty-state" style="border:none;padding:1.5rem 0;"><div class="emoji">🎯</div><p>لا توجد طلبات جارية حالياً</p></div>`;
+                return;
+            }
+            panel.innerHTML = items.map(r => `
+                <div class="request-card" data-req-id="${r.id}" data-service="${r.serviceTitle || 'خدمة'}" style="box-shadow:none;padding:1rem 0;border-bottom:1px solid #f1f5f9;border-radius:0">
+                    <div class="req-icon">🔧</div>
+                    <div class="req-info">
+                        <div class="req-name">${r.serviceTitle || r.title || 'طلب خدمة'}</div>
+                        <div class="req-meta"><span>${r.customer?.profile?.nameAr || 'عميل'}</span></div>
+                    </div>
+                    <span class="badge badge-progress">جارٍ</span>
+                    <div class="req-actions">
+                        <a href="chat.html?type=service&requestId=${r.id}" class="btn-sm btn-outline">💬</a>
+                        <button class="btn-sm btn-success" onclick="completeWork(this)">اكتمل ✓</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function dismissRequest(btn) {
+            const card = btn.closest('.request-card');
+            card.style.display = 'none';
+            const list = document.getElementById('newRequestsList');
+            const visible = list.querySelectorAll('.request-card:not([style*="display: none"]):not([style*="display:none"])').length;
+            document.getElementById('newRequestsEmpty').style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        async function acceptRequest(btn) {
+            const card    = btn.closest('.request-card');
+            const reqId   = card.dataset.reqId;
+            const service = card.dataset.service || 'خدمة';
+            const priceStr = prompt('أدخل سعرك المقترح للخدمة (ر.س):');
+            if (!priceStr) return;
+            const price = parseFloat(priceStr);
+            if (isNaN(price) || price <= 0) { API.toast('❌ سعر غير صالح'); return; }
+            btn.disabled = true;
+            try {
+                await API.requests.submitQuote(reqId, { price, notes: '' });
+                card.querySelector('.badge').className = 'badge badge-progress';
+                card.querySelector('.badge').textContent = 'تم إرسال العرض';
+                btn.textContent = '✅ تم الإرسال';
+                API.toast('✅ تم إرسال عرضك للعميل', 'success');
+                setTimeout(() => {
+                    window.location.href = 'chat.html?type=service&requestId=' + reqId + '&service=' + encodeURIComponent(service);
+                }, 1500);
+            } catch(err) {
+                btn.disabled = false;
+                API.toast('❌ ' + API.errorMsg(err));
+            }
+        }
+
+        async function completeWork(btn) {
+            if (!confirm('هل أكملت العمل وتريد إشعار العميل للتأكيد؟')) return;
+            const card    = btn.closest('.request-card');
+            const reqId   = card.dataset.reqId || '';
+            const service = card.dataset.service || 'خدمة';
+            btn.disabled = true;
+            try {
+                await API.requests.complete(reqId);
+                card.querySelector('.badge').className = 'badge badge-completed';
+                card.querySelector('.badge').textContent = 'مكتمل';
+                btn.textContent = '✅ تم';
+                API.toast('✅ تم إشعار العميل — في انتظار تأكيد الاستلام', 'success');
+                const actionsEl = card.querySelector('.req-actions');
+                if (actionsEl) {
+                    const chatBtn = document.createElement('a');
+                    chatBtn.href = 'chat.html?type=service&requestId=' + reqId;
+                    chatBtn.className = 'btn-sm btn-outline';
+                    chatBtn.textContent = '💬 محادثة';
+                    actionsEl.appendChild(chatBtn);
+                    const rateBtn = document.createElement('a');
+                    rateBtn.href = 'provider-rate-customer.html?requestId=' + reqId + '&service=' + encodeURIComponent(service);
+                    rateBtn.className = 'btn-sm btn-primary';
+                    rateBtn.textContent = '⭐ قيّم';
+                    actionsEl.appendChild(rateBtn);
+                }
+            } catch(err) {
+                btn.disabled = false;
+                API.toast('❌ ' + API.errorMsg(err));
+            }
+        }
+
+        function showWithdraw() {
+            window.location.href = 'provider-wallet.html';
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:.65rem 1.5rem;border-radius:12px;font-family:Tajawal,sans-serif;font-size:.88rem;z-index:9999;white-space:nowrap;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        document.querySelector('.avatar-btn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (confirm('تسجيل الخروج؟')) {
+                await API.auth.logout().catch(() => {});
+                window.location.href = 'login.html';
+            }
+        });
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        }
+        (function() {
+            if (localStorage.getItem('khedmah_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        })();
+    </script>
+</body>
+</html>
