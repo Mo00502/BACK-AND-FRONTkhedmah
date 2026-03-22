@@ -600,6 +600,11 @@
             overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('show'); });
         });
 
+        // XSS escaping helper
+        function escHtml(str) {
+            return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
         // Role-aware dashboard link
         document.addEventListener('DOMContentLoaded', function() {
             const role = API.auth.getRole();
@@ -624,22 +629,30 @@
                     card.dataset.city = t.city || '';
                     card.dataset.date = t.createdAt || '';
                     card.dataset.deadline = t.deadline || '';
+                    const safeTitle    = escHtml(t.title || 'مناقصة');
+                    const safeCompany  = escHtml(t.company?.nameAr || t.company?.name || 'شركة');
+                    const safeCity     = escHtml(t.city || '');
+                    const safeCategory = escHtml(t.category || '');
+                    const safeDesc     = escHtml((t.description || '').slice(0, 120));
+                    const safeSuffix   = t.description?.length > 120 ? '...' : '';
+                    const safeDeadline = escHtml(t.deadline ? t.deadline.split('T')[0] : '');
+                    const safeId       = escHtml(id);
                     card.innerHTML = `
                         <div style="padding:1.25rem">
                             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap">
                                 <div>
-                                    <div style="font-weight:700;font-size:1rem;margin-bottom:0.25rem">${t.title || 'مناقصة'}</div>
-                                    <div style="font-size:0.82rem;color:var(--gray)">🏢 ${t.company?.name || 'شركة'} &nbsp;•&nbsp; 📍 ${t.city || ''} &nbsp;•&nbsp; 🏷️ ${t.category || ''}</div>
+                                    <div style="font-weight:700;font-size:1rem;margin-bottom:0.25rem">${safeTitle}</div>
+                                    <div style="font-size:0.82rem;color:var(--gray)">🏢 ${safeCompany} &nbsp;•&nbsp; 📍 ${safeCity} &nbsp;•&nbsp; 🏷️ ${safeCategory}</div>
                                 </div>
                                 <span style="background:#dcfce7;color:#166534;padding:0.25rem 0.75rem;border-radius:999px;font-size:0.75rem;font-weight:600;white-space:nowrap">${t.status === 'OPEN' ? '🟢 مفتوح' : '🔴 مغلق'}</span>
                             </div>
-                            <p style="font-size:0.88rem;color:var(--gray);margin:0.75rem 0 0">${(t.description || '').slice(0, 120)}${t.description?.length > 120 ? '...' : ''}</p>
+                            <p style="font-size:0.88rem;color:var(--gray);margin:0.75rem 0 0">${safeDesc}${safeSuffix}</p>
                             <div style="display:flex;gap:1rem;margin-top:0.875rem;flex-wrap:wrap">
                                 <span style="font-size:0.8rem;color:var(--primary);font-weight:600">💰 ${Number(t.budget || 0).toLocaleString('ar-SA')} ر.س</span>
-                                ${t.deadline ? `<span style="font-size:0.8rem;color:var(--gray)">⏰ الإغلاق: ${t.deadline.split('T')[0]}</span>` : ''}
+                                ${safeDeadline ? `<span style="font-size:0.8rem;color:var(--gray)">⏰ الإغلاق: ${safeDeadline}</span>` : ''}
                             </div>
                             <div style="margin-top:1rem;text-align:left">
-                                <a href="tender-detail.html?id=${id}" style="background:var(--primary);color:white;padding:0.45rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض التفاصيل</a>
+                                <a href="tender-detail.html?id=${safeId}" style="background:var(--primary);color:white;padding:0.45rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض التفاصيل</a>
                             </div>
                         </div>`;
                     list.appendChild(card);

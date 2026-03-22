@@ -52,12 +52,20 @@ export class SupportService {
   }
 
   // ── List user's own tickets ────────────────────────────────────────────────
-  async listMine(userId: string, status?: string) {
-    return this.prisma.supportTicket.findMany({
-      where: { userId, ...(status ? { status: status as any } : {}) },
-      orderBy: { createdAt: 'desc' },
-      include: { messages: { orderBy: { createdAt: 'asc' }, take: 1 } },
-    });
+  async listMine(userId: string, status?: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where: any = { userId, ...(status ? { status: status as any } : {}) };
+    const [tickets, total] = await Promise.all([
+      this.prisma.supportTicket.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { messages: { orderBy: { createdAt: 'asc' }, take: 1 } },
+        skip,
+        take: limit,
+      }),
+      this.prisma.supportTicket.count({ where }),
+    ]);
+    return { tickets, total, page, pages: Math.ceil(total / limit) };
   }
 
   // ── Get single ticket ──────────────────────────────────────────────────────

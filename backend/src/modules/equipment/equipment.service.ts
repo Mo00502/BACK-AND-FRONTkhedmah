@@ -192,11 +192,19 @@ export class EquipmentService {
     return this.prisma.equipment.update({ where: { id }, data: { status: 'ARCHIVED' } });
   }
 
-  async listMine(userId: string) {
-    return this.prisma.equipment.findMany({
-      where: { ownerId: userId },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listMine(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { ownerId: userId };
+    const [items, total] = await Promise.all([
+      this.prisma.equipment.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.equipment.count({ where }),
+    ]);
+    return { items, total, page, pages: Math.ceil(total / limit) };
   }
 
   // ── Inquiries ─────────────────────────────────────────────────────────────
@@ -231,39 +239,55 @@ export class EquipmentService {
   /**
    * Equipment owner views all inquiries for one of their listings.
    */
-  async listInquiries(equipmentId: string, userId: string) {
+  async listInquiries(equipmentId: string, userId: string, page = 1, limit = 20) {
     const eq = await this.prisma.equipment.findUnique({ where: { id: equipmentId } });
     if (!eq) throw new NotFoundException('Equipment not found');
     if (eq.ownerId !== userId)
       throw new ForbiddenException('Only the equipment owner can view inquiries');
 
-    return this.prisma.equipmentInquiry.findMany({
-      where: { equipmentId },
-      include: {
-        fromUser: {
-          select: {
-            id: true,
-            profile: { select: { nameAr: true, nameEn: true, avatarUrl: true } },
+    const skip = (page - 1) * limit;
+    const where = { equipmentId };
+    const [items, total] = await Promise.all([
+      this.prisma.equipmentInquiry.findMany({
+        where,
+        include: {
+          fromUser: {
+            select: {
+              id: true,
+              profile: { select: { nameAr: true, nameEn: true, avatarUrl: true } },
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.equipmentInquiry.count({ where }),
+    ]);
+    return { items, total, page, pages: Math.ceil(total / limit) };
   }
 
   /**
    * Customer sees all inquiries they have sent.
    */
-  async myInquiries(userId: string) {
-    return this.prisma.equipmentInquiry.findMany({
-      where: { fromUserId: userId },
-      include: {
-        equipment: {
-          select: { id: true, name: true, category: true, region: true, imageUrls: true },
+  async myInquiries(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { fromUserId: userId };
+    const [items, total] = await Promise.all([
+      this.prisma.equipmentInquiry.findMany({
+        where,
+        include: {
+          equipment: {
+            select: { id: true, name: true, category: true, region: true, imageUrls: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.equipmentInquiry.count({ where }),
+    ]);
+    return { items, total, page, pages: Math.ceil(total / limit) };
   }
 
   /**
@@ -366,15 +390,23 @@ export class EquipmentService {
     return updated;
   }
 
-  async myRentals(userId: string) {
-    return this.prisma.equipmentRental.findMany({
-      where: { renterId: userId },
-      include: {
-        equipment: {
-          select: { id: true, name: true, category: true, region: true, dayPrice: true },
+  async myRentals(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { renterId: userId };
+    const [items, total] = await Promise.all([
+      this.prisma.equipmentRental.findMany({
+        where,
+        include: {
+          equipment: {
+            select: { id: true, name: true, category: true, region: true, dayPrice: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.equipmentRental.count({ where }),
+    ]);
+    return { items, total, page, pages: Math.ceil(total / limit) };
   }
 }

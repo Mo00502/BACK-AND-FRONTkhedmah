@@ -12,6 +12,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { IsString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
@@ -25,6 +27,13 @@ import {
   ThrottleStrict,
 } from '../../common/decorators/throttle.decorator';
 import { UserRole } from '@prisma/client';
+
+class SuspendUserDto {
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -77,8 +86,12 @@ export class UsersController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ThrottleStrict()
   @ApiOperation({ summary: 'Suspend a user (admin only)' })
-  suspend(@CurrentUser('id') adminId: string, @Param('id') targetId: string) {
-    return this.users.suspend(adminId, targetId);
+  suspend(
+    @CurrentUser('id') adminId: string,
+    @Param('id') targetId: string,
+    @Body() dto: SuspendUserDto,
+  ) {
+    return this.users.suspend(adminId, targetId, dto.reason);
   }
 
   @Patch(':id/ban')

@@ -625,6 +625,11 @@
             if (q || city) applyFilters();
         })();
 
+        // XSS escaping helper
+        function escHtml(str) {
+            return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
         let currentSort = 'rating';
 
         function applyFilters() {
@@ -779,25 +784,29 @@
                     card.dataset.available = p.available ? '1' : '0';
                     card.dataset.jobs = p.jobsCompleted || 0;
                     const name = p.user?.name || p.name || 'مزود خدمة';
-                    const initial = name.charAt(0);
+                    const initial = escHtml(name.charAt(0));
                     const rating = parseFloat(p.ratingAvg || p.rating || 0).toFixed(1);
+                    const safeName     = escHtml(name);
+                    const safeCategory = escHtml(p.category || '');
+                    const safeCity     = escHtml(p.city || '');
+                    const safeId       = escHtml(id);
                     card.innerHTML = `
                         <div class="card-top">
                             <div class="prov-avatar">${initial}</div>
                             <div style="flex:1">
-                                <div style="font-weight:700">${name}</div>
-                                <div class="prov-service">${p.category || ''}</div>
-                                <div style="font-size:0.82rem;color:var(--gray)">📍 ${p.city || ''}</div>
+                                <div style="font-weight:700">${safeName}</div>
+                                <div class="prov-service">${safeCategory}</div>
+                                <div style="font-size:0.82rem;color:var(--gray)">📍 ${safeCity}</div>
                             </div>
                         </div>
                         <div class="card-bottom">
                             <div class="card-avail-price">
                                 <span style="color:var(--success);font-size:0.8rem">${p.available ? '🟢 متاح' : '🔴 غير متاح'}</span>
-                                <span style="font-weight:700;color:var(--primary)">${p.startingPrice ? p.startingPrice + ' ر.س' : 'حسب الاتفاق'}</span>
+                                <span style="font-weight:700;color:var(--primary)">${p.startingPrice ? escHtml(String(p.startingPrice)) + ' ر.س' : 'حسب الاتفاق'}</span>
                             </div>
                             <div class="card-actions">
                                 <span style="font-size:0.85rem">⭐ ${rating}</span>
-                                <a href="provider-profile.html?id=${id}" style="background:var(--primary);color:white;padding:0.4rem 1rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض الملف</a>
+                                <a href="provider-profile.html?id=${safeId}" style="background:var(--primary);color:white;padding:0.4rem 1rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض الملف</a>
                             </div>
                         </div>`;
                     grid.appendChild(card);

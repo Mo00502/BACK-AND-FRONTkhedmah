@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -32,8 +32,12 @@ export class DisputesController {
   @ThrottleRelaxed()
   @Get()
   @ApiOperation({ summary: 'List my disputes (as reporter or against)' })
-  listMine(@CurrentUser('id') userId: string) {
-    return this.disputes.listMyDisputes(userId);
+  listMine(
+    @CurrentUser('id') userId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.disputes.listMyDisputes(userId, +page, +limit);
   }
 
   @ThrottleStrict()

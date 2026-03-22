@@ -71,12 +71,20 @@ export class DisputesService {
     return dispute;
   }
 
-  async listMyDisputes(userId: string) {
-    return this.prisma.dispute.findMany({
-      where: { OR: [{ reporterId: userId }, { againstId: userId }] },
-      include: { request: { include: { service: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listMyDisputes(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { OR: [{ reporterId: userId }, { againstId: userId }] };
+    const [disputes, total] = await Promise.all([
+      this.prisma.dispute.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { request: { include: { service: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.dispute.count({ where }),
+    ]);
+    return { disputes, total, page, pages: Math.ceil(total / limit) };
   }
 
   async addEvidence(userId: string, disputeId: string, fileUrls: string[]) {

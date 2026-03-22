@@ -62,8 +62,15 @@ export class SupportController {
   @Get('tickets')
   @ApiOperation({ summary: 'List my support tickets' })
   @ApiQuery({ name: 'status', required: false })
-  listMine(@CurrentUser('id') userId: string, @Query('status') status?: string) {
-    return this.support.listMine(userId, status);
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  listMine(
+    @CurrentUser('id') userId: string,
+    @Query('status') status?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.support.listMine(userId, status, +page, +limit);
   }
 
   @ThrottleStrict()

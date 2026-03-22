@@ -52,6 +52,7 @@ export class WalletController {
   constructor(private wallet: WalletService) {}
 
   @Get('balance')
+  @Roles(UserRole.CUSTOMER, UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Get current wallet balance (available + held)' })
   getBalance(@CurrentUser() user: any) {
@@ -59,6 +60,7 @@ export class WalletController {
   }
 
   @Get('transactions')
+  @Roles(UserRole.CUSTOMER, UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Get wallet transaction history' })
   getTransactions(@CurrentUser() user: any, @Query('page') page = 1, @Query('limit') limit = 20) {

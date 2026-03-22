@@ -165,8 +165,11 @@ export class AdminController {
   @Get('commissions/overdue')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'List tender commissions overdue >30 days' })
-  getOverdueCommissions() {
-    return this.admin.getOverdueCommissions();
+  getOverdueCommissions(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.admin.getOverdueCommissions(+page, +limit);
   }
 
   @Get('reports/weekly')

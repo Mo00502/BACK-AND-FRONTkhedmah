@@ -115,7 +115,7 @@ export class SearchService {
         take: limit,
         orderBy: { deadline: 'asc' },
         include: {
-          company: { select: { name: true, region: true } as any },
+          company: { select: { nameAr: true, nameEn: true, region: true } as any },
           // Intentionally NO _count.bids — exposing bid count violates bid privacy rules
         },
       }),

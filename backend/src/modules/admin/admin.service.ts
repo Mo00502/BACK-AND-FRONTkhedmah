@@ -416,12 +416,20 @@ export class AdminService {
   }
 
   // ── Commission oversight ─────────────────────────────────────────────────
-  async getOverdueCommissions() {
-    return this.prisma.tenderCommission.findMany({
-      where: { status: 'OVERDUE' },
-      include: { tender: true, company: { include: { owner: { include: { profile: true } } } } },
-      orderBy: { overdueAt: 'asc' },
-    });
+  async getOverdueCommissions(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { status: 'OVERDUE' as const };
+    const [items, total] = await Promise.all([
+      this.prisma.tenderCommission.findMany({
+        where,
+        include: { tender: true, company: { include: { owner: { include: { profile: true } } } } },
+        orderBy: { overdueAt: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.tenderCommission.count({ where }),
+    ]);
+    return { items, total, page, pages: Math.ceil(total / limit) };
   }
 
   // ── Consultation management ───────────────────────────────────────────────

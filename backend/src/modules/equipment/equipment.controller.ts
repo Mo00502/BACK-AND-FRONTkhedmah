@@ -10,6 +10,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { EquipmentService } from './equipment.service';
@@ -74,22 +76,34 @@ export class EquipmentController {
   @Get('mine')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'My equipment listings (owner dashboard)' })
-  mine(@CurrentUser() user: any) {
-    return this.equipment.listMine(user.id);
+  mine(
+    @CurrentUser() user: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.equipment.listMine(user.id, page, limit);
   }
 
   @Get('rentals/mine')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'My rental history' })
-  myRentals(@CurrentUser() user: any) {
-    return this.equipment.myRentals(user.id);
+  myRentals(
+    @CurrentUser() user: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.equipment.myRentals(user.id, page, limit);
   }
 
   @Get('inquiries/mine')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'All inquiries I have sent' })
-  myInquiries(@CurrentUser() user: any) {
-    return this.equipment.myInquiries(user.id);
+  myInquiries(
+    @CurrentUser() user: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.equipment.myInquiries(user.id, page, limit);
   }
 
   @Get(':id')
@@ -139,8 +153,13 @@ export class EquipmentController {
   @Get(':id/inquiries')
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'View all inquiries for a listing (owner only)' })
-  listInquiries(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.equipment.listInquiries(id, user.id);
+  listInquiries(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.equipment.listInquiries(id, user.id, page, limit);
   }
 
   @Patch('inquiries/:inquiryId/status')

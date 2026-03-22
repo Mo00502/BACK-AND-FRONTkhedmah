@@ -42,6 +42,7 @@ const buildPrismaMock = () => ({
     findUnique: jest.fn(),
     update: jest.fn(),
     findMany: jest.fn(),
+    count: jest.fn(),
   },
   $transaction: jest.fn().mockImplementation(async (fn: any) => {
     const tx = {
@@ -242,16 +243,17 @@ describe('EquipmentService', () => {
 
   // ── 8. myRentals ────────────────────────────────────────────────────────────
   describe('myRentals', () => {
-    it('should return rentals with equipment details for the renter', async () => {
+    it('should return paginated rentals with equipment details for the renter', async () => {
       const rentals = [mockRental()];
       prisma.equipmentRental.findMany.mockResolvedValue(rentals);
+      prisma.equipmentRental.count.mockResolvedValue(1);
 
       const result = await service.myRentals('renter-1');
 
       expect(prisma.equipmentRental.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { renterId: 'renter-1' } }),
       );
-      expect(result).toEqual(rentals);
+      expect(result).toEqual({ items: rentals, total: 1, page: 1, pages: 1 });
     });
   });
 });

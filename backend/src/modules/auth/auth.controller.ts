@@ -10,7 +10,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiProperty } from '@nestjs/swagger';
+import { IsEmail } from 'class-validator';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
@@ -29,6 +30,12 @@ import {
   ThrottleStrict,
   SkipThrottle,
 } from '../../common/decorators/throttle.decorator';
+
+class ResendVerificationDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -74,8 +81,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ThrottleAuth() // 5/min — prevent flooding
   @ApiOperation({ summary: 'Re-send the email verification link' })
-  resendVerification(@Body() body: { email: string }) {
-    return this.auth.resendVerificationEmail(body.email);
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.auth.resendVerificationEmail(dto.email);
   }
 
   // ── Login ─────────────────────────────────────────────────────────────────────

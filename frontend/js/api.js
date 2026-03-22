@@ -342,11 +342,31 @@
   };
 
   const consultations = {
-    list:    (p = {})   => http.get('/consultations?' + new URLSearchParams(p)),
-    book:    (data)     => http.post('/consultations', data),
-    get:     (id)       => http.get(`/consultations/${id}`),
-    accept:  (id)       => http.patch(`/consultations/${id}/accept`),
-    complete: (id)      => http.patch(`/consultations/${id}/complete`),
+    list:         (p = {})    => http.get('/consultations?' + new URLSearchParams(p)),
+    book:         (data)      => http.post('/consultations', data),
+    get:          (id)        => http.get(`/consultations/${id}`),
+    accept:       (id)        => http.patch(`/consultations/${id}/accept`),
+    complete:     (id)        => http.patch(`/consultations/${id}/complete`),
+    cancel:       (id)        => http.patch(`/consultations/${id}/cancel`),
+    rate:         (id, data)  => http.post(`/consultations/${id}/rate`, data),
+    reject:       (id)        => http.patch(`/consultations/${id}/reject`),
+    startSession: (id)        => http.patch(`/consultations/${id}/start`),
+  };
+
+  const disputes = {
+    list:        (p = 1)   => http.get(`/disputes?page=${p}`),
+    get:         (id)      => http.get(`/disputes/${id}`),
+    open:        (data)    => http.post('/disputes', data),
+    addEvidence: (id, data) => http.post(`/disputes/${id}/evidence`, data),
+    escalate:    (id)      => http.post(`/disputes/${id}/escalate`),
+  };
+
+  const support = {
+    list:   (p = 1)       => http.get(`/support/tickets?page=${p}`),
+    get:    (id)          => http.get(`/support/tickets/${id}`),
+    create: (data)        => http.post('/support/tickets', data),
+    reply:  (id, data)    => http.post(`/support/tickets/${id}/messages`, data),
+    close:  (id)          => http.patch(`/support/admin/tickets/${id}/status`, { status: 'CLOSED' }),
   };
 
   const maps = {
@@ -402,7 +422,7 @@
     // Domain namespaces
     auth, requests, payments, wallet, providers, services,
     search, reviews, notifications, chat, admin, tenders,
-    invoices, equipment, consultations, maps,
+    invoices, equipment, consultations, disputes, support, maps,
 
     // Auth helpers (frequently needed in guards)
     isLoggedIn:  auth.isLoggedIn,

@@ -485,4 +485,175 @@ export class EventListenerService {
       );
     }
   }
+
+  // ── Payment events ────────────────────────────────────────────────────────
+
+  @OnEvent('payment.confirmed')
+  async onPaymentConfirmed(payload: { paymentId: string; requestId: string; customerId: string; amount: number }) {
+    try {
+      await this.notif.notifyUser(
+        payload.customerId,
+        '✅ تم تأكيد الدفع',
+        `تم تأكيد دفعتك بمبلغ ${payload.amount} ريال. جاري البحث عن مزود خدمة.`,
+        { requestId: payload.requestId, paymentId: payload.paymentId },
+      );
+      this.logger.log(`Payment confirmed: ${payload.paymentId} for request ${payload.requestId}`);
+    } catch (err) {
+      this.logger.error(`onPaymentConfirmed failed: ${err}`);
+    }
+  }
+
+  @OnEvent('payment.refund_confirmed')
+  async onRefundConfirmed(payload: { paymentId: string; requestId?: string; customerId?: string; amount?: number }) {
+    try {
+      if (payload.customerId) {
+        await this.notif.notifyUser(
+          payload.customerId,
+          '💸 تم تأكيد الاسترداد',
+          `تم تأكيد استرداد مبلغ ${payload.amount ?? ''} ريال إلى حسابك.`,
+          { paymentId: payload.paymentId },
+        );
+      }
+      this.logger.log(`Refund confirmed for payment ${payload.paymentId}`);
+    } catch (err) {
+      this.logger.error(`onRefundConfirmed failed: ${err}`);
+    }
+  }
+
+  @OnEvent('payment.refunded')
+  async onPaymentRefunded(payload: { paymentId: string; adminId: string; reason: string }) {
+    this.logger.log(`Payment refunded by admin ${payload.adminId}: ${payload.paymentId} — ${payload.reason}`);
+  }
+
+  // ── Admin user management events ─────────────────────────────────────────
+
+  @OnEvent('admin.user_suspended')
+  async onUserSuspended(payload: { targetUserId: string; adminId: string; reason: string }) {
+    try {
+      await this.notif.notifyUser(
+        payload.targetUserId,
+        '⚠️ تم تعليق حسابك',
+        `تم تعليق حسابك. السبب: ${payload.reason}. للاستفسار تواصل مع الدعم.`,
+        {},
+      );
+      this.logger.warn(`User suspended: ${payload.targetUserId} by admin ${payload.adminId}`);
+    } catch (err) {
+      this.logger.error(`onUserSuspended failed: ${err}`);
+    }
+  }
+
+  @OnEvent('admin.user_banned')
+  async onUserBanned(payload: { targetUserId: string; adminId: string; reason?: string }) {
+    try {
+      await this.notif.notifyUser(
+        payload.targetUserId,
+        '🚫 تم حظر حسابك',
+        'تم حظر حسابك نهائياً. للاستفسار تواصل مع الدعم.',
+        {},
+      );
+      this.logger.warn(`User banned: ${payload.targetUserId} by admin ${payload.adminId}`);
+    } catch (err) {
+      this.logger.error(`onUserBanned failed: ${err}`);
+    }
+  }
+
+  // ── Auth events ───────────────────────────────────────────────────────────
+
+  @OnEvent('auth.login')
+  async onLogin(payload: { userId: string; ip?: string; userAgent?: string }) {
+    this.logger.log(`Login: user ${payload.userId} from ${payload.ip ?? 'unknown'}`);
+  }
+
+  @OnEvent('auth.password_changed')
+  async onPasswordChanged(payload: { userId: string }) {
+    try {
+      const user = await this.prisma.user.findUnique({ where: { id: payload.userId }, select: { email: true } });
+      if (user?.email) {
+        await this.notif.sendEmail(
+          user.email,
+          '🔐 تم تغيير كلمة مرورك',
+          '<p>تم تغيير كلمة مرور حسابك على منصة خدمة. إذا لم تقم بهذا الإجراء، تواصل مع الدعم فوراً.</p>',
+        );
+      }
+    } catch (err) {
+      this.logger.error(`onPasswordChanged notification failed: ${err}`);
+    }
+  }
+
+  // ── Request status events ─────────────────────────────────────────────────
+
+  @OnEvent('request.status_changed')
+  async onRequestStatusChanged(payload: { requestId: string; status: string; providerId?: string; customerId?: string }) {
+    try {
+      const statusLabels: Record<string, string> = {
+        IN_PROGRESS: 'بدأ مزود الخدمة في تنفيذ طلبك.',
+        COMPLETED: 'تم إكمال طلب الخدمة. يرجى تأكيد الاستلام.',
+      };
+      const bodyAr = statusLabels[payload.status];
+      if (!bodyAr) return;
+      // Notify customer if we have their id; otherwise look it up
+      let customerId = payload.customerId;
+      if (!customerId) {
+        const req = await this.prisma.serviceRequest.findUnique({
+          where: { id: payload.requestId },
+          select: { customerId: true },
+        });
+        customerId = req?.customerId;
+      }
+      if (customerId) {
+        await this.notif.notifyUser(
+          customerId,
+          '🔔 تحديث حالة الطلب',
+          bodyAr,
+          { requestId: payload.requestId },
+        );
+      }
+    } catch (err) {
+      this.logger.error(`onRequestStatusChanged failed: ${err}`);
+    }
+  }
+
+  // ── Materials usage logged ────────────────────────────────────────────────
+
+  @OnEvent('materials.usage.logged')
+  async onMaterialsUsageLogged(payload: { requestId: string; amount: number; description?: string }) {
+    try {
+      const request = await this.prisma.serviceRequest.findUnique({
+        where: { id: payload.requestId },
+        select: { customerId: true },
+      });
+      if (request?.customerId) {
+        await this.notif.notifyUser(
+          request.customerId,
+          '🛒 تم تسجيل مشتريات مواد',
+          `سجّل المزود شراء مواد بقيمة ${payload.amount} ريال${payload.description ? ': ' + payload.description : ''}.`,
+          { requestId: payload.requestId },
+        );
+      }
+    } catch (err) {
+      this.logger.error(`onMaterialsUsageLogged failed: ${err}`);
+    }
+  }
+
+  // ── Tender bid submitted ──────────────────────────────────────────────────
+
+  @OnEvent('tender.bid_submitted')
+  async onBidSubmitted(payload: { tenderId: string; bidId: string; userId: string }) {
+    try {
+      const tender = await this.prisma.tender.findUnique({
+        where: { id: payload.tenderId },
+        include: { company: { select: { ownerId: true } } },
+      });
+      if (tender?.company?.ownerId) {
+        await this.notif.notifyUser(
+          tender.company.ownerId,
+          '📋 عرض سعر جديد على مناقصتك',
+          'تلقيت عرض سعر جديد على إحدى مناقصاتك. راجع العروض من لوحة التحكم.',
+          { tenderId: payload.tenderId },
+        );
+      }
+    } catch (err) {
+      this.logger.error(`onBidSubmitted failed: ${err}`);
+    }
+  }
 }

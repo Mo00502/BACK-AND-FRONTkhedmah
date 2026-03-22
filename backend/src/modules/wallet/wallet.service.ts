@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Decimal } from '@prisma/client/runtime/library';
-import { WalletTxType } from '@prisma/client';
+import { WalletTxType, WithdrawalStatus } from '@prisma/client';
 
 @Injectable()
 export class WalletService {
@@ -209,8 +209,15 @@ export class WalletService {
       include: { user: true },
     });
     if (!wr) throw new NotFoundException('Withdrawal request not found');
-    if (wr.status !== 'PENDING')
+    if (wr.status !== WithdrawalStatus.PENDING)
       throw new BadRequestException('Only PENDING withdrawals can be approved');
+
+    // Mark as PROCESSING first — if the bank step fails, record stays in PROCESSING
+    // (not PENDING) so it won't be picked up by a duplicate approval attempt.
+    await this.prisma.withdrawalRequest.update({
+      where: { id: withdrawalId },
+      data: { status: WithdrawalStatus.PROCESSING },
+    });
 
     const wallet = await this.getOrCreate(wr.userId);
     const newBalance = new Decimal(wallet.balance).minus(wr.amount);
@@ -235,7 +242,7 @@ export class WalletService {
       this.prisma.withdrawalRequest.update({
         where: { id: withdrawalId },
         data: {
-          status: 'COMPLETED',
+          status: WithdrawalStatus.COMPLETED,
           processedBy: adminId,
           processedAt: new Date(),
           adminNote,
