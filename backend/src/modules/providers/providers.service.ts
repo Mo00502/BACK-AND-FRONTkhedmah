@@ -54,11 +54,11 @@ export class ProvidersService {
   }
 
   async findByUserId(userId: string) {
-    const profile = await this.prisma.providerProfile.findUnique({
+    const profile = await this.prisma.providerProfile.findFirst({
       where: {
         userId,
-        verificationStatus: 'APPROVED',
-        user: { deletedAt: null, suspended: false, status: 'ACTIVE' },
+        verificationStatus: 'APPROVED' as any,
+        user: { deletedAt: null, suspended: false, status: 'ACTIVE' as any },
       },
       include: {
         user: { include: { profile: true } },
