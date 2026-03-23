@@ -168,7 +168,7 @@
             if (!localStorage.getItem('khedmah_demo')) { location.href = 'login.html'; return; }
             try {
                 var u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-                if (u.role && u.role !== 'customer' && u.role !== 'CUSTOMER') {
+                if (u.role && u.role !== 'customer') {
                     window.location.href = 'provider-dashboard.html';
                     return;
                 }

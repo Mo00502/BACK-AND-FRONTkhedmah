@@ -182,7 +182,28 @@ export class EquipmentService {
     const eq = await this.prisma.equipment.findUnique({ where: { id } });
     if (!eq) throw new NotFoundException('Equipment not found');
     if (eq.ownerId !== userId) throw new ForbiddenException();
-    return this.prisma.equipment.update({ where: { id }, data });
+
+    // Allowlist: only provider-editable fields. Fields like ownerId, rating,
+    // rentalCount, reviewCount, status are excluded to prevent injection.
+    const {
+      name, description, category, brand, model, year, capacity,
+      imageUrls, emoji, region, city,
+      hourPrice, dayPrice, weekPrice, monthPrice,
+      hasOperator, hasDelivery, deliveryCost, deposit,
+      minRental, isAvailable,
+    } = data;
+
+    const safeData = Object.fromEntries(
+      Object.entries({
+        name, description, category, brand, model, year, capacity,
+        imageUrls, emoji, region, city,
+        hourPrice, dayPrice, weekPrice, monthPrice,
+        hasOperator, hasDelivery, deliveryCost, deposit,
+        minRental, isAvailable,
+      }).filter(([, v]) => v !== undefined),
+    );
+
+    return this.prisma.equipment.update({ where: { id }, data: safeData });
   }
 
   async remove(id: string, userId: string) {

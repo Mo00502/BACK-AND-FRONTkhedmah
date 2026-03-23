@@ -214,6 +214,22 @@ export class PaymentsService {
     });
     if (!payment) return;
 
+    // Check for materials_adjustment FIRST — before creating any Escrow.
+    // Adjustment payments must never create an Escrow row (the Escrow for this
+    // requestId already exists from the original payment). Creating one here
+    // would leave an orphan row and crash on the second adjustment due to the
+    // @unique constraint on Escrow.requestId.
+    const meta = payment.metadata as Record<string, any> | null;
+    if (meta?.type === 'materials_adjustment') {
+      await this.materials.onAdjustmentPaymentConfirmed(
+        meta.adjustmentId,
+        meta.materialsPaymentId,
+        Number(payment.amount),
+      );
+      this.logger.log(`Adjustment payment confirmed: adjustmentId=${meta.adjustmentId}`);
+      return;
+    }
+
     const feePct = this.config.get<number>('PLATFORM_FEE_PERCENT', 15);
     const serviceAmt = Number(payment.serviceAmount) || Number(payment.amount);
     const materialsAmt = Number(payment.materialsAmount) || 0;
@@ -235,19 +251,7 @@ export class PaymentsService {
       // Request stays ACCEPTED — provider explicitly calls startWork() → IN_PROGRESS
     ]);
 
-    // 4a. If this is an adjustment payment, increment paidAmount and stop here
-    const meta = payment.metadata as Record<string, any> | null;
-    if (meta?.type === 'materials_adjustment') {
-      await this.materials.onAdjustmentPaymentConfirmed(
-        meta.adjustmentId,
-        meta.materialsPaymentId,
-        Number(payment.amount),
-      );
-      this.logger.log(`Adjustment payment confirmed: adjustmentId=${meta.adjustmentId}`);
-      return;
-    }
-
-    // 4b. Create MaterialsPayment record outside transaction (depends on payment row)
+    // Create MaterialsPayment record outside transaction (depends on payment row)
     if (materialsAmt > 0 && payment.request.hasMaterials) {
       await this.materials.create(
         payment.requestId,

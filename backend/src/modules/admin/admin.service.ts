@@ -113,6 +113,12 @@ export class AdminService {
     });
     if (!profile) throw new NotFoundException('Provider not found');
 
+    if (!['PENDING_REVIEW', 'UNDER_REVIEW'].includes(profile.verificationStatus as string)) {
+      throw new BadRequestException(
+        `Cannot approve provider with status ${profile.verificationStatus}. Must be PENDING_REVIEW or UNDER_REVIEW.`,
+      );
+    }
+
     const updated = await this.prisma.providerProfile.update({
       where: { id: providerId },
       data: {

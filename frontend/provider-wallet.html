@@ -452,7 +452,7 @@
   if (!demo) { window.location.href = 'login.html'; return; }
   try {
     var u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-    if (u.role !== 'PROVIDER') { window.location.href = 'home.html'; }
+    if (u.role !== 'provider') { window.location.href = 'home.html'; }
   } catch(e) { window.location.href = 'login.html'; }
 })();
 </script>

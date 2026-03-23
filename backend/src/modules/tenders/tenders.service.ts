@@ -143,8 +143,17 @@ export class TendersService {
 
   async create(userId: string, data: Record<string, any>) {
     const company = await this.companies.getMyCompany(userId);
+
+    // Allowlist: only fields the submitting company owner may set.
+    // companyId is always sourced from the authenticated user's company — never from input.
+    const { title, description, category, region, city, budget, deadline, attachments } = data;
+    const safeData = Object.fromEntries(
+      Object.entries({ title, description, category, region, city, budget, deadline, attachments })
+        .filter(([, v]) => v !== undefined),
+    );
+
     return this.prisma.tender.create({
-      data: { companyId: company.id, ...data } as any,
+      data: { companyId: company.id, ...safeData } as any,
     });
   }
 
@@ -367,8 +376,15 @@ export class TendersService {
     if (tender.company.ownerId !== userId)
       throw new ForbiddenException('Only the tender owner can add requirements');
 
+    // Allowlist: only fields the tender owner may specify for a requirement.
+    const { title, description, quantity, unit, estimatedBudget, deadline, specifications } = data;
+    const safeData = Object.fromEntries(
+      Object.entries({ title, description, quantity, unit, estimatedBudget, deadline, specifications })
+        .filter(([, v]) => v !== undefined),
+    );
+
     return this.prisma.projectRequirement.create({
-      data: { tenderId, ...data } as any,
+      data: { tenderId, ...safeData } as any,
     });
   }
 
@@ -402,8 +418,15 @@ export class TendersService {
       companyId = co.id;
     } catch {}
 
+    // Allowlist: only supplier-supplied fields. status is always 'PENDING' — never from input.
+    const { price, deliveryDays, notes, attachments } = data;
+    const safeData = Object.fromEntries(
+      Object.entries({ price, deliveryDays, notes, attachments })
+        .filter(([, v]) => v !== undefined),
+    );
+
     return this.prisma.supplierOffer.create({
-      data: { requirementId, supplierId: userId, companyId, status: 'PENDING', ...data } as any,
+      data: { requirementId, supplierId: userId, companyId, status: 'PENDING', ...safeData } as any,
     });
   }
 

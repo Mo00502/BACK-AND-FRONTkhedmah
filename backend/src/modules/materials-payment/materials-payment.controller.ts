@@ -68,6 +68,25 @@ class AdminReviewDto {
 export class MaterialsPaymentController {
   constructor(private mp: MaterialsPaymentService) {}
 
+  // ── Admin: list all materials payments ───────────────────────────────────
+  // IMPORTANT: This must be declared BEFORE @Get(':requestId') so NestJS does not
+  // match the literal path segment 'admin' as the :requestId wildcard parameter.
+  @Get('admin/list')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Admin: list all materials payment records' })
+  adminList(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: MaterialsPaymentStatus,
+  ) {
+    return this.mp.adminList(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+      status,
+    );
+  }
+
   // ── Customer / Provider: view materials summary ───────────────────────────
   @Get(':requestId')
   @ThrottleRelaxed()
@@ -169,22 +188,5 @@ export class MaterialsPaymentController {
   @ApiOperation({ summary: 'Admin: finalize materials budget — compute used, refund unused' })
   reconcile(@Param('requestId') requestId: string, @CurrentUser('id') adminId: string) {
     return this.mp.reconcile(requestId, adminId);
-  }
-
-  // ── Admin: list all materials payments ───────────────────────────────────
-  @Get('admin/list')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ThrottleRelaxed()
-  @ApiOperation({ summary: 'Admin: list all materials payment records' })
-  adminList(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('status') status?: MaterialsPaymentStatus,
-  ) {
-    return this.mp.adminList(
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
-      status,
-    );
   }
 }
