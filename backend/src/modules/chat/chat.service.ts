@@ -69,13 +69,13 @@ export class ChatService {
     const tender = await this.prisma.tender.findUnique({
       where: { id: tenderId },
       select: {
-        createdById: true,
-        bids: { where: { status: 'AWARDED' }, select: { providerId: true } },
+        company: { select: { ownerId: true } },
+        bids: { where: { status: 'WON' }, select: { submittedBy: true } },
       },
     });
     if (!tender) throw new NotFoundException('Tender not found');
-    const awardedProviderIds = tender.bids.map((b) => b.providerId);
-    if (tender.createdById !== callerId && !awardedProviderIds.includes(callerId)) {
+    const wonBidderIds = tender.bids.map((b) => b.submittedBy);
+    if (tender.company.ownerId !== callerId && !wonBidderIds.includes(callerId)) {
       throw new ForbiddenException('You are not the tender owner or an awarded bidder');
     }
     return this.getOrCreateForRef('TENDER', tenderId, participantIds);
