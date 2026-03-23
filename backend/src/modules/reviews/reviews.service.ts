@@ -58,10 +58,11 @@ export class ReviewsService {
         _avg: { score: true },
         _count: { id: true },
       });
+      const roundedAvg = Math.round((stats._avg.score ?? 0) * 100) / 100;
       await this.prisma.providerProfile.update({
         where: { userId: rateeId },
         data: {
-          ratingAvg: new Decimal(stats._avg.score ?? 0),
+          ratingAvg: new Decimal(roundedAvg),
           ratingCount: stats._count.id,
         },
       });

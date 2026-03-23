@@ -29,7 +29,7 @@ export class AnalyticsService {
 
       // Tender vertical (2% commission)
       this.prisma.tenderCommission.aggregate({
-        where: { status: { in: ['PAID'] as any } },
+        where: { status: 'PAID' as any },
         _sum: { commissionAmount: true },
       }),
 

@@ -36,15 +36,23 @@ export class ChatController {
   @Post('request/:requestId')
   @ThrottleDefault()
   @ApiOperation({ summary: 'Get or create conversation for a service request' })
-  forRequest(@Param('requestId') refId: string, @Body('participantIds') ids: string[]) {
-    return this.chat.getOrCreateForRef('REQUEST', refId, ids);
+  forRequest(
+    @CurrentUser() user: any,
+    @Param('requestId') refId: string,
+    @Body('participantIds') ids: string[],
+  ) {
+    return this.chat.getOrCreateForRequest(refId, user.id, ids);
   }
 
   @Post('tender/:tenderId')
   @ThrottleDefault()
   @ApiOperation({ summary: 'Get or create conversation for a tender' })
-  forTender(@Param('tenderId') refId: string, @Body('participantIds') ids: string[]) {
-    return this.chat.getOrCreateForRef('TENDER', refId, ids);
+  forTender(
+    @CurrentUser() user: any,
+    @Param('tenderId') refId: string,
+    @Body('participantIds') ids: string[],
+  ) {
+    return this.chat.getOrCreateForTender(refId, user.id, ids);
   }
 
   @Get('conversations/:id/messages')

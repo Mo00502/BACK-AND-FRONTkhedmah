@@ -53,6 +53,34 @@ export class ChatService {
     });
   }
 
+  async getOrCreateForRequest(requestId: string, callerId: string, participantIds: string[]) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id: requestId },
+      select: { customerId: true, providerId: true },
+    });
+    if (!request) throw new NotFoundException('Request not found');
+    if (request.customerId !== callerId && request.providerId !== callerId) {
+      throw new ForbiddenException('You are not a party to this service request');
+    }
+    return this.getOrCreateForRef('REQUEST', requestId, participantIds);
+  }
+
+  async getOrCreateForTender(tenderId: string, callerId: string, participantIds: string[]) {
+    const tender = await this.prisma.tender.findUnique({
+      where: { id: tenderId },
+      select: {
+        createdById: true,
+        bids: { where: { status: 'AWARDED' }, select: { providerId: true } },
+      },
+    });
+    if (!tender) throw new NotFoundException('Tender not found');
+    const awardedProviderIds = tender.bids.map((b) => b.providerId);
+    if (tender.createdById !== callerId && !awardedProviderIds.includes(callerId)) {
+      throw new ForbiddenException('You are not the tender owner or an awarded bidder');
+    }
+    return this.getOrCreateForRef('TENDER', tenderId, participantIds);
+  }
+
   async sendMessage(
     conversationId: string,
     senderId: string,
