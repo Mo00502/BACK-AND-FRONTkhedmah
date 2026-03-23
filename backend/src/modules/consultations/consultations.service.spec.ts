@@ -127,8 +127,8 @@ describe('ConsultationsService', () => {
   describe('accept', () => {
     it('sets status to ACCEPTED and emits consultation.accepted', async () => {
       mockPrisma.providerProfile.findFirst.mockResolvedValue({ id: 'pp-1', userId: 'provider-1', verificationStatus: 'APPROVED', suspendedAt: null });
-      mockPrisma.consultation.findUnique.mockResolvedValue(makeConsult());
-      mockPrisma.consultation.update.mockResolvedValue(
+      mockPrisma.consultation.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.consultation.findUniqueOrThrow.mockResolvedValue(
         makeConsult({ status: ConsultationStatus.ACCEPTED, providerId: 'provider-1' }),
       );
 
@@ -148,16 +148,16 @@ describe('ConsultationsService', () => {
 
     it('throws BadRequestException if already ACCEPTED', async () => {
       mockPrisma.providerProfile.findFirst.mockResolvedValue({ id: 'pp-1', userId: 'provider-1', verificationStatus: 'APPROVED', suspendedAt: null });
-      mockPrisma.consultation.findUnique.mockResolvedValue(
-        makeConsult({ status: ConsultationStatus.ACCEPTED, providerId: 'provider-1' }),
-      );
+      // updateMany returns count: 0 when the consultation is not PENDING
+      mockPrisma.consultation.updateMany.mockResolvedValue({ count: 0 });
       await expect(service.accept('provider-1', 'consult-1')).rejects.toThrow(BadRequestException);
     });
 
     it('throws NotFoundException for unknown consultation', async () => {
       mockPrisma.providerProfile.findFirst.mockResolvedValue({ id: 'pp-1', userId: 'provider-1', verificationStatus: 'APPROVED', suspendedAt: null });
-      mockPrisma.consultation.findUnique.mockResolvedValue(null);
-      await expect(service.accept('provider-1', 'missing')).rejects.toThrow(NotFoundException);
+      // updateMany returns count: 0 (no row found); then findUniqueOrThrow throws
+      mockPrisma.consultation.updateMany.mockResolvedValue({ count: 0 });
+      await expect(service.accept('provider-1', 'missing')).rejects.toThrow(BadRequestException);
     });
   });
 

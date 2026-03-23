@@ -377,9 +377,9 @@ export class TendersService {
       throw new ForbiddenException('Only the tender owner can add requirements');
 
     // Allowlist: only fields the tender owner may specify for a requirement.
-    const { title, description, quantity, unit, estimatedBudget, deadline, specifications } = data;
+    const { type, nameAr, quantity, durationDays, sourceText } = data;
     const safeData = Object.fromEntries(
-      Object.entries({ title, description, quantity, unit, estimatedBudget, deadline, specifications })
+      Object.entries({ type, nameAr, quantity, durationDays, sourceText })
         .filter(([, v]) => v !== undefined),
     );
 
@@ -423,9 +423,9 @@ export class TendersService {
     } catch {}
 
     // Allowlist: only supplier-supplied fields. status is always 'PENDING' — never from input.
-    const { price, deliveryDays, notes, attachments } = data;
+    const { priceTotal, pricePerUnit, availableFrom, durationDays, notes } = data;
     const safeData = Object.fromEntries(
-      Object.entries({ price, deliveryDays, notes, attachments })
+      Object.entries({ priceTotal, pricePerUnit, availableFrom, durationDays, notes })
         .filter(([, v]) => v !== undefined),
     );
 

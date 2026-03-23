@@ -840,7 +840,7 @@
     const cards = document.querySelectorAll('.card-amount');
     if (cards[0]) cards[0].innerHTML = Number(w.balance ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
     if (cards[1]) cards[1].innerHTML = Number(w.heldBalance ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
-    if (cards[2]) cards[2].innerHTML = Number(w.frozenBalance ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
+    if (cards[2]) cards[2].innerHTML = Number(w.heldBalance ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
     if (cards[3]) cards[3].innerHTML = Number(w.totalEarned ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
     const avAmt = document.querySelector('.av-amount');
     if (avAmt) avAmt.textContent = 'SAR ' + Number(w.balance ?? 0).toLocaleString('ar-SA');

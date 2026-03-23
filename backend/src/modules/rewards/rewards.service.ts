@@ -43,18 +43,13 @@ export class RewardsService {
     });
     if (count === 0) throw new BadRequestException('Referral code was just used by another signup');
 
-    // Credit both wallets (only reached by the one caller that won the race)
+    // Credit both wallets (only reached by the one caller that won the race).
+    // wallet.creditReferralReward() already emits 'referral.rewarded' — do NOT emit here.
     await this.wallet.creditReferralReward(
       referral.referrerId,
       refereeId,
       Number(referral.rewardAmount),
     );
-
-    this.events.emit('referral.rewarded', {
-      referrerId: referral.referrerId,
-      refereeId,
-      amount: Number(referral.rewardAmount),
-    });
 
     return { ok: true, reward: referral.rewardAmount };
   }

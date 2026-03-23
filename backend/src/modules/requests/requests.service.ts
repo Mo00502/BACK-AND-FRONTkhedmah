@@ -38,6 +38,7 @@ export class RequestsService {
       requestId: request.id,
       customerId,
       serviceId: dto.serviceId,
+      city: request.city,
     });
     return request;
   }

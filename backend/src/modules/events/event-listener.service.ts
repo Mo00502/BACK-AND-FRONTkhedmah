@@ -475,12 +475,14 @@ export class EventListenerService {
         `ألغى المشرف الاستشارة. السبب: ${payload.reason}`,
         { consultationId: payload.consultationId },
       ),
-      this.notif.notifyUser(
-        payload.providerId,
-        '❌ تم إلغاء الاستشارة',
-        `ألغى المشرف الاستشارة. السبب: ${payload.reason}`,
-        { consultationId: payload.consultationId },
-      ),
+      payload.providerId
+        ? this.notif.notifyUser(
+            payload.providerId,
+            '❌ تم إلغاء الاستشارة',
+            `ألغى المشرف الاستشارة. السبب: ${payload.reason}`,
+            { consultationId: payload.consultationId },
+          )
+        : Promise.resolve(),
     ]);
   }
 

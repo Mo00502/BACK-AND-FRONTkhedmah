@@ -43,7 +43,7 @@ export class SearchService {
         { user: { profile: { nameEn: { contains: q, mode: 'insensitive' } } } },
         { user: { username: { contains: q, mode: 'insensitive' } } },
         {
-          services: {
+          skills: {
             some: {
               service: {
                 OR: [
@@ -66,7 +66,7 @@ export class SearchService {
         orderBy: [{ ratingAvg: 'desc' }, { completedJobs: 'desc' }],
         include: {
           user: { include: { profile: true } },
-          services: { include: { service: true } },
+          skills: { include: { service: true } },
         } as any,
       }),
       this.prisma.providerProfile.count({ where }),
@@ -105,8 +105,8 @@ export class SearchService {
       ],
     };
     if (region) where.region = { contains: region, mode: 'insensitive' };
-    if (minPrice) where.budget = { ...where.budget, gte: minPrice };
-    if (maxPrice) where.budget = { ...where.budget, lte: maxPrice };
+    if (minPrice) where.budgetMin = { gte: minPrice };
+    if (maxPrice) where.budgetMax = { lte: maxPrice };
 
     const [items, total] = await Promise.all([
       this.prisma.tender.findMany({

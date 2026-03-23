@@ -152,6 +152,20 @@ export class MaterialsPaymentController {
     );
   }
 
+  // ── Customer: pay for an approved adjustment ─────────────────────────────
+  @Post('adjustments/:adjustmentId/pay')
+  @Roles(UserRole.CUSTOMER)
+  @ThrottleStrict()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Customer: pay for approved materials adjustment' })
+  payForAdjustment(
+    @Param('adjustmentId') adjustmentId: string,
+    @CurrentUser('id') customerId: string,
+    @Body() dto: { method: string },
+  ) {
+    return this.mp.payForAdjustment(customerId, adjustmentId, dto.method as any);
+  }
+
   // ── Customer: approve or reject an adjustment request ────────────────────
   @Patch('adjustments/:adjustmentId/respond')
   @Roles(UserRole.CUSTOMER)

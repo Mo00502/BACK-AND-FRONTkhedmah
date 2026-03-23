@@ -106,19 +106,18 @@ export class ConsultationsService {
     });
     if (!providerProfile) throw new ForbiddenException('Provider is not approved to accept consultations');
 
-    const c = await this._getAndAssertProvider(consultationId, providerId, [
-      ConsultationStatus.PENDING,
-    ]);
-
-    const updated = await this.prisma.consultation.update({
-      where: { id: consultationId },
+    const { count } = await this.prisma.consultation.updateMany({
+      where: { id: consultationId, status: ConsultationStatus.PENDING },
       data: { status: ConsultationStatus.ACCEPTED, providerId },
     });
+    if (count === 0) throw new BadRequestException('Consultation is no longer available');
+
+    const updated = await this.prisma.consultation.findUniqueOrThrow({ where: { id: consultationId } });
 
     this.events.emit('consultation.accepted', {
       consultationId,
       providerId,
-      customerId: c.customerId,
+      customerId: updated.customerId,
     });
 
     return updated;
@@ -126,7 +125,18 @@ export class ConsultationsService {
 
   // ── Provider: reject consultation request ────────────────────────────────
   async reject(providerId: string, consultationId: string) {
-    await this._getAndAssertProvider(consultationId, providerId, [ConsultationStatus.PENDING]);
+    const c = await this.prisma.consultation.findUnique({ where: { id: consultationId } });
+    if (!c) throw new NotFoundException('Consultation not found');
+    if (c.status !== ConsultationStatus.PENDING) {
+      throw new BadRequestException(
+        `Cannot perform this action on a consultation with status: ${c.status}`,
+      );
+    }
+    // Only the targeted provider may reject. If providerId is already set on the
+    // consultation, the caller must match it.
+    if (c.providerId && c.providerId !== providerId) {
+      throw new ForbiddenException('Not your consultation');
+    }
 
     return this.prisma.consultation.update({
       where: { id: consultationId },

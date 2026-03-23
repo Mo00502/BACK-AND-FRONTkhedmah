@@ -102,7 +102,8 @@ describe('SearchService', () => {
       await service.searchTenders({ q: 'بناء', minPrice: 500_000, maxPrice: 5_000_000 });
 
       const call = mockPrisma.tender.findMany.mock.calls[0][0];
-      expect(call.where.budget).toMatchObject({ gte: 500_000, lte: 5_000_000 });
+      expect(call.where.budgetMin).toMatchObject({ gte: 500_000 });
+      expect(call.where.budgetMax).toMatchObject({ lte: 5_000_000 });
     });
   });
 

@@ -209,8 +209,8 @@ export class WalletService {
       include: { user: true },
     });
     if (!wr) throw new NotFoundException('Withdrawal request not found');
-    if (wr.status !== WithdrawalStatus.PENDING)
-      throw new BadRequestException('Only PENDING withdrawals can be approved');
+    if (!([WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING] as WithdrawalStatus[]).includes(wr.status))
+      throw new BadRequestException('Withdrawal is not in a processable state');
 
     const wallet = await this.getOrCreate(wr.userId);
     const newBalance = new Decimal(wallet.balance).minus(wr.amount);
