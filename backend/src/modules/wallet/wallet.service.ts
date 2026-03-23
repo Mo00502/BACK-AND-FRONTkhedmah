@@ -212,23 +212,22 @@ export class WalletService {
     if (wr.status !== WithdrawalStatus.PENDING)
       throw new BadRequestException('Only PENDING withdrawals can be approved');
 
-    // Mark as PROCESSING first — if the bank step fails, record stays in PROCESSING
-    // (not PENDING) so it won't be picked up by a duplicate approval attempt.
-    await this.prisma.withdrawalRequest.update({
-      where: { id: withdrawalId },
-      data: { status: WithdrawalStatus.PROCESSING },
-    });
-
     const wallet = await this.getOrCreate(wr.userId);
     const newBalance = new Decimal(wallet.balance).minus(wr.amount);
     const newHeldBalance = new Decimal(wallet.heldBalance).minus(wr.amount);
 
-    await this.prisma.$transaction([
-      this.prisma.wallet.update({
+    // Set PROCESSING + debit balance atomically so a crash between the two
+    // cannot leave the record in PENDING (allowing duplicate approvals).
+    await this.prisma.$transaction(async (tx) => {
+      await tx.withdrawalRequest.update({
+        where: { id: withdrawalId },
+        data: { status: WithdrawalStatus.PROCESSING },
+      });
+      await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: newBalance, heldBalance: newHeldBalance },
-      }),
-      this.prisma.walletTransaction.create({
+      });
+      await tx.walletTransaction.create({
         data: {
           walletId: wallet.id,
           type: WalletTxType.DEBIT,
@@ -238,17 +237,19 @@ export class WalletService {
           refId: withdrawalId,
           refType: 'withdrawal',
         },
-      }),
-      this.prisma.withdrawalRequest.update({
-        where: { id: withdrawalId },
-        data: {
-          status: WithdrawalStatus.COMPLETED,
-          processedBy: adminId,
-          processedAt: new Date(),
-          adminNote,
-        },
-      }),
-    ]);
+      });
+    });
+
+    // Only mark COMPLETED after the atomic block succeeds
+    await this.prisma.withdrawalRequest.update({
+      where: { id: withdrawalId },
+      data: {
+        status: WithdrawalStatus.COMPLETED,
+        processedBy: adminId,
+        processedAt: new Date(),
+        adminNote,
+      },
+    });
 
     this.events.emit('wallet.withdrawal_completed', {
       userId: wr.userId,

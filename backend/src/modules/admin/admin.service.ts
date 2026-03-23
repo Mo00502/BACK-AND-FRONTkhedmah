@@ -129,7 +129,7 @@ export class AdminService {
     });
 
     this.events.emit('provider.approved', { userId: profile.userId, email: profile.user.email });
-    this.events.emit('audit.log', { action: 'provider_approved', adminId: 'system', targetId: providerId });
+    this.events.emit('audit.log', { action: 'APPROVE', entityType: 'ProviderProfile', entityId: providerId });
     return updated;
   }
 
@@ -155,7 +155,7 @@ export class AdminService {
       email: profile.user.email,
       reason,
     });
-    this.events.emit('audit.log', { action: 'provider_rejected', adminId: 'system', targetId: providerId, details: reason });
+    this.events.emit('audit.log', { action: 'REJECT', entityType: 'ProviderProfile', entityId: providerId, metadata: { reason } });
     return updated;
   }
 
@@ -199,7 +199,7 @@ export class AdminService {
       adminId: adminId ?? 'system',
       reason,
     });
-    this.events.emit('audit.log', { action: 'user_suspended', adminId: adminId ?? 'system', targetId: targetUserId, details: reason });
+    this.events.emit('audit.log', { userId: adminId, action: 'SUSPEND', entityType: 'User', entityId: targetUserId, metadata: { reason } });
     return updated;
   }
 
@@ -378,7 +378,7 @@ export class AdminService {
       reporterId: dispute.reporterId,
       againstId: dispute.againstId,
     });
-    this.events.emit('audit.log', { action: 'dispute_resolved', adminId, targetId: disputeId, details: resolution });
+    this.events.emit('audit.log', { userId: adminId, action: 'UPDATE', entityType: 'Dispute', entityId: disputeId, metadata: { resolution } });
 
     return { message: `Dispute resolved: ${resolution}` };
   }

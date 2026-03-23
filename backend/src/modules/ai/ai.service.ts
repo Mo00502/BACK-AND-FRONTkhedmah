@@ -83,7 +83,7 @@ export class AiService {
         },
         include: {
           user: { include: { profile: true } },
-          services: { include: { service: { include: { category: true } } } },
+          skills: { include: { service: { include: { category: true } } } },
         } as any,
         orderBy: [{ ratingAvg: 'desc' }, { completedJobs: 'desc' }],
         take: 20,
@@ -98,7 +98,7 @@ export class AiService {
       .slice(0, 10)
       .map((p: any) => {
         const name = p.user.profile?.nameAr ?? p.user.username;
-        const cats = p.services.map((ps: any) => ps.service.category.nameAr).join(', ');
+        const cats = p.skills.map((ps: any) => ps.service.category.nameAr).join(', ');
         return `- ${name} | تقييم: ${p.ratingAvg} | تخصص: ${cats} [providerId: ${p.userId}]`;
       })
       .join('\n');

@@ -404,8 +404,12 @@ export class TendersService {
   async submitOffer(requirementId: string, userId: string, data: Record<string, any>) {
     const requirement = await this.prisma.projectRequirement.findUnique({
       where: { id: requirementId },
+      include: { tender: { select: { status: true } } },
     });
     if (!requirement) throw new NotFoundException('Requirement not found');
+    if (requirement.tender.status !== 'OPEN') {
+      throw new BadRequestException('This tender is no longer accepting offers');
+    }
 
     const existing = await this.prisma.supplierOffer.findFirst({
       where: { requirementId, supplierId: userId, status: { not: 'WITHDRAWN' as any } },

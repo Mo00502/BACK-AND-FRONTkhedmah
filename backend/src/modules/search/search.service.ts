@@ -101,10 +101,10 @@ export class SearchService {
       OR: [
         { title: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
-        { location: { contains: q, mode: 'insensitive' } },
+        { region: { contains: q, mode: 'insensitive' } },
       ],
     };
-    if (region) where.location = { contains: region, mode: 'insensitive' };
+    if (region) where.region = { contains: region, mode: 'insensitive' };
     if (minPrice) where.budget = { ...where.budget, gte: minPrice };
     if (maxPrice) where.budget = { ...where.budget, lte: maxPrice };
 

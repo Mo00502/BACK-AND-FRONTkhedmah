@@ -372,6 +372,7 @@ export class EventListenerService {
     const platformFee = parseFloat((payload.amount * CONSULTATION_FEE_RATE).toFixed(2));
     const providerNet = parseFloat((payload.amount - platformFee).toFixed(2));
 
+    let debited = false;
     try {
       await this.wallet.debit(
         payload.customerId,
@@ -379,23 +380,24 @@ export class EventListenerService {
         `رسوم استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
         payload.consultationId,
       );
-      try {
-        await this.wallet.credit(
-          payload.providerId,
-          providerNet,
-          `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
-          payload.consultationId,
-        );
-      } catch (creditErr) {
-        this.logger.error(`CRITICAL: consultation charge debit succeeded but credit FAILED for consultation ${payload.consultationId}. Manual intervention required. Error: ${creditErr}`);
-        // Re-throw so the error is visible
-        throw creditErr;
-      }
-      this.logger.log(
-        `Consultation charged: customer ${payload.customerId} -${payload.amount} SAR, provider ${payload.providerId} +${providerNet} SAR (platform fee: ${platformFee} SAR)`,
+      debited = true;
+
+      await this.wallet.credit(
+        payload.providerId,
+        providerNet,
+        `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
+        payload.consultationId,
       );
+
+      this.logger.log(`Consultation charged: customer -${payload.amount} SAR, provider +${providerNet} SAR`);
     } catch (err) {
-      this.logger.error(`onConsultationChargeRequired failed for consultation ${payload.consultationId}: ${err}`);
+      if (debited) {
+        this.logger.error(
+          `CRITICAL: consultation ${payload.consultationId} — customer debited ${payload.amount} SAR but provider credit FAILED. Manual intervention required. Error: ${err}`,
+        );
+      } else {
+        this.logger.error(`onConsultationChargeRequired debit failed for ${payload.consultationId}: ${err}`);
+      }
     }
   }
 

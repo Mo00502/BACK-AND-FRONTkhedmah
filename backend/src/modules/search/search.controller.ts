@@ -45,6 +45,15 @@ export class SearchController {
 
   @ThrottleRelaxed()
   @Public()
+  @Get('services')
+  @ApiOperation({ summary: 'Search services by name/category' })
+  @ApiQuery({ name: 'q', required: true })
+  searchServices(@Query('q') q: string) {
+    return this.search.searchServices(q);
+  }
+
+  @ThrottleRelaxed()
+  @Public()
   @Get('providers')
   @ApiOperation({ summary: 'Search providers only' })
   searchProviders(
