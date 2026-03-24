@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CommissionStatus } from '@prisma/client';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
@@ -56,7 +57,7 @@ export class ReportsService {
         _sum: { platformFee: true, amount: true },
       }),
       this.prisma.tenderCommission.aggregate({
-        where: { paidAt: { gte: weekAgo }, status: { in: ['PAID'] as any } },
+        where: { paidAt: { gte: weekAgo }, status: { in: [CommissionStatus.PAID] } },
         _sum: { commissionAmount: true },
       }),
       this.prisma.dispute.count({ where: { status: 'OPEN' } }),

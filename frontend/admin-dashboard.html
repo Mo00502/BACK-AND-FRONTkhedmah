@@ -723,6 +723,9 @@
         }
         updateClock(); setInterval(updateClock, 30000);
 
+        // ── XSS-safe HTML escaping ──
+        function escHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
         // ── Section navigation ──
         const sectionTitles = {
             dashboard: '📊 لوحة التحكم', verifications: '✅ التحقق من المزودين',
@@ -1049,18 +1052,16 @@
                     const city  = p.city || p.user?.city || '';
                     const skill = p.mainSkill || p.skills?.[0] || '';
                     const days  = p.daysSinceSubmission != null ? `منذ ${p.daysSinceSubmission} أيام` : '';
-                    const init  = name.charAt(0);
-                    const safeId   = id.replace(/'/g, "\\'");
-                    const safeName = name.replace(/'/g, "\\'");
-                    return `<div class="verify-item" data-id="${id}">
+                    const init  = escHtml(name.charAt(0));
+                    return `<div class="verify-item" data-id="${escHtml(id)}">
                         <div class="verify-avatar">${init}</div>
                         <div class="verify-info">
-                            <div class="verify-name">${name}</div>
-                            <div class="verify-meta">${skill}${city ? ' • ' + city : ''}${days ? ' • ' + days : ''}</div>
+                            <div class="verify-name">${escHtml(name)}</div>
+                            <div class="verify-meta">${escHtml(skill)}${city ? ' • ' + escHtml(city) : ''}${days ? ' • ' + escHtml(days) : ''}</div>
                         </div>
                         <div class="verify-actions">
-                            <button class="btn-xs btn-review" data-id="${id}" data-name="${name}" onclick="startReview(this,'${safeName}','${safeId}')">مراجعة</button>
-                            <button class="btn-xs btn-approve" data-id="${id}" data-name="${name}" onclick="approveProvider(this,'${safeName}','${safeId}')">قبول ✓</button>
+                            <button class="btn-xs btn-review" data-id="${escHtml(id)}" data-name="${escHtml(name)}" onclick="startReview(this,this.dataset.name,this.dataset.id)">مراجعة</button>
+                            <button class="btn-xs btn-approve" data-id="${escHtml(id)}" data-name="${escHtml(name)}" onclick="approveProvider(this,this.dataset.name,this.dataset.id)">قبول ✓</button>
                         </div>
                     </div>`;
                 }).join('');
@@ -1094,18 +1095,17 @@
                     const against    = d.against?.fullName  || d.againstName  || 'مزود';
                     const amount     = d.escrow?.amount != null ? Number(d.escrow.amount).toLocaleString('ar-SA') + ' ر.س' : '—';
                     const desc       = d.description || '';
-                    const safeId     = String(id).replace(/'/g, "\\'");
-                    return `<div class="dispute-item" data-id="${id}">
+                    return `<div class="dispute-item" data-id="${escHtml(id)}">
                         <div class="dispute-top">
-                            <div class="dispute-title">${title}${requestId ? ' — #' + requestId.substring(0,8) : ''}</div>
+                            <div class="dispute-title">${escHtml(title)}${requestId ? ' — #' + escHtml(requestId.substring(0,8)) : ''}</div>
                             <span class="badge badge-open">مفتوح</span>
                         </div>
-                        <div class="dispute-meta">📌 ${reporter} (عميل) ← ${against} (مزود) • مبلغ: ${amount}</div>
-                        ${desc ? `<div class="dispute-desc">${desc.substring(0, 150)}</div>` : ''}
+                        <div class="dispute-meta">📌 ${escHtml(reporter)} (عميل) ← ${escHtml(against)} (مزود) • مبلغ: ${escHtml(amount)}</div>
+                        ${desc ? `<div class="dispute-desc">${escHtml(desc.substring(0, 150))}</div>` : ''}
                         <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
-                            <button class="btn-xs btn-approve" onclick="resolveDispute(this,'${safeId}','تحرير')">✅ تحرير للمزود</button>
-                            <button class="btn-xs btn-reject"  onclick="resolveDispute(this,'${safeId}','استرداد')">↩️ استرداد للعميل</button>
-                            <button class="btn-xs btn-review"  onclick="resolveDispute(this,'${safeId}','تقسيم')">⚖️ تقسيم المبلغ</button>
+                            <button class="btn-xs btn-approve" data-id="${escHtml(id)}" onclick="resolveDispute(this,this.dataset.id,'تحرير')">✅ تحرير للمزود</button>
+                            <button class="btn-xs btn-reject"  data-id="${escHtml(id)}" onclick="resolveDispute(this,this.dataset.id,'استرداد')">↩️ استرداد للعميل</button>
+                            <button class="btn-xs btn-review"  data-id="${escHtml(id)}" onclick="resolveDispute(this,this.dataset.id,'تقسيم')">⚖️ تقسيم المبلغ</button>
                         </div>
                     </div>`;
                 }).join('');

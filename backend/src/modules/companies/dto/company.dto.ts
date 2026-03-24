@@ -5,7 +5,7 @@ export class CreateCompanyDto {
   @ApiProperty({ example: 'مجموعة البناء المتكامل' })
   @IsString()
   @MaxLength(120)
-  name: string;
+  nameAr: string;
 
   @ApiPropertyOptional({ example: 'Integrated Construction Group' })
   @IsOptional()
