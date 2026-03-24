@@ -81,11 +81,11 @@ export class ProvidersController {
   @Patch('me/skills/:skillId')
   @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
-  @ApiOperation({ summary: 'Update a skill (hourlyRate)' })
+  @ApiOperation({ summary: 'Update a skill (hourlyRate, active)' })
   updateSkill(
     @Param('skillId') skillId: string,
     @CurrentUser('id') userId: string,
-    @Body() dto: { hourlyRate?: number },
+    @Body() dto: { hourlyRate?: number; active?: boolean },
   ) {
     return this.providers.updateSkill(userId, skillId, dto);
   }

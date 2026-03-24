@@ -710,7 +710,7 @@
         // API call — use PATCH /providers/me/skills/:id with active flag
         // id may be a real UUID (loaded from API) or a local DOM number (hardcoded/new)
         try {
-            await API.patch(`/providers/me/skills/${id}`, { active: isActive });
+            await API.providers.updateSkill(id, { active: isActive });
             showToast(isActive ? '✓ تم تفعيل الخدمة' : '⏸ تم إيقاف الخدمة');
         } catch(e) {
             // Revert optimistic update on failure

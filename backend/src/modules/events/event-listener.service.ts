@@ -404,8 +404,6 @@ export class EventListenerService {
     }
   }
 
-  // ── Wallet events ────────────────────────────────────────────────────────
-
   // ── Consultation events ──────────────────────────────────────────────────
 
   @OnEvent('consultation.charge_required')

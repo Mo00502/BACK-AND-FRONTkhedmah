@@ -101,10 +101,10 @@ export class RequestsService {
     if (!request) throw new NotFoundException('Request not found');
     if (request.customerId !== userId) throw new ForbiddenException('Not your request');
 
-    const cancellableStatuses: RequestStatus[] = [RequestStatus.PENDING, RequestStatus.QUOTED];
+    const cancellableStatuses: RequestStatus[] = [RequestStatus.PENDING, RequestStatus.QUOTED, RequestStatus.ACCEPTED];
     if (!cancellableStatuses.includes(request.status)) {
       throw new BadRequestException(
-        'Cannot cancel a request that is already in progress or completed',
+        'لا يمكن إلغاء هذا الطلب في وضعه الحالي',
       );
     }
 

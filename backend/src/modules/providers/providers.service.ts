@@ -116,7 +116,7 @@ export class ProvidersService {
     });
   }
 
-  async updateSkill(userId: string, skillId: string, dto: { hourlyRate?: number }) {
+  async updateSkill(userId: string, skillId: string, dto: { hourlyRate?: number; active?: boolean }) {
     if (dto.hourlyRate !== undefined && dto.hourlyRate <= 0) {
       throw new BadRequestException('يجب أن يكون السعر بالساعة أكبر من صفر');
     }
@@ -132,6 +132,7 @@ export class ProvidersService {
       where: { id: skillId },
       data: {
         ...(dto.hourlyRate !== undefined && { hourlyRate: dto.hourlyRate }),
+        ...(dto.active !== undefined && { active: dto.active }),
       },
     });
   }

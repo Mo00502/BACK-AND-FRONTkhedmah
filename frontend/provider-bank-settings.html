@@ -529,8 +529,8 @@
                         selectedBank = matched.dataset.bank;
                     }
                 }
-                if (data?.accountName) {
-                    document.getElementById('accountName').value = data.accountName;
+                if (data?.beneficiaryName) {
+                    document.getElementById('accountName').value = data.beneficiaryName;
                 }
             } catch(e) { /* silent on load failure */ }
         }
@@ -584,7 +584,7 @@
             btn.disabled = true;
             btn.textContent = '⏳ جاري الحفظ...';
             try {
-                await API.providers.updateBank({ bankName: bankNames[selectedBank] || selectedBank, iban, accountName });
+                await API.providers.updateBank({ bankName: bankNames[selectedBank] || selectedBank, ibanNumber: iban, beneficiaryName: accountName });
                 API.toast('✅ تم حفظ الحساب البنكي بنجاح!', 'success');
             } catch(err) {
                 API.toast('❌ ' + API.errorMsg(err));

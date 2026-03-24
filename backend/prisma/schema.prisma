@@ -315,6 +315,7 @@ model ProviderSkill {
   providerId String   @map("provider_id")
   serviceId  String   @map("service_id")
   hourlyRate Decimal? @map("hourly_rate") @db.Decimal(10, 2)
+  active     Boolean  @default(true)
   createdAt  DateTime @default(now()) @map("created_at")
 
   provider ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
