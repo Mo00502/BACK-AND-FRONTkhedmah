@@ -187,17 +187,20 @@ export class WalletService {
 
   async adminListWithdrawals(status: string = 'PENDING', page = 1, limit = 20) {
     const skip = (page - 1) * limit;
+    const validStatuses = Object.values(WithdrawalStatus) as string[];
+    const statusFilter =
+      status === 'ALL' || !validStatuses.includes(status)
+        ? {}
+        : { status: status as WithdrawalStatus };
     const [items, total] = await Promise.all([
       this.prisma.withdrawalRequest.findMany({
-        where: status === 'ALL' ? {} : { status: status as any },
+        where: statusFilter,
         orderBy: { createdAt: 'asc' },
         skip,
         take: limit,
         include: { user: { include: { profile: true } } },
       }),
-      this.prisma.withdrawalRequest.count({
-        where: status === 'ALL' ? {} : { status: status as any },
-      }),
+      this.prisma.withdrawalRequest.count({ where: statusFilter }),
     ]);
     return { items, total, page, limit };
   }

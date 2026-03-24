@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
-import { QuoteStatus, RentalStatus } from '@prisma/client';
+import { QuoteStatus, RentalStatus, DisputeStatus, MaterialsPaymentStatus, JobStatus } from '@prisma/client';
 
 @Injectable()
 export class SchedulerService {
@@ -28,7 +28,7 @@ export class SchedulerService {
           status: 'COMPLETED',
           completedAt: { lte: cutoff },
           // Do not auto-release while a dispute is open or under review
-          disputes: { none: { status: { in: ['OPEN', 'UNDER_REVIEW'] as any } } },
+          disputes: { none: { status: { in: [DisputeStatus.OPEN, DisputeStatus.UNDER_REVIEW] } } },
         },
       },
       include: { request: true },
@@ -55,7 +55,7 @@ export class SchedulerService {
 
     await this.logJob(
       'auto_release_escrow',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Released ${released} escrows`,
       Date.now() - start,
     );
@@ -78,7 +78,7 @@ export class SchedulerService {
 
     await this.logJob(
       'mark_overdue_commissions',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Marked ${count} commissions overdue`,
       Date.now() - start,
     );
@@ -102,7 +102,7 @@ export class SchedulerService {
 
     await this.logJob(
       'cleanup_stale_device_tokens',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Deactivated ${count} stale device tokens`,
       Date.now() - start,
     );
@@ -128,7 +128,7 @@ export class SchedulerService {
 
     await this.logJob(
       'cleanup_auth_tokens',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Deleted ${rtCount} refresh, ${evtCount} email-verify, ${prtCount} password-reset tokens`,
       Date.now() - start,
     );
@@ -157,7 +157,7 @@ export class SchedulerService {
       if (res.count > 0) updated++;
     }
 
-    await this.logJob('recalc_provider_ratings', 'SUCCESS', `Updated ${updated} providers`, Date.now() - start);
+    await this.logJob('recalc_provider_ratings', JobStatus.SUCCESS, `Updated ${updated} providers`, Date.now() - start);
   }
 
   // ── NEW: Auto-reconcile completed orders with materials ─────────────────────
@@ -174,7 +174,7 @@ export class SchedulerService {
 
     const pending = await this.prisma.materialsPayment.findMany({
       where: {
-        status: { in: ['PAID_AVAILABLE', 'PARTIALLY_USED'] as any },
+        status: { in: [MaterialsPaymentStatus.PAID_AVAILABLE, MaterialsPaymentStatus.PARTIALLY_USED] },
         request: { status: 'COMPLETED', completedAt: { lte: cutoff } },
       },
       select: { requestId: true },
@@ -195,7 +195,7 @@ export class SchedulerService {
 
     await this.logJob(
       'auto_reconcile_materials',
-      errors > 0 ? 'FAILED' : 'SUCCESS',
+      errors > 0 ? JobStatus.FAILED : JobStatus.SUCCESS,
       `Reconciled ${reconciled} materials payments (${errors} errors)`,
       Date.now() - start,
     );
@@ -225,7 +225,7 @@ export class SchedulerService {
 
     await this.logJob(
       'expire_adjustment_requests',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Expired ${count} adjustment requests`,
       Date.now() - start,
     );
@@ -270,7 +270,7 @@ export class SchedulerService {
 
     await this.logJob(
       'process_ready_escrows',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Processed ${processed} ready-for-release escrows`,
       Date.now() - start,
     );
@@ -292,7 +292,7 @@ export class SchedulerService {
     });
 
     if (staleRentals.length === 0) {
-      await this.logJob('cancel_stale_pending_rentals', 'SUCCESS', 'No stale rentals found', Date.now() - start);
+      await this.logJob('cancel_stale_pending_rentals', JobStatus.SUCCESS, 'No stale rentals found', Date.now() - start);
       return;
     }
 
@@ -312,7 +312,7 @@ export class SchedulerService {
 
     await this.logJob(
       'cancel_stale_pending_rentals',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Cancelled ${cancelResult.count} stale PENDING rentals; restored ${equipmentIds.length} equipment items`,
       Date.now() - start,
     );
@@ -335,7 +335,7 @@ export class SchedulerService {
     });
     await this.logJob(
       'expire_stale_quotes',
-      'SUCCESS',
+      JobStatus.SUCCESS,
       `Expired ${result.count} stale quotes`,
       Date.now() - start,
     );
@@ -343,13 +343,13 @@ export class SchedulerService {
 
   private async logJob(
     jobName: string,
-    status: 'SUCCESS' | 'FAILED' | 'SKIPPED',
+    status: JobStatus,
     message: string,
     duration: number,
   ) {
     await this.prisma.scheduledJobLog
       .create({
-        data: { jobName, status: status as any, message, duration },
+        data: { jobName, status, message, duration },
       })
       .catch(() => {});
   }

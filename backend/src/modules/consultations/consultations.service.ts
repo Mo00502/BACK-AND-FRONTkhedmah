@@ -10,7 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateConsultationDto } from './dto/create-consultation.dto';
 import { RateConsultationDto } from './dto/rate-consultation.dto';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
-import { ConsultationStatus, UserRole } from '@prisma/client';
+import { ConsultationStatus, UserRole, ProviderVerificationStatus } from '@prisma/client';
 
 @Injectable()
 export class ConsultationsService {
@@ -105,7 +105,7 @@ export class ConsultationsService {
     const providerProfile = await this.prisma.providerProfile.findFirst({
       where: {
         userId: providerId,
-        verificationStatus: 'APPROVED' as any,
+        verificationStatus: ProviderVerificationStatus.APPROVED,
         user: { suspended: false, deletedAt: null },
       },
     });
@@ -128,7 +128,7 @@ export class ConsultationsService {
         where: {
           providerId,
           id: { not: consultationId },
-          status: { in: ['ACCEPTED', 'IN_SESSION'] as any },
+          status: { in: [ConsultationStatus.ACCEPTED, ConsultationStatus.IN_SESSION] },
           scheduledAt: { gte: scheduledAt, lt: endTime },
         },
       });

@@ -159,8 +159,11 @@ export class InvoicesService {
 
   // ── My invoices list ────────────────────────────────────────────────────
   async listMyInvoices(userId: string, page = 1, limit = 20) {
-    // Fetch ALL records for each type without skip/take — pagination is applied
-    // after merging and sorting so the result set is accurate across types.
+    // Fetch up to 1000 records per type — pagination is applied after merging
+    // and sorting so the result set is accurate across types. The 1000-row cap
+    // prevents OOM for high-volume provider accounts while still covering any
+    // realistic user's full invoice history.
+    const DB_CAP = 1000;
     const [serviceRequests, tenderCommissions, rentals, consultations] = await Promise.all([
       this.prisma.serviceRequest.findMany({
         where: {
@@ -170,6 +173,7 @@ export class InvoicesService {
         },
         select: { id: true, service: { select: { nameAr: true } }, completedAt: true },
         orderBy: { completedAt: 'desc' },
+        take: DB_CAP,
       }),
       this.prisma.tenderCommission.findMany({
         where: {
@@ -186,6 +190,7 @@ export class InvoicesService {
           paidAt: true,
         },
         orderBy: { paidAt: 'desc' },
+        take: DB_CAP,
       }),
       this.prisma.equipmentRental.findMany({
         where: {
@@ -199,6 +204,7 @@ export class InvoicesService {
           completedAt: true,
         },
         orderBy: { completedAt: 'desc' },
+        take: DB_CAP,
       }),
       this.prisma.consultation.findMany({
         where: {
@@ -214,6 +220,7 @@ export class InvoicesService {
           provider: { select: { profile: { select: { nameAr: true, nameEn: true } } } },
         },
         orderBy: { completedAt: 'desc' },
+        take: DB_CAP,
       }),
     ]);
 

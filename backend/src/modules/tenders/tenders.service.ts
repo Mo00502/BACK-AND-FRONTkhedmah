@@ -8,7 +8,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompaniesService } from '../companies/companies.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { RequirementStatus, TenderStatus, CommissionStatus } from '@prisma/client';
+import { RequirementStatus, TenderStatus, CommissionStatus, SupplierOfferStatus } from '@prisma/client';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 
 const COMMISSION_RATE = 0.02;
@@ -469,10 +469,10 @@ export class TendersService {
     if (!offer || offer.requirementId !== requirementId) throw new NotFoundException('Offer not found');
 
     await this.prisma.$transaction([
-      this.prisma.supplierOffer.update({ where: { id: offerId }, data: { status: 'ACCEPTED' } }),
+      this.prisma.supplierOffer.update({ where: { id: offerId }, data: { status: SupplierOfferStatus.ACCEPTED } }),
       this.prisma.supplierOffer.updateMany({
         where: { requirementId, id: { not: offerId } },
-        data: { status: 'REJECTED' },
+        data: { status: SupplierOfferStatus.REJECTED },
       }),
       this.prisma.projectRequirement.update({
         where: { id: requirementId },

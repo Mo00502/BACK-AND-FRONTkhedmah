@@ -247,8 +247,10 @@
             }
         })();
 
+        let _submitting = false;
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (_submitting) return;
             const identifier = document.getElementById('identifier').value.trim();
             const password   = document.getElementById('password').value;
             const btn        = document.getElementById('submitBtn');
@@ -258,6 +260,7 @@
                 return;
             }
 
+            _submitting = true;
             btn.disabled = true;
             btn.innerHTML = '<span>⏳</span><span>جاري التحقق...</span>';
 
@@ -278,6 +281,7 @@
                 }, 1000);
 
             } catch (err) {
+                _submitting = false;
                 btn.disabled = false;
                 btn.innerHTML = '<span>🔓</span><span>تسجيل الدخول</span>';
                 showAlert('error', '❌ ' + API.errorMsg(err));

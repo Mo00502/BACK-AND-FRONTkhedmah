@@ -335,7 +335,7 @@ export class NotificationsService {
         `
           <div dir="rtl" style="font-family:Tajawal,Arial,sans-serif;max-width:560px;margin:auto;">
             <h2 style="color:#EF4444;">نأسف، لم نتمكن من قبول وثائقك</h2>
-            <p><strong>السبب:</strong> ${event.reason}</p>
+            <p><strong>السبب:</strong> ${event.reason.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
             <p>يمكنك تعديل وثائقك وإعادة تقديمها من خلال لوحة التحكم.</p>
           </div>
         `,
