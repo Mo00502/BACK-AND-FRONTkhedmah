@@ -7,7 +7,15 @@ type RefType = 'PROVIDER' | 'EQUIPMENT' | 'TENDER';
 export class FavouritesService {
   constructor(private prisma: PrismaService) {}
 
+  private assertValidRefType(refType: string): asserts refType is RefType {
+    const VALID_REF_TYPES: RefType[] = ['PROVIDER', 'EQUIPMENT', 'TENDER'];
+    if (!VALID_REF_TYPES.includes(refType as RefType)) {
+      throw new BadRequestException('Invalid refType. Must be one of: PROVIDER, EQUIPMENT, TENDER');
+    }
+  }
+
   async toggle(userId: string, refType: RefType, refId: string) {
+    this.assertValidRefType(refType);
     const existing = await this.prisma.favourite.findUnique({
       where: { userId_refType_refId: { userId, refType, refId } },
     });
@@ -23,7 +31,10 @@ export class FavouritesService {
 
   async listMine(userId: string, refType?: RefType) {
     const where: any = { userId };
-    if (refType) where.refType = refType;
+    if (refType) {
+      this.assertValidRefType(refType);
+      where.refType = refType;
+    }
 
     const favs = await this.prisma.favourite.findMany({
       where,
@@ -69,6 +80,7 @@ export class FavouritesService {
   }
 
   async isSaved(userId: string, refType: RefType, refId: string) {
+    this.assertValidRefType(refType);
     const fav = await this.prisma.favourite.findUnique({
       where: { userId_refType_refId: { userId, refType, refId } },
     });
@@ -76,6 +88,7 @@ export class FavouritesService {
   }
 
   async countForRef(refType: RefType, refId: string) {
+    this.assertValidRefType(refType);
     const count = await this.prisma.favourite.count({ where: { refType, refId } });
     return { count };
   }

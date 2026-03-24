@@ -56,7 +56,14 @@ export class SearchService {
         },
       ],
     };
-    if (city) where.user = { ...where.user, profile: { city } };
+    if (city) {
+      where.user = {
+        status: 'ACTIVE',
+        suspended: false,
+        deletedAt: null,
+        profile: { city },
+      };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.providerProfile.findMany({
@@ -67,7 +74,7 @@ export class SearchService {
         include: {
           user: { include: { profile: true } },
           skills: { include: { service: true } },
-        } as any,
+        },
       }),
       this.prisma.providerProfile.count({ where }),
     ]);

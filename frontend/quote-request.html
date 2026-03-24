@@ -195,6 +195,7 @@
             submitted: false,
             submitting: false,
             reqNumber: '',
+            providerId: '',
             errors: {},
             stepLabels: ['نوع الخدمة','وصف المشكلة','الموقع والوقت','مراجعة وإرسال'],
             DISTRICTS: {
@@ -274,8 +275,7 @@
                 if (this.timing === 'custom' && this.customDate && new Date(this.customDate) <= new Date()) { this.errors.timing = 'يجب أن يكون الموعد في المستقبل'; this.step = 3; return; }
                 this.submitting = true;
                 try {
-                    const req = await API.requests.create({
-                        serviceTitle:    this.selectedService,
+                    const payload = {
                         serviceCategory: this.selectedService,
                         city:            this.city,
                         district:        this.district,
@@ -283,7 +283,9 @@
                         scheduledAt:     this.timing === 'custom' && this.customDate ? new Date(this.customDate).toISOString() : undefined,
                         hasMaterials:    this.hasMaterials,
                         materialsEst:    this.hasMaterials ? (this.materialsEst || 0) : 0,
-                    });
+                    };
+                    if (this.providerId) payload.providerId = this.providerId;
+                    const req = await API.requests.create(payload);
                     this.reqNumber = req?.id;
                     this.submitting = false;
                     this.submitted = true;
@@ -299,7 +301,9 @@
             }
         }"
         x-init="
-            const c = new URLSearchParams(location.search).get('category'); if(c) selectedService = c;
+            const _p = new URLSearchParams(location.search);
+            const _c = _p.get('category'); if(_c) selectedService = _c;
+            const _pid = _p.get('providerId'); if(_pid) providerId = _pid;
             $watch('city', () => { district = ''; });
         ">
 

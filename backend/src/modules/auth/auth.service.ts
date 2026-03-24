@@ -444,7 +444,7 @@ export class AuthService {
     });
 
     const rawRefresh = uuidv4();
-    const tokenHash = await bcrypt.hash(rawRefresh, 10);
+    const tokenHash = await bcrypt.hash(rawRefresh, BCRYPT_ROUNDS);
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000);
 
     const stored = await this.prisma.refreshToken.create({

@@ -39,14 +39,6 @@ export class CompaniesController {
     return this.companies.findAll({ ...dto, verified: true } as any);
   }
 
-  @Public()
-  @Get(':id')
-  @ThrottleRelaxed()
-  @ApiOperation({ summary: 'Get company profile by ID (public)' })
-  getOne(@Param('id') id: string) {
-    return this.companies.getById(id);
-  }
-
   @ApiBearerAuth()
   @Get('me/profile')
   @Roles(UserRole.PROVIDER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -54,6 +46,14 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Get my company profile' })
   mine(@CurrentUser('id') userId: string) {
     return this.companies.getMyCompany(userId);
+  }
+
+  @Public()
+  @Get(':id')
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Get company profile by ID (public)' })
+  getOne(@Param('id') id: string) {
+    return this.companies.getById(id);
   }
 
   @ApiBearerAuth()
