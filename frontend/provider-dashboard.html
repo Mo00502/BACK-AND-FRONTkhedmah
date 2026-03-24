@@ -428,6 +428,22 @@
             </div>
         </div>
 
+        <!-- Availability Status -->
+        <div class="section" id="availabilitySection" style="display:none;">
+            <div class="section-header">
+                <div class="section-title">📅 التوافر الأسبوعي</div>
+                <a href="provider-availability.html" class="section-link">إدارة التوافر</a>
+            </div>
+            <div id="availabilityError" style="display:none;background:rgba(245,158,11,0.1);border:1.5px solid #f59e0b;border-radius:12px;padding:0.875rem 1.25rem;font-size:0.88rem;color:#92400e;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <span>⚠️ فشل تحميل جدول التوافر.</span>
+                <button onclick="loadAvailability()" style="background:none;border:none;color:var(--primary);font-family:'Tajawal',sans-serif;font-size:0.88rem;cursor:pointer;text-decoration:underline;padding:0;">حاول مرة أخرى</button>
+            </div>
+            <div id="availabilityContent" style="display:none;background:white;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 10px rgba(0,0,0,0.06);font-size:0.88rem;color:var(--gray);">
+                <span id="availabilityText">جارٍ التحميل...</span>
+                <a href="provider-availability.html" style="margin-right:1rem;color:var(--primary);font-weight:600;text-decoration:none;">تعديل الجدول</a>
+            </div>
+        </div>
+
         <!-- Active + Earnings -->
         <div class="two-col section">
             <!-- Active Orders -->
@@ -553,6 +569,9 @@
                 renderActiveJobs(activeItems);
 
             } catch(e) { /* silent */ }
+
+            // Load availability status (non-blocking)
+            loadAvailability().catch(() => {});
         })();
 
         function renderNewRequests(items) {
@@ -613,6 +632,26 @@
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        async function loadAvailability() {
+            const section = document.getElementById('availabilitySection');
+            const errEl   = document.getElementById('availabilityError');
+            const contentEl = document.getElementById('availabilityContent');
+            const textEl    = document.getElementById('availabilityText');
+            if (section) section.style.display = 'block';
+            if (errEl)   errEl.style.display = 'none';
+            if (contentEl) contentEl.style.display = 'none';
+            try {
+                const avail = await API.providers.schedule().catch(() => { throw new Error('load failed'); });
+                const days  = avail?.days || avail?.availability || avail;
+                if (textEl) textEl.textContent = Array.isArray(days) && days.length
+                    ? 'لديك ' + days.length + ' يوم متاح هذا الأسبوع.'
+                    : 'لا توجد فترات توافر محددة بعد.';
+                if (contentEl) contentEl.style.display = 'block';
+            } catch (e) {
+                if (errEl) errEl.style.display = 'flex';
+            }
         }
 
         function dismissRequest(btn) {

@@ -483,7 +483,9 @@
         updateBadge();
         showToast('✓ تم تحديد الكل كمقروء');
         refreshUnreadTab();
-        API.notifications.markAllRead().catch(() => {});
+        API.notifications.markAllRead()
+            .then(() => { API.toast('تم تحديد جميع الإشعارات كمقروءة', 'success'); })
+            .catch(() => {});
     }
 
     function refreshUnreadTab() {
@@ -499,6 +501,26 @@
             });
         }
     }
+
+    async function loadNotifications() {
+        try {
+            const data = await API.notifications.list({ limit: 20 });
+            const items = Array.isArray(data) ? data : (data?.items || []);
+            const unread = items.filter(n => !n.read);
+            // Update badge with live count
+            if (unread.length !== unreadIds.size) {
+                unreadIds = new Set(unread.map(n => n.id));
+                updateBadge();
+            }
+        } catch (_) { /* silent — no toast on background refresh */ }
+    }
+
+    // Auto-refresh every 15 seconds, only while page is visible
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            loadNotifications();
+        }
+    }, 15000);
 
     function switchTab(tab, btn) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

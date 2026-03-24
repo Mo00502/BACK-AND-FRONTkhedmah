@@ -492,19 +492,22 @@
         }
 
         function updateCount(el) {
-            document.getElementById('charCount').textContent = el.value.length;
+            if (el.value.length > 500) { el.value = el.value.slice(0, 500); }
+            const count = el.value.length;
+            const counter = document.getElementById('charCount');
+            if (counter) counter.textContent = count;
+            // Colour hint when approaching limit
+            const wrap = el.parentElement.querySelector('.char-count');
+            if (wrap) wrap.style.color = count >= 480 ? '#EF4444' : '';
         }
 
         function previewPhoto(input, idx) {
             const slots = document.querySelectorAll('.photo-slot');
             const file = input.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                slots[idx].innerHTML = `<img src="${e.target.result}" alt="preview">`;
-                slots[idx].classList.add('filled');
-            };
-            reader.readAsDataURL(file);
+            const url = URL.createObjectURL(file);
+            slots[idx].innerHTML = `<img src="${url}" alt="preview">`;
+            slots[idx].classList.add('filled');
         }
 
         // Read requestId and service context from URL

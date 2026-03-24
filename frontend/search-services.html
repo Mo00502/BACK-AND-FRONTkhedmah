@@ -422,6 +422,7 @@
             <div class="results-header">
                 <div class="results-count">عرض <strong>48</strong> مزود في <strong>الرياض</strong></div>
                 <select class="sort-select" onchange="sortResults(this.value)">
+                    <option value="relevant" selected>الأكثر صلة</option>
                     <option value="rating">الأعلى تقييماً</option>
                     <option value="price">الأقل سعراً</option>
                     <option value="nearest">الأقرب</option>
@@ -600,6 +601,14 @@
 
             </div>
 
+            <!-- Empty state: shown when no providers match -->
+            <div id="searchEmptyState" style="display:none;" class="col-12 text-center py-5">
+                <i style="font-size:3rem;color:var(--gray)">🔍</i>
+                <h5 style="margin-top:1rem;color:var(--gray)">لا توجد نتائج</h5>
+                <p style="color:var(--gray)">حاول تغيير الفئة أو المنطقة أو مسح المرشحات</p>
+                <button style="margin-top:0.5rem;padding:0.5rem 1.25rem;border:1.5px solid var(--primary);background:transparent;color:var(--primary);border-radius:10px;font-family:'Tajawal',sans-serif;font-size:0.9rem;cursor:pointer;" onclick="clearFilters()">مسح المرشحات</button>
+            </div>
+
             <div class="pagination">
                 <button class="page-btn active">1</button>
                 <button class="page-btn" onclick="this.parentNode.querySelectorAll('.page-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">2</button>
@@ -707,11 +716,32 @@
             const countEl = document.querySelector('.results-count strong');
             if (countEl) countEl.textContent = visible;
 
+            // Toggle empty state
+            const emptyEl = document.getElementById('searchEmptyState');
+            if (emptyEl) emptyEl.style.display = visible === 0 ? 'block' : 'none';
+
             // Re-apply current sort
             sortResultsBy(currentSort, false);
 
             // Update filter badge
             updateFilterBadge();
+        }
+
+        function clearFilters() {
+            // Reset all sidebar checkboxes
+            document.querySelectorAll('.filter-option input').forEach(i => i.checked = false);
+            // Reset price range inputs
+            const pMin = document.getElementById('priceMin');
+            const pMax = document.getElementById('priceMax');
+            if (pMin) pMin.value = '0';
+            if (pMax) pMax.value = '1000';
+            // Reset search box
+            document.getElementById('searchInput').value = '';
+            // Reset category chips to 'الكل' only
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            const allChip = document.querySelector('.cat-chip');
+            if (allChip) allChip.classList.add('active');
+            applyFilters();
         }
 
         function updateFilterBadge() {
@@ -733,13 +763,14 @@
                 if (val === 'rating') return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
                 if (val === 'price')  return parseFloat(a.dataset.price)  - parseFloat(b.dataset.price);
                 if (val === 'jobs')   return parseFloat(b.dataset.jobs)   - parseFloat(a.dataset.jobs);
+                if (val === 'relevant') return 0; // preserve original order
                 return 0;
             });
 
             cards.forEach(c => grid.appendChild(c));
 
             if (updateToast) {
-                const labels = { rating: 'الأعلى تقييماً', price: 'الأقل سعراً', nearest: 'الأقرب', jobs: 'الأكثر تجربة' };
+                const labels = { relevant: 'الأكثر صلة', rating: 'الأعلى تقييماً', price: 'الأقل سعراً', nearest: 'الأقرب', jobs: 'الأكثر تجربة' };
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:.6rem 1.25rem;border-radius:12px;font-family:Tajawal,sans-serif;font-size:.85rem;z-index:9999;';
                 toast.textContent = `تم الترتيب: ${labels[val] || val}`;

@@ -375,7 +375,12 @@
             <div class="section-header">
                 <div class="section-title">الطلبات النشطة</div>
             </div>
-            <div class="requests-list">
+            <div class="requests-list" id="activeRequestsList">
+                <div id="requestsEmpty" class="empty-state" style="display:none;">
+                    <div class="emoji">📋</div>
+                    <p>لا توجد طلبات حتى الآن</p>
+                    <a href="search-services.html" style="display:inline-block;margin-top:0.75rem;background:var(--primary);color:white;padding:0.45rem 1.1rem;border-radius:10px;text-decoration:none;font-size:0.85rem;font-weight:600;">ابدأ أول طلب</a>
+                </div>
                 <div class="request-card">
                     <div class="request-service-icon">🔧</div>
                     <div class="request-info">
@@ -431,7 +436,7 @@
                     </div>
                     <div class="request-actions">
                         <a href="payment-escrow.html?requestId=REQ-Q001&service=%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A1&hasMaterials=false&materialsEst=0" class="btn-sm btn-primary">قبول</a>
-                        <button class="btn-sm btn-ghost" onclick="dismissQuote(this)">رفض</button>
+                        <button class="btn-sm" style="background:transparent;color:#ef4444;border:1.5px solid #ef4444;" onclick="dismissQuote(this)">رفض</button>
                     </div>
                 </div>
 
@@ -447,7 +452,7 @@
                     </div>
                     <div class="request-actions">
                         <a href="payment-escrow.html?requestId=REQ-Q002&service=%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A1&hasMaterials=false&materialsEst=0" class="btn-sm btn-primary">قبول</a>
-                        <button class="btn-sm btn-ghost" onclick="dismissQuote(this)">رفض</button>
+                        <button class="btn-sm" style="background:transparent;color:#ef4444;border:1.5px solid #ef4444;" onclick="dismissQuote(this)">رفض</button>
                     </div>
                 </div>
                 <div id="quotesEmpty" class="empty-state" style="display:none;">
@@ -648,8 +653,14 @@
 
             // Render active requests
             const reqList = document.querySelector('.requests-list');
+            const reqsEmptyEl = document.getElementById('requestsEmpty');
+            if (reqList && activeReqs.length === 0) {
+                reqList.querySelectorAll('.request-card').forEach(c => c.style.display = 'none');
+                if (reqsEmptyEl) reqsEmptyEl.style.display = 'block';
+            }
             if (reqList && activeReqs.length > 0) {
-                reqList.innerHTML = activeReqs.map(r => {
+                if (reqsEmptyEl) reqsEmptyEl.style.display = 'none';
+                reqList.innerHTML = `<div id="requestsEmpty" class="empty-state" style="display:none;"><div class="emoji">📋</div><p>لا توجد طلبات حتى الآن</p></div>` + activeReqs.map(r => {
                     const st  = STATUS_LABEL[r.status] || STATUS_LABEL.PENDING;
                     const svc = escHtml(r.service?.nameAr || 'خدمة');
                     const city = escHtml(r.city || '');
@@ -701,7 +712,7 @@
                             <div><div class="quote-price">${amount} ر.س <small>+ ضريبة</small></div></div>
                             <div class="request-actions">
                                 <button class="btn-sm btn-primary" onclick="acceptQuote('${reqId}','${quoteId}','${svcName}')">قبول</button>
-                                <button class="btn-sm btn-ghost" onclick="rejectQuote('${reqId}','${quoteId}',this)">رفض</button>
+                                <button class="btn-sm" style="background:transparent;color:#ef4444;border:1.5px solid #ef4444;" onclick="rejectQuote('${reqId}','${quoteId}',this)">رفض</button>
                             </div>
                         </div>`);
                     });

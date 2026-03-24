@@ -303,6 +303,12 @@
                     <div style="font-size:0.72rem;color:var(--gray);line-height:1.5">لا يمكن لأي مزود آخر رؤية سعر عرضك. فقط صاحب المناقصة يرى الأسعار.</div>
                 </div>
 
+                <!-- Bid privacy notice -->
+                <div style="background:rgba(2,128,144,0.08);border:1px solid rgba(2,128,144,0.2);border-radius:10px;padding:0.6rem 0.875rem;display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.875rem;font-size:0.78rem;color:#0f4c57;line-height:1.5;">
+                    <span style="flex-shrink:0;font-size:0.85rem;">🔒</span>
+                    <span>أسعار العروض سرية — لا يمكن للمتنافسين الاطلاع على عروض بعضهم</span>
+                </div>
+
                 <!-- CTA -->
                 <div id="ctaArea">
                     <button class="btn-submit-bid" id="btnSubmit" onclick="openBidModal()">تقديم عرض سعر</button>
@@ -823,6 +829,58 @@ function loadTender() {
 }
 
 loadTender();
+
+// ─── Deadline Countdown ───────────────────────────────────────────────────────
+// isoDeadline map (future-dated for demo; adjust as needed)
+const DEADLINES = {
+    '1': '2026-04-15T23:59:00',
+    '2': '2026-04-20T23:59:00',
+    '3': '2026-04-05T23:59:00',
+    '4': '2026-04-28T23:59:00',
+    '5': '2026-05-10T23:59:00',
+    '6': '2026-04-08T23:59:00',
+    '7': '2026-03-01T23:59:00',
+    '8': '2026-05-02T23:59:00',
+};
+
+function getCountdown(deadline) {
+    const diff = new Date(deadline) - new Date();
+    if (diff <= 0) return 'انتهى التقديم';
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    if (d > 0) return `يتبقى ${d} يوم و ${h} ساعة`;
+    if (h > 0) return `يتبقى ${h} ساعة و ${m} دقيقة`;
+    return `يتبقى ${m} دقيقة`;
+}
+
+(function startCountdown() {
+    const deadlineISO = DEADLINES[tenderId];
+    if (!deadlineISO) return;
+    const remEl = document.getElementById('sDeadlineRemaining');
+    const fillEl = document.getElementById('sDeadlineFill');
+    if (!remEl) return;
+
+    function updateCountdown() {
+        const text = getCountdown(deadlineISO);
+        remEl.textContent = text;
+        if (text === 'انتهى التقديم') {
+            remEl.style.color = '#EF4444';
+            if (fillEl) fillEl.style.width = '100%';
+        } else {
+            // Also update progress bar based on elapsed time
+            const totalMs = new Date(deadlineISO) - new Date(data.deadline.replace(/[٠-٩]/g, d => d.charCodeAt(0) - 1632));
+            const remaining = new Date(deadlineISO) - new Date();
+            if (totalMs > 0 && fillEl) {
+                const pct = Math.min(100, Math.max(0, ((totalMs - remaining) / totalMs) * 100));
+                fillEl.style.width = pct + '%';
+            }
+        }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+})();
 
 // ─── Bid Modal ───────────────────────────────────────────────────────────────
 function openBidModal() {

@@ -371,16 +371,23 @@ const BIDS = [
 <div class="bids-main" x-data="{
     tab: 'all',
     sortBy: 'date',
+    sortField: null,
     expandedBid: null,
     bids: BIDS,
     get filteredBids() {
         let list = this.tab === 'all' ? this.bids
             : this.tab === 'shortlisted' ? this.bids.filter(b => b.status === 'shortlisted')
             : this.bids.filter(b => b.status === 'accepted');
+        if (this.sortField === 'price') return [...list].sort((a,b) => a.price - b.price);
+        if (this.sortField === 'rating') return [...list].sort((a,b) => b.rating - a.rating);
+        if (this.sortField === 'date') return [...list]; // original insertion order = date desc
         if (this.sortBy === 'price_low') return [...list].sort((a,b) => a.price - b.price);
         if (this.sortBy === 'price_high') return [...list].sort((a,b) => b.price - a.price);
         if (this.sortBy === 'rating') return [...list].sort((a,b) => b.rating - a.rating);
         return list;
+    },
+    sortBids(field) {
+        this.sortField = field;
     },
     shortlistBid(id) {
         const bid = this.bids.find(b => b.id === id);
@@ -388,6 +395,10 @@ const BIDS = [
         updateShortlistedCount(this.bids);
     },
     async acceptBid(id) {
+        const bid = this.bids.find(b => b.id === id);
+        if (!bid) return;
+        const confirmed = confirm(`هل تريد منح المناقصة لـ "${bid.company}" بمبلغ ${bid.price.toLocaleString('ar-SA')} ر.س؟`);
+        if (!confirmed) return;
         // First, un-accept any previously accepted bid
         this.bids.forEach(b => {
             if (b.status === 'accepted') b.status = 'pending';
@@ -430,6 +441,22 @@ const BIDS = [
             <option value="price_high">السعر: الأعلى</option>
             <option value="rating">التقييم</option>
         </select>
+    </div>
+
+    <!-- Sort buttons -->
+    <div class="d-flex gap-2 mb-3" style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+        <button style="padding:0.4rem 0.85rem;border:1.5px solid #e2e8f0;border-radius:10px;background:white;font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;color:var(--gray);"
+            @click="sortBids('price')" :style="sortField==='price' ? 'border-color:var(--primary);color:var(--primary);' : ''">
+            ترتيب بالسعر
+        </button>
+        <button style="padding:0.4rem 0.85rem;border:1.5px solid #e2e8f0;border-radius:10px;background:white;font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;color:var(--gray);"
+            @click="sortBids('date')" :style="sortField==='date' ? 'border-color:var(--primary);color:var(--primary);' : ''">
+            ترتيب بالتاريخ
+        </button>
+        <button style="padding:0.4rem 0.85rem;border:1.5px solid #e2e8f0;border-radius:10px;background:white;font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;color:var(--gray);"
+            @click="sortBids('rating')" :style="sortField==='rating' ? 'border-color:var(--primary);color:var(--primary);' : ''">
+            ترتيب بالتقييم
+        </button>
     </div>
 
     <!-- Price range insight (client-only) -->

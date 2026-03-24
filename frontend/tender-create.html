@@ -189,6 +189,7 @@
         step: 1,
         totalSteps: 6,
         submitted: false,
+        submitting: false,
         tenderId: '',
 
         // Step 1
@@ -289,22 +290,27 @@
 
         async publish() {
             if (!this.validate()) return;
-            this.submitted = true;
-            window.scrollTo(0, 0);
+            if (this.submitting) return;
+            this.submitting = true;
             try {
                 const res = await API.tenders.create({
                     title: this.title,
                     description: this.description,
                     category: this.category,
-                    budget: this.budget,
+                    budget: this.budgetType === 'fixed' ? this.budgetFixed : (this.budgetMin + '-' + this.budgetMax),
                     deadline: this.deadline,
-                    location: this.location,
+                    locationDetail: this.locationDetail,
                     city: this.city,
                 });
                 this.tenderId = res?.id ? ('#TND-' + res.id.slice(-6)) : ('#TND-' + Date.now().toString().slice(-6));
             } catch(e) {
                 this.tenderId = '#TND-' + Date.now().toString().slice(-6);
+            } finally {
+                this.submitting = false;
             }
+            tenderFormDirty = false;
+            this.submitted = true;
+            window.scrollTo(0, 0);
         },
         saveDraft() {
             const draft = {
@@ -705,7 +711,10 @@
             <span x-show="step === 1"></span>
             <button class="btn-skip5" x-show="step === 5" @click="skipStep5()">تخطي</button>
             <button class="btn-next" x-show="step < 6" @click="goNext()">التالي ←</button>
-            <button class="btn-publish" x-show="step === 6" @click="publish()">نشر المناقصة ✓</button>
+            <button class="btn-publish" x-show="step === 6" @click="publish()" :disabled="submitting">
+                <span x-show="submitting" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;margin-left:6px;vertical-align:middle;"></span>
+                <span x-text="submitting ? 'جارٍ النشر...' : 'نشر المناقصة ✓'"></span>
+            </button>
         </div>
 
     </div><!-- /.wizard-wrap -->
@@ -715,6 +724,8 @@
 
     <!-- Alpine.js v3 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
     <script>
         function showToast(msg) {
@@ -738,6 +749,22 @@
                 btn.textContent = '☀️';
             }
         })();
+
+        // Unsaved changes warning
+        let tenderFormDirty = false;
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', () => { tenderFormDirty = true; });
+                el.addEventListener('change', () => { tenderFormDirty = true; });
+            });
+            // Also watch clicks on card-selectors (category, budget type, visibility)
+            document.querySelectorAll('.cat-card, .budget-card, .vis-card, .subcat-chip, .mode-tab, .attach-btn').forEach(el => {
+                el.addEventListener('click', () => { tenderFormDirty = true; });
+            });
+        });
+        window.addEventListener('beforeunload', (e) => {
+            if (tenderFormDirty) { e.preventDefault(); e.returnValue = ''; }
+        });
     </script>
 </body>
 </html>

@@ -407,6 +407,13 @@
                 <span>🟢 موقعك</span>
                 <span>🚗 المزود</span>
             </div>
+            <!-- Fallback when no location data available -->
+            <div id="mapFallback" style="display:none;height:200px;background:var(--light);border-radius:12px;display:none;align-items:center;justify-content:center;">
+                <div style="text-align:center;color:var(--gray)">
+                    <div style="font-size:2rem">📍</div>
+                    <p style="margin-top:0.5rem;font-size:0.85rem">لا توجد بيانات موقع</p>
+                </div>
+            </div>
             <div id="liveMap"></div>
         </div>
 
@@ -516,6 +523,54 @@
         }, 3000); // move every 3 seconds
     }
     startProviderMovement();
+
+    // ── Real-time polling (10s interval when IN_PROGRESS) ───────────────────
+    let pollInterval = null;
+
+    function updateStatus(data) {
+        // Map backend status to step number
+        const statusStepMap = {
+            'PENDING': 1, 'PENDING_QUOTE': 1, 'QUOTE_SENT': 1,
+            'ACCEPTED': 2, 'IN_PROGRESS': 3, 'COMPLETED': 4, 'CANCELLED': 4
+        };
+        const step = statusStepMap[data.status];
+        if (step && step > currentStep) {
+            advanceStep(step);
+        }
+        if (data.status === 'CANCELLED') {
+            showToast('تم إلغاء الطلب.');
+        }
+    }
+
+    function startPolling(requestId) {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(async () => {
+            if (document.visibilityState !== 'visible') return;
+            if (['COMPLETED', 'CANCELLED'].includes(window._trackingStatus || '')) {
+                clearInterval(pollInterval);
+                return;
+            }
+            try {
+                if (typeof API !== 'undefined' && API.requests && typeof API.requests.get === 'function') {
+                    const data = await API.requests.get(requestId).catch(() => null);
+                    if (!data) return;
+                    window._trackingStatus = data.status;
+                    updateStatus(data);
+                    if (['COMPLETED', 'CANCELLED'].includes(data.status)) {
+                        clearInterval(pollInterval);
+                    }
+                }
+            } catch(e) { /* silent — demo mode */ }
+        }, 10000);
+    }
+
+    // Start polling if we have a real requestId (not the demo placeholder)
+    if (_currentRequestId && _currentRequestId !== 'REQ-demo-001') {
+        startPolling(_currentRequestId);
+    }
+
+    // Clear polling on page unload
+    window.addEventListener('beforeunload', () => { if (pollInterval) clearInterval(pollInterval); });
 
     function showToast(msg) {
         const t = document.getElementById('toast');

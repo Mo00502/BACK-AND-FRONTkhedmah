@@ -83,11 +83,26 @@
       if (token) headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: body != null ? JSON.stringify(body) : undefined,
-    });
+    const controller = new AbortController();
+    const timeoutId  = setTimeout(() => controller.abort(), 15000);
+
+    let res;
+    try {
+      res = await fetch(url, {
+        method,
+        headers,
+        body:   body != null ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        toast('انتهت مهلة الطلب، حاول مرة أخرى', 'danger');
+        throw new ApiError(0, 'انتهت مهلة الطلب، حاول مرة أخرى');
+      }
+      throw e;
+    }
+    clearTimeout(timeoutId);
 
     // 401 → try silent refresh once
     if (res.status === 401 && !opts.skipAuth && !opts._retried) {
@@ -98,8 +113,10 @@
       // Refresh failed — clear session and send to login
       const role = Store.getUser()?.role;   // read role BEFORE clearing
       Store.clearAll();
-      window.location.href = (role === 'admin' || role === 'ADMIN' || role === 'super_admin' || role === 'SUPER_ADMIN')
+      toast('انتهت جلستك، يُرجى تسجيل الدخول مجدداً', 'warning');
+      const loginPage = (role === 'admin' || role === 'ADMIN' || role === 'super_admin' || role === 'SUPER_ADMIN')
         ? 'admin-login.html' : 'login.html';
+      setTimeout(() => { window.location.href = loginPage; }, 500);
       throw new ApiError(401, 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.');
     }
 
@@ -117,7 +134,9 @@
     }
 
     // Unwrap the ResponseInterceptor envelope: { success, data, meta, ... }
-    return json?.data !== undefined ? json.data : json;
+    if (json?.data !== undefined) return json.data;
+    if (json?.success !== false)  return json;
+    throw new ApiError(res.status, json?.message || _httpMessage(res.status));
   }
 
   async function _tryRefresh() {
@@ -408,7 +427,7 @@
            animation:fadeIn .2s ease;direction:rtl">
         ${message}
       </div>`);
-    setTimeout(() => document.getElementById(id)?.remove(), 4000);
+    setTimeout(() => document.getElementById(id)?.remove(), type === 'danger' ? 6000 : 4000);
   }
 
   /** Extract a user-facing error message from an ApiError or unknown error. */

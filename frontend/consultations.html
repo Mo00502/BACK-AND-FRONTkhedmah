@@ -227,9 +227,9 @@
                             <span>📹 فيديو</span>
                         </div>
                         <div class="cons-tags">
-                            <span class="tag">المقاولات</span>
-                            <span class="tag">إدارة مشاريع</span>
-                            <span class="tag">عقود البناء</span>
+                            <span class="tag" data-tag="المقاولات" onclick="filterByTag('المقاولات')" style="cursor:pointer">المقاولات</span>
+                            <span class="tag" data-tag="إدارة مشاريع" onclick="filterByTag('إدارة مشاريع')" style="cursor:pointer">إدارة مشاريع</span>
+                            <span class="tag" data-tag="عقود البناء" onclick="filterByTag('عقود البناء')" style="cursor:pointer">عقود البناء</span>
                         </div>
                     </div>
                     <div class="cons-right">
@@ -252,8 +252,8 @@
                             <span>📹 فيديو</span>
                         </div>
                         <div class="cons-tags">
-                            <span class="tag">عقود تجارية</span>
-                            <span class="tag">نزاعات عمالية</span>
+                            <span class="tag" data-tag="عقود تجارية" onclick="filterByTag('عقود تجارية')" style="cursor:pointer">عقود تجارية</span>
+                            <span class="tag" data-tag="نزاعات عمالية" onclick="filterByTag('نزاعات عمالية')" style="cursor:pointer">نزاعات عمالية</span>
                         </div>
                     </div>
                     <div class="cons-right">
@@ -276,9 +276,9 @@
                             <span>💬 دردشة</span>
                         </div>
                         <div class="cons-tags">
-                            <span class="tag">الاستثمار</span>
-                            <span class="tag">الميزانية</span>
-                            <span class="tag">الضرائب</span>
+                            <span class="tag" data-tag="الاستثمار" onclick="filterByTag('الاستثمار')" style="cursor:pointer">الاستثمار</span>
+                            <span class="tag" data-tag="الميزانية" onclick="filterByTag('الميزانية')" style="cursor:pointer">الميزانية</span>
+                            <span class="tag" data-tag="الضرائب" onclick="filterByTag('الضرائب')" style="cursor:pointer">الضرائب</span>
                         </div>
                     </div>
                     <div class="cons-right">
@@ -301,9 +301,9 @@
                             <span>📹 فيديو</span>
                         </div>
                         <div class="cons-tags">
-                            <span class="tag">أمن سيبراني</span>
-                            <span class="tag">Cloud</span>
-                            <span class="tag">DevOps</span>
+                            <span class="tag" data-tag="أمن سيبراني" onclick="filterByTag('أمن سيبراني')" style="cursor:pointer">أمن سيبراني</span>
+                            <span class="tag" data-tag="Cloud" onclick="filterByTag('Cloud')" style="cursor:pointer">Cloud</span>
+                            <span class="tag" data-tag="DevOps" onclick="filterByTag('DevOps')" style="cursor:pointer">DevOps</span>
                         </div>
                     </div>
                     <div class="cons-right">
@@ -326,9 +326,9 @@
                             <span>🤝 حضوري</span>
                         </div>
                         <div class="cons-tags">
-                            <span class="tag">كهرباء</span>
-                            <span class="tag">طاقة شمسية</span>
-                            <span class="tag">تصاميم</span>
+                            <span class="tag" data-tag="كهرباء" onclick="filterByTag('كهرباء')" style="cursor:pointer">كهرباء</span>
+                            <span class="tag" data-tag="طاقة شمسية" onclick="filterByTag('طاقة شمسية')" style="cursor:pointer">طاقة شمسية</span>
+                            <span class="tag" data-tag="تصاميم" onclick="filterByTag('تصاميم')" style="cursor:pointer">تصاميم</span>
                         </div>
                     </div>
                     <div class="cons-right">
@@ -351,9 +351,9 @@
                             <span>📹 فيديو</span>
                         </div>
                         <div class="cons-tags">
-                            <span class="tag">أمراض القلب</span>
-                            <span class="tag">ضغط الدم</span>
-                            <span class="tag">الوقاية</span>
+                            <span class="tag" data-tag="أمراض القلب" onclick="filterByTag('أمراض القلب')" style="cursor:pointer">أمراض القلب</span>
+                            <span class="tag" data-tag="ضغط الدم" onclick="filterByTag('ضغط الدم')" style="cursor:pointer">ضغط الدم</span>
+                            <span class="tag" data-tag="الوقاية" onclick="filterByTag('الوقاية')" style="cursor:pointer">الوقاية</span>
                         </div>
                     </div>
                     <div class="cons-right">
@@ -406,9 +406,19 @@
                 <label class="form-label">موضوع الاستشارة</label>
                 <textarea class="form-control" id="bookTopic" placeholder="اشرح بإيجاز ما تحتاج مناقشته..."></textarea>
             </div>
-            <div style="background:var(--light); border-radius:10px; padding:0.75rem 1rem; font-size:0.88rem; margin-top:0.5rem;">
-                <div style="display:flex; justify-content:space-between;">
-                    <span>سعر الجلسة (ساعة)</span>
+            <!-- Price breakdown with VAT -->
+            <div style="background:var(--light); border-radius:10px; padding:0.85rem 1rem; font-size:0.88rem; margin-top:0.5rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span>سعر الاستشارة</span>
+                    <span id="bookPriceBase" style="color:var(--dark)">0 ر.س / ساعة</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem; color:var(--gray);">
+                    <span>ضريبة القيمة المضافة (15%)</span>
+                    <span id="bookPriceVAT">0 ر.س</span>
+                </div>
+                <hr style="border-color:#e2e8f0; margin:0.4rem 0;">
+                <div style="display:flex; justify-content:space-between; font-weight:800;">
+                    <span>الإجمالي</span>
                     <strong id="bookPrice" style="color:var(--primary)">0 ر.س</strong>
                 </div>
             </div>
@@ -420,6 +430,19 @@
     </div>
 
     <script>
+        let _activeTag = '';
+
+        function filterByTag(tag) {
+            // Toggle: clicking the same tag clears the filter
+            _activeTag = (_activeTag === tag) ? '' : tag;
+            // Highlight active tag visually
+            document.querySelectorAll('.tag[data-tag]').forEach(el => {
+                el.style.background = (el.dataset.tag === _activeTag) ? 'var(--primary)' : '';
+                el.style.color      = (el.dataset.tag === _activeTag) ? 'white' : '';
+            });
+            applyFilters();
+        }
+
         function applyFilters() {
             const q = document.getElementById('searchInput').value.trim().toLowerCase();
             const specs = [...document.querySelectorAll('[data-filter="spec"]:checked')].map(el => el.value);
@@ -429,10 +452,12 @@
             const cards = document.querySelectorAll('.consultant-card');
             let visible = 0;
             cards.forEach(card => {
+                const matchTag = !_activeTag || card.textContent.includes(_activeTag);
                 const show = (!q || card.textContent.toLowerCase().includes(q))
                     && (specs.length === 0 || specs.includes(card.dataset.spec))
                     && (modes.length === 0 || modes.includes(card.dataset.mode))
-                    && parseFloat(card.dataset.rating) >= minRating;
+                    && parseFloat(card.dataset.rating) >= minRating
+                    && matchTag;
                 card.classList.toggle('hidden', !show);
                 if (show) visible++;
             });
@@ -454,6 +479,8 @@
         function clearFilters() {
             document.querySelectorAll('[data-filter]').forEach(el => el.checked = false);
             document.getElementById('searchInput').value = '';
+            _activeTag = '';
+            document.querySelectorAll('.tag[data-tag]').forEach(el => { el.style.background = ''; el.style.color = ''; });
             applyFilters();
         }
 
@@ -464,7 +491,14 @@
             _bookingConsultantName  = name;
             _bookingConsultantPrice = price;
             document.getElementById('bookConsName').textContent = name;
-            document.getElementById('bookPrice').textContent = price.toLocaleString() + ' ر.س';
+            // Price breakdown
+            const vat   = Math.round(price * 0.15);
+            const total = price + vat;
+            const baseEl = document.getElementById('bookPriceBase');
+            if (baseEl) baseEl.textContent = price.toLocaleString() + ' ر.س / ساعة';
+            const vatEl = document.getElementById('bookPriceVAT');
+            if (vatEl) vatEl.textContent = vat.toLocaleString() + ' ر.س';
+            document.getElementById('bookPrice').textContent = total.toLocaleString() + ' ر.س';
             document.getElementById('bookDate').value = '';
             document.getElementById('bookTopic').value = '';
             document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));

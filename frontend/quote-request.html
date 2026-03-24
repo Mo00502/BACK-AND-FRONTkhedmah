@@ -193,6 +193,7 @@
             hasMaterials: false,
             materialsEst: '',
             submitted: false,
+            submitting: false,
             reqNumber: '',
             errors: {},
             stepLabels: ['نوع الخدمة','وصف المشكلة','الموقع والوقت','مراجعة وإرسال'],
@@ -251,7 +252,8 @@
             goNext() {
                 this.errors = {};
                 if (this.step === 1 && !this.selectedService) { this.errors.service = 'يرجى اختيار نوع الخدمة'; return; }
-                if (this.step === 2 && this.description.trim().length < 10) { this.errors.description = 'يرجى كتابة وصف أوضح (10 أحرف على الأقل)'; return; }
+                if (this.step === 2 && this.description.trim().length < 20) { this.errors.description = 'يرجى كتابة وصف أوضح (20 حرفاً على الأقل)'; return; }
+                if (this.step === 2 && this.hasMaterials && this.materialsEst && Number(this.materialsEst) <= 0) { this.errors.materialsEst = 'يجب أن تكون تكلفة المواد أكبر من صفر'; return; }
                 if (this.step === 3 && !this.district.trim()) { this.errors.district = 'يرجى إدخال الحي'; return; }
                 if (this.step === 4 && this.timing === 'custom') {
                     if (!this.customDate) { this.errors.timing = 'يرجى اختيار التاريخ والوقت'; return; }
@@ -263,8 +265,14 @@
                 if (this.step > 1) { this.step--; window.scrollTo(0, 0); }
             },
             async submitRequest() {
-                this.submitted = true;
-                window.scrollTo(0, 0);
+                if (this.submitting) return;
+                // Final client-side validation before submit
+                if (!this.selectedService) { this.errors.service = 'يرجى اختيار نوع الخدمة'; this.step = 1; return; }
+                if (this.description.trim().length < 20) { this.errors.description = 'يرجى كتابة وصف أوضح (20 حرفاً على الأقل)'; this.step = 2; return; }
+                if (this.hasMaterials && this.materialsEst && Number(this.materialsEst) <= 0) { this.errors.materialsEst = 'يجب أن تكون تكلفة المواد أكبر من صفر'; this.step = 2; return; }
+                if (!this.district.trim()) { this.errors.district = 'يرجى إدخال الحي'; this.step = 3; return; }
+                if (this.timing === 'custom' && this.customDate && new Date(this.customDate) <= new Date()) { this.errors.timing = 'يجب أن يكون الموعد في المستقبل'; this.step = 3; return; }
+                this.submitting = true;
                 try {
                     const req = await API.requests.create({
                         serviceTitle:    this.selectedService,
@@ -272,23 +280,22 @@
                         city:            this.city,
                         district:        this.district,
                         description:     this.description || '',
-                        scheduledAt:     this.scheduledDate ? new Date(this.scheduledDate).toISOString() : undefined,
+                        scheduledAt:     this.timing === 'custom' && this.customDate ? new Date(this.customDate).toISOString() : undefined,
                         hasMaterials:    this.hasMaterials,
                         materialsEst:    this.hasMaterials ? (this.materialsEst || 0) : 0,
                     });
                     this.reqNumber = req?.id || ('REQ-' + Date.now().toString().slice(-6));
                 } catch(e) {
                     this.reqNumber = 'REQ-' + Date.now().toString().slice(-6);
+                } finally {
+                    this.submitting = false;
                 }
+                this.submitted = true;
+                window.scrollTo(0, 0);
+                showQuoteToast('تم إرسال طلبك بنجاح! سيتواصل معك المزود قريباً');
                 setTimeout(() => {
-                    const p = new URLSearchParams({
-                        requestId:    this.reqNumber,
-                        service:      this.selectedService,
-                        hasMaterials: String(this.hasMaterials),
-                        materialsEst: String(this.materialsEst || 0),
-                    });
-                    window.location.href = 'payment-escrow.html?' + p.toString();
-                }, 1500);
+                    window.location.href = 'customer-dashboard.html';
+                }, 2000);
             }
         }"
         x-init="
@@ -398,6 +405,7 @@
                     <label class="field-label">تقدير تكلفة المواد (ر.س)</label>
                     <input type="number" class="form-input" x-model="materialsEst" placeholder="500" min="0">
                     <div style="font-size:0.78rem;color:var(--gray);margin-top:4px">هذا المبلغ يُحجز ويتاح فوراً للمزود لشراء المواد</div>
+                    <p class="step-error" x-show="errors.materialsEst" x-text="errors.materialsEst"></p>
                 </div>
 
                 <!-- Photo upload (optional) -->
@@ -510,7 +518,7 @@
                 <div class="success-icon">🎉</div>
                 <h2>تم إرسال طلبك!</h2>
                 <p>رقم الطلب: <strong x-text="reqNumber"></strong></p>
-                <p class="success-sub" style="color:var(--primary);font-weight:600;">جارٍ الانتقال لصفحة الدفع...</p>
+                <p class="success-sub" style="color:var(--primary);font-weight:600;">جارٍ الانتقال للوحة التحكم...</p>
                 <div style="margin-top:1.5rem;">
                     <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;"></div>
                 </div>
@@ -526,8 +534,9 @@
             <button class="btn-next" x-show="step < 4" @click="goNext()">
                 التالي ←
             </button>
-            <button class="btn-submit-req" x-show="step === 4" @click="submitRequest()">
-                إرسال الطلب ✓
+            <button class="btn-submit-req" x-show="step === 4" @click="submitRequest()" :disabled="submitting">
+                <span x-show="submitting" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;margin-left:6px;vertical-align:middle;"></span>
+                <span x-text="submitting ? 'جارٍ الإرسال...' : 'إرسال الطلب ✓'"></span>
             </button>
         </div>
 
@@ -547,6 +556,31 @@
                 if (btn) btn.textContent = '☀️';
             }
         })();
+
+        function showQuoteToast(msg) {
+            let t = document.getElementById('quoteToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'quoteToast';
+                t.style.cssText = 'position:fixed;bottom:6rem;left:50%;transform:translateX(-50%);background:#10B981;color:white;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.95rem;font-weight:600;z-index:9999;font-family:Tajawal,sans-serif;box-shadow:0 4px 20px rgba(16,185,129,0.35);white-space:nowrap;pointer-events:none;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.display = 'block';
+            t.style.opacity = '1';
+        }
+
+        // Unsaved changes warning
+        let quoteFormDirty = false;
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', () => { quoteFormDirty = true; });
+                el.addEventListener('change', () => { quoteFormDirty = true; });
+            });
+        });
+        window.addEventListener('beforeunload', (e) => {
+            if (quoteFormDirty) { e.preventDefault(); e.returnValue = ''; }
+        });
     </script>
 </body>
 </html>

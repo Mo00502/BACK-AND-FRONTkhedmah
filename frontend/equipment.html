@@ -408,6 +408,9 @@
                 <label class="form-label">موقع التسليم</label>
                 <input type="text" class="form-control" id="rentLocation" placeholder="العنوان الكامل">
             </div>
+            <div style="font-size:0.8rem;color:var(--gray);margin-top:-0.25rem;margin-bottom:0.75rem;">
+                السعر يشمل التسليم والاستلام والتأمين الأساسي
+            </div>
             <div class="price-summary" id="rentSummary" style="display:none;">
                 <div class="price-row"><span>عدد الأيام</span><span id="rentDays">0</span></div>
                 <div class="price-row"><span>السعر اليومي</span><span id="rentDailyPrice">0 ر.س</span></div>
@@ -535,10 +538,23 @@
         function openListModal() { document.getElementById('listModal').classList.add('show'); }
         function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
+        function validateDates() {
+            const startVal = document.getElementById('rentStart').value;
+            const endVal   = document.getElementById('rentEnd').value;
+            if (!startVal || !endVal) { showToast('يرجى تحديد تاريخ البداية والانتهاء'); return false; }
+            const start = new Date(startVal);
+            const end   = new Date(endVal);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            if (start < today) { showToast('تاريخ البداية يجب أن يكون اليوم أو لاحقاً'); return false; }
+            if (end <= start)  { showToast('تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية'); return false; }
+            return true;
+        }
+
         async function confirmRent() {
             const start = document.getElementById('rentStart').value;
             const end   = document.getElementById('rentEnd').value;
-            if (!start || !end) { alert('يرجى تحديد تاريخ البداية والانتهاء'); return; }
+            if (!start || !end) { showToast('يرجى تحديد تاريخ البداية والانتهاء'); return; }
+            if (!validateDates()) return;
             const totalText = document.getElementById('rentTotal').textContent.replace(/[^\d.]/g, '') || '0';
             closeModal('rentModal');
             showToast('تم تأكيد الحجز ✅ — جارٍ الانتقال للدفع...');

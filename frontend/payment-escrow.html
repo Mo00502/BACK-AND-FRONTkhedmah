@@ -450,9 +450,16 @@
                     <div class="split-note" style="padding-right:1.3rem;color:var(--materials)">
                         ⚡ متاح فوراً — مخصص حصراً لمشتريات مواد هذا الطلب
                     </div>
-                    <div class="split-total-row">
-                        <span>المجموع</span>
-                        <span x-text="totalAmount.toFixed(2)+' ريال'"></span>
+                    <div class="split-total-row" style="flex-direction:column;gap:.5rem;">
+                        <div style="display:flex;justify-content:space-between;width:100%;font-size:.88rem;font-weight:400;color:var(--gray);">
+                            <span>ضريبة القيمة المضافة (15%)</span>
+                            <span x-text="(totalAmount * 0.15).toFixed(2)+' ريال'"></span>
+                        </div>
+                        <hr style="width:100%;margin:.3rem 0;border-color:#e2e8f0;">
+                        <div style="display:flex;justify-content:space-between;width:100%;">
+                            <span>الإجمالي شامل الضريبة</span>
+                            <span x-text="(totalAmount * 1.15).toFixed(2)+' ريال'"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -573,6 +580,9 @@
                     <button class="pay-btn" style="margin-top:1.5rem;" @click="submitPayment()">
                         📱 ادفع عبر STC Pay — <span x-text="totalWithVat.toFixed(2)+' ريال (شامل الضريبة)'"></span>
                     </button>
+                    <p style="color:var(--gray);font-size:.8rem;text-align:center;margin-top:.75rem;line-height:1.5;">
+                        🛡️ الدفع محمي بنظام الضمان — لن يُحرر المبلغ للمزود إلا بعد موافقتك
+                    </p>
                 </div>
                 <!-- ── Apple Pay ── -->
                 <div x-show="payMethod==='apple'" x-transition>
@@ -612,6 +622,11 @@
                             </svg>
                             Face ID / Touch ID · بيانات بطاقتك مشفرة ومحمية بالكامل
                         </div>
+
+                        <p class="text-muted small text-center mt-1" style="color:var(--gray);font-size:.8rem;margin-top:.75rem;line-height:1.5;">
+                            <i class="bi bi-shield-check text-success">🛡️</i>
+                            الدفع محمي بنظام الضمان — لن يُحرر المبلغ للمزود إلا بعد موافقتك
+                        </p>
                     </div>
                 </div>
             </div>
