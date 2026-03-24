@@ -9,7 +9,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ConsultationStatus, UserRole } from '@prisma/client';
-import { ThrottleDefault } from '../../common/decorators/throttle.decorator';
+import { ThrottleDefault, ThrottleRelaxed } from '../../common/decorators/throttle.decorator';
 
 @ApiTags('consultations')
 @ApiBearerAuth()
@@ -17,6 +17,18 @@ import { ThrottleDefault } from '../../common/decorators/throttle.decorator';
 @Controller('consultations')
 export class ConsultationsController {
   constructor(private consultations: ConsultationsService) {}
+
+  // ── Admin endpoints ───────────────────────────────────────────────────────
+
+  @Get('all')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UseGuards(RolesGuard)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Admin: list all consultations with pagination' })
+  @ApiQuery({ name: 'status', enum: ConsultationStatus, required: false })
+  findAll(@Query() dto: PaginationDto & { status?: ConsultationStatus }) {
+    return this.consultations.findAll(dto);
+  }
 
   // ── Customer endpoints ────────────────────────────────────────────────────
 

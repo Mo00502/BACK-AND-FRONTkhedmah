@@ -242,7 +242,11 @@ export class PaymentsService {
       return;
     }
 
-    const feePct = this.config.get<number>('PLATFORM_FEE_PERCENT', 15);
+    const feePctRaw = this.config.get<string>('PLATFORM_FEE_PERCENT');
+    if (!feePctRaw) {
+      this.logger.warn('PLATFORM_FEE_PERCENT not set, defaulting to 15%');
+    }
+    const feePct = feePctRaw ? Number(feePctRaw) : 15;
     const serviceAmt = Number(payment.serviceAmount) || Number(payment.amount);
     const materialsAmt = Number(payment.materialsAmount) || 0;
     const platformFee = (serviceAmt * feePct) / 100;

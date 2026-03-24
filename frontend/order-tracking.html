@@ -670,12 +670,18 @@
         if (currentStep > 1) return;
         if (!confirm('هل تريد إلغاء الطلب؟\n\nسيتم استرداد المبلغ خلال 2-5 أيام عمل.')) return;
         const btn = document.getElementById('cancelBtn');
+        const originalText = btn.textContent;
         btn.disabled = true;
+        btn.textContent = '⏳ جارٍ الإلغاء...';
         const reqId = new URLSearchParams(location.search).get('requestId');
         try {
             if (reqId && reqId.includes('-')) await API.requests.cancel(reqId);
-        } catch(e) { /* silent */ }
-        showToast('✓ تم إلغاء الطلب. سيتم استرداد المبلغ قريباً.');
+            showToast('✓ تم إلغاء الطلب. سيتم استرداد المبلغ قريباً.');
+        } catch(e) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            showToast('❌ تعذّر إلغاء الطلب. يرجى المحاولة مجدداً.');
+        }
     }
 
     function simulateCompletion() {

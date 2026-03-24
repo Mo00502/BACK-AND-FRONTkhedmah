@@ -577,7 +577,7 @@
                     <div style="font-size:3rem;margin-bottom:1rem;">📱</div>
                     <p style="font-weight:600;margin-bottom:.5rem;">ستُوجَّه إلى تطبيق STC Pay</p>
                     <p style="color:var(--gray);font-size:.9rem;">لإتمام الدفع بأمان عبر محفظتك الرقمية</p>
-                    <button class="pay-btn" style="margin-top:1.5rem;" @click="submitPayment()">
+                    <button class="pay-btn" style="margin-top:1.5rem;" @click="submitPayment()" :disabled="processing">
                         📱 ادفع عبر STC Pay — <span x-text="totalWithVat.toFixed(2)+' ريال (شامل الضريبة)'"></span>
                     </button>
                     <p style="color:var(--gray);font-size:.8rem;text-align:center;margin-top:.75rem;line-height:1.5;">
@@ -602,7 +602,7 @@
                         </p>
 
                         <!-- Native Apple Pay button (Safari renders this as real Apple Pay) -->
-                        <button class="apple-pay-btn" @click="submitPayment()">
+                        <button class="apple-pay-btn" @click="submitPayment()" :disabled="processing">
                             <!-- Fallback content for non-Safari browsers -->
                             <span class="apple-pay-btn-inner">
                                 <!-- Apple  SVG in white -->

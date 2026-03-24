@@ -113,22 +113,24 @@ export class RequestsService {
       data: { status: RequestStatus.CANCELLED },
     });
 
-    // Check for held escrow and trigger refund
-    const escrow = await this.prisma.escrow.findFirst({
+    // Atomically claim the HELD escrow — prevents race with autoReleaseEscrow
+    const { count } = await this.prisma.escrow.updateMany({
       where: { requestId: request.id, status: 'HELD' },
+      data: { status: 'REFUNDED' },
     });
-    if (escrow) {
-      // Mark escrow as REFUNDED and emit refund event
-      await this.prisma.escrow.update({
-        where: { id: escrow.id },
-        data: { status: 'REFUNDED' },
+    if (count > 0) {
+      // Fetch the now-REFUNDED escrow to get its id and amount for the event
+      const escrow = await this.prisma.escrow.findFirst({
+        where: { requestId: request.id, status: 'REFUNDED' },
       });
-      this.events.emit('escrow.refund_on_cancel', {
-        escrowId: escrow.id,
-        requestId: request.id,
-        customerId: request.customerId,
-        amount: escrow.amount,
-      });
+      if (escrow) {
+        this.events.emit('escrow.refund_on_cancel', {
+          escrowId: escrow.id,
+          requestId: request.id,
+          customerId: request.customerId,
+          amount: escrow.amount,
+        });
+      }
     }
 
     return updated;

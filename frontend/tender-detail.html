@@ -821,7 +821,13 @@ function loadTender() {
 
     // Wire chat button to this tender's conversation
     const chatBtn = document.getElementById('btnChatTender');
-    if (chatBtn) chatBtn.href = `chat.html?type=tender&id=${tenderId}`;
+    if (chatBtn) {
+        chatBtn.href = '#';
+        chatBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (tenderId) window.location.href = `chat.html?type=TENDER&refId=${encodeURIComponent(tenderId)}`;
+        });
+    }
 
     // Wire bids link to pass tenderId
     const bidsLink = document.querySelector('.btn-my-bids-link');

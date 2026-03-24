@@ -797,6 +797,9 @@
             const params = {};
             if (q) params.q = q;
             if (cityChips.length > 0) params.city = cityChips[0];
+            const btn = document.querySelector('.nav-search button');
+            const originalLabel = btn ? btn.innerHTML : null;
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
             API.search.providers(params).then(res => {
                 const items = res.data || res.items || (Array.isArray(res) ? res : []);
                 if (!items.length) return;
@@ -845,7 +848,11 @@
                 // Update count
                 const countEl = document.querySelector('.results-count strong');
                 if (countEl) countEl.textContent = grid.querySelectorAll('.provider-card:not([style*="none"])').length;
-            }).catch(() => {});
+            }).catch(err => {
+                API.toast('❌ ' + API.errorMsg(err));
+            }).finally(() => {
+                if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+            });
         }
         function sortResults(val) { sortResultsBy(val); }
 

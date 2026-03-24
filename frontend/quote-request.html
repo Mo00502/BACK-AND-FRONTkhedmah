@@ -284,18 +284,18 @@
                         hasMaterials:    this.hasMaterials,
                         materialsEst:    this.hasMaterials ? (this.materialsEst || 0) : 0,
                     });
-                    this.reqNumber = req?.id || ('REQ-' + Date.now().toString().slice(-6));
-                } catch(e) {
-                    this.reqNumber = 'REQ-' + Date.now().toString().slice(-6);
-                } finally {
+                    this.reqNumber = req?.id;
                     this.submitting = false;
+                    this.submitted = true;
+                    window.scrollTo(0, 0);
+                    showQuoteToast('تم إرسال طلبك بنجاح! سيتواصل معك المزود قريباً');
+                    setTimeout(() => {
+                        window.location.href = 'customer-dashboard.html';
+                    }, 2000);
+                } catch(e) {
+                    this.submitting = false;
+                    showQuoteToast('❌ ' + (e?.message || 'حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مجدداً'));
                 }
-                this.submitted = true;
-                window.scrollTo(0, 0);
-                showQuoteToast('تم إرسال طلبك بنجاح! سيتواصل معك المزود قريباً');
-                setTimeout(() => {
-                    window.location.href = 'customer-dashboard.html';
-                }, 2000);
             }
         }"
         x-init="

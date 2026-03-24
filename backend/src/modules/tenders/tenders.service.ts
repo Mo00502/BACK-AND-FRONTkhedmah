@@ -351,6 +351,25 @@ export class TendersService {
   }
 
   async updateCommissionStatus(id: string, status: string) {
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      IN_PROGRESS: ['COMPLETED', 'OVERDUE'],
+      COMPLETED: ['INVOICE_ISSUED'],
+      INVOICE_ISSUED: ['PAID', 'OVERDUE'],
+      OVERDUE: ['PAID'],
+      PAID: [], // terminal — no further transitions allowed
+    };
+
+    const current = await this.prisma.tenderCommission.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Commission not found');
+
+    const allowed = VALID_TRANSITIONS[current.status as string] ?? [];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status transition: ${current.status} → ${status}. ` +
+          `Allowed next states: [${allowed.join(', ') || 'none'}]`,
+      );
+    }
+
     const timestamps: Record<string, Record<string, Date>> = {
       IN_PROGRESS: { projectStartedAt: new Date() },
       COMPLETED: { projectCompletedAt: new Date() },
@@ -361,7 +380,7 @@ export class TendersService {
 
     return this.prisma.tenderCommission.update({
       where: { id },
-      data: { status: status as any, ...timestamps[status] },
+      data: { status: status as CommissionStatus, ...timestamps[status] },
     });
   }
 
