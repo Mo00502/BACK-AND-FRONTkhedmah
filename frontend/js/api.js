@@ -278,7 +278,7 @@
     myProfile:         ()         => http.get('/providers/me/profile'),
     myEarnings:        ()         => http.get('/providers/me/earnings'),
     earningsDashboard: ()         => http.get('/providers/me/earnings/dashboard'),
-    updateBank:        (data)     => http.patch('/providers/me/bank', data),
+    updateBank:        (data)     => http.patch('/providers/me/profile', data),
     submitDocs:        (data)     => http.post('/providers/me/documents', data),
     services:          ()         => http.get('/providers/me/skills'),
     addService:        (data)     => http.post('/providers/me/skills', data),

@@ -133,6 +133,11 @@ export class ConsultationsService {
         },
       });
       if (conflict) {
+        this.events.emit('consultation.conflict_detected', {
+          consultationId,
+          providerId,
+          scheduledAt: consultation.scheduledAt,
+        });
         throw new ConflictException('لديك استشارة أخرى مجدولة في نفس الوقت');
       }
     }

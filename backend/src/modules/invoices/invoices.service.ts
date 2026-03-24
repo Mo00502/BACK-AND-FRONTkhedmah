@@ -158,8 +158,8 @@ export class InvoicesService {
 
   // ── My invoices list ────────────────────────────────────────────────────
   async listMyInvoices(userId: string, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-
+    // Fetch ALL records for each type without skip/take — pagination is applied
+    // after merging and sorting so the result set is accurate across types.
     const [serviceRequests, tenderCommissions, rentals, consultations] = await Promise.all([
       this.prisma.serviceRequest.findMany({
         where: {
@@ -169,8 +169,6 @@ export class InvoicesService {
         },
         select: { id: true, service: { select: { nameAr: true } }, completedAt: true },
         orderBy: { completedAt: 'desc' },
-        skip,
-        take: limit,
       }),
       this.prisma.tenderCommission.findMany({
         where: {
@@ -187,8 +185,6 @@ export class InvoicesService {
           paidAt: true,
         },
         orderBy: { paidAt: 'desc' },
-        skip,
-        take: limit,
       }),
       this.prisma.equipmentRental.findMany({
         where: {
@@ -202,8 +198,6 @@ export class InvoicesService {
           completedAt: true,
         },
         orderBy: { completedAt: 'desc' },
-        skip,
-        take: limit,
       }),
       this.prisma.consultation.findMany({
         where: {
@@ -219,8 +213,6 @@ export class InvoicesService {
           provider: { select: { profile: { select: { nameAr: true, nameEn: true } } } },
         },
         orderBy: { completedAt: 'desc' },
-        skip,
-        take: limit,
       }),
     ]);
 
@@ -260,7 +252,8 @@ export class InvoicesService {
       consultantName: c.provider?.profile?.nameAr ?? c.provider?.profile?.nameEn ?? null,
     }));
 
-    const data = [
+    // Merge all types, sort globally by date descending, then paginate the merged array
+    const all = [
       ...homeServicesData,
       ...tendersData,
       ...equipmentData,
@@ -271,11 +264,15 @@ export class InvoicesService {
       return db - da;
     });
 
+    const total = all.length;
+    const data = all.slice((page - 1) * limit, page * limit);
+
     return {
       data,
-      total: data.length,
+      total,
       page,
       limit,
+      pages: Math.ceil(total / limit),
     };
   }
 

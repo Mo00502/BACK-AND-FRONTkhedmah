@@ -78,6 +78,19 @@ export class ProvidersController {
   }
 
   @ApiBearerAuth()
+  @Patch('me/skills/:skillId')
+  @Roles(UserRole.PROVIDER)
+  @ThrottleDefault()
+  @ApiOperation({ summary: 'Update a skill (hourlyRate)' })
+  updateSkill(
+    @Param('skillId') skillId: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: { hourlyRate?: number },
+  ) {
+    return this.providers.updateSkill(userId, skillId, dto);
+  }
+
+  @ApiBearerAuth()
   @Patch('me/availability')
   @Roles(UserRole.PROVIDER)
   @ThrottleDefault()

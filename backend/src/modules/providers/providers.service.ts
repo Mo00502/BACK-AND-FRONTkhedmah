@@ -116,6 +116,26 @@ export class ProvidersService {
     });
   }
 
+  async updateSkill(userId: string, skillId: string, dto: { hourlyRate?: number }) {
+    if (dto.hourlyRate !== undefined && dto.hourlyRate <= 0) {
+      throw new BadRequestException('يجب أن يكون السعر بالساعة أكبر من صفر');
+    }
+    const profile = await this.prisma.providerProfile.findUnique({ where: { userId } });
+    if (!profile) throw new NotFoundException('Provider profile not found');
+
+    const skill = await this.prisma.providerSkill.findFirst({
+      where: { id: skillId, providerId: profile.id },
+    });
+    if (!skill) throw new NotFoundException('Skill not found');
+
+    return this.prisma.providerSkill.update({
+      where: { id: skillId },
+      data: {
+        ...(dto.hourlyRate !== undefined && { hourlyRate: dto.hourlyRate }),
+      },
+    });
+  }
+
   async setAvailability(userId: string, dto: SetAvailabilityDto) {
     const profile = await this.prisma.providerProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Provider profile not found');

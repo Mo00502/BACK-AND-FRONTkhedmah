@@ -400,6 +400,15 @@ export class EquipmentService {
         where: { id: rental.equipmentId },
         data: { isAvailable: true, rentalCount: { increment: 1 } },
       });
+      const platformFee = Number(rental.totalPrice) * 0.10;
+      this.events.emit('equipment.rental.completed', {
+        rentalId: rental.id,
+        equipmentId: rental.equipmentId,
+        ownerId: rental.equipment.ownerId,
+        renterId: rental.renterId,
+        totalPrice: Number(rental.totalPrice),
+        platformFee,
+      });
     } else if (status === 'CANCELLED') {
       await this.prisma.equipment.update({
         where: { id: rental.equipmentId },

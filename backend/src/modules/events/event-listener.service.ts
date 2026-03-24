@@ -71,7 +71,19 @@ export class EventListenerService {
   @OnEvent('escrow.refund_on_cancel')
   async onEscrowRefundOnCancel(payload: { escrowId: string; requestId: string; customerId: string; amount: any }) {
     try {
-      await this.wallet.credit(payload.customerId, Number(payload.amount), 'REFUND', `استرداد مبلغ الطلب ${payload.requestId}`);
+      await this.wallet.credit(
+        payload.customerId,
+        Number(payload.amount),
+        `استرداد مبلغ الطلب ${payload.requestId}`,
+        payload.escrowId,
+        'refund',
+      );
+      await this.notif.notifyUser(
+        payload.customerId,
+        'تم استرداد المبلغ',
+        'تم استرجاع مبلغ طلبك الملغى إلى محفظتك',
+        { requestId: payload.requestId },
+      );
     } catch (err) {
       this.logger.error(`onEscrowRefundOnCancel failed: ${err}`);
     }
@@ -363,6 +375,32 @@ export class EventListenerService {
         `حصلت معدة "${rental.equipment.name}" على تقييم ${payload.score}/5.`,
         { rentalId: payload.rentalId },
       );
+    }
+  }
+
+  @OnEvent('equipment.rental.completed')
+  async onEquipmentRentalCompleted(payload: {
+    rentalId: string;
+    equipmentId: string;
+    ownerId: string;
+    renterId: string;
+    totalPrice: number;
+    platformFee: number;
+  }) {
+    try {
+      const ownerPayout = payload.totalPrice - payload.platformFee;
+      await this.wallet.credit(
+        payload.ownerId,
+        ownerPayout,
+        `إيرادات تأجير معدة`,
+        payload.rentalId,
+        'equipment_rental',
+      );
+      this.logger.log(
+        `Equipment rental completed: owner ${payload.ownerId} credited ${ownerPayout} SAR (rental ${payload.rentalId})`,
+      );
+    } catch (err) {
+      this.logger.error(`onEquipmentRentalCompleted failed: ${err}`);
     }
   }
 

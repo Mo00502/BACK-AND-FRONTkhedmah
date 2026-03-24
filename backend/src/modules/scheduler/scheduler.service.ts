@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
-import { QuoteStatus } from '@prisma/client';
+import { QuoteStatus, RentalStatus } from '@prisma/client';
 
 @Injectable()
 export class SchedulerService {
@@ -301,8 +301,8 @@ export class SchedulerService {
 
     const [cancelResult] = await this.prisma.$transaction([
       this.prisma.equipmentRental.updateMany({
-        where: { id: { in: rentalIds }, status: 'PENDING' },
-        data: { status: 'CANCELLED', cancelledAt: new Date() },
+        where: { id: { in: rentalIds }, status: RentalStatus.PENDING },
+        data: { status: RentalStatus.CANCELLED, cancelledAt: new Date() },
       }),
       this.prisma.equipment.updateMany({
         where: { id: { in: equipmentIds } },
