@@ -9,7 +9,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CompaniesService } from '../companies/companies.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { RequirementStatus, TenderStatus, CommissionStatus, SupplierOfferStatus } from '@prisma/client';
+import { RequirementStatus, TenderStatus, CommissionStatus, SupplierOfferStatus, Prisma } from '@prisma/client';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 
 const COMMISSION_RATE = 0.02;
@@ -156,7 +156,7 @@ export class TendersService {
     );
 
     return this.prisma.tender.create({
-      data: { companyId: company.id, ...safeData } as any,
+      data: { companyId: company.id, ...safeData } as Prisma.TenderCreateInput & { companyId: string },
     });
   }
 
@@ -409,7 +409,7 @@ export class TendersService {
     );
 
     return this.prisma.projectRequirement.create({
-      data: { tenderId, ...safeData } as any,
+      data: { tenderId, ...safeData } as Prisma.ProjectRequirementCreateInput & { tenderId: string },
     });
   }
 
@@ -436,8 +436,14 @@ export class TendersService {
       throw new BadRequestException('This tender is no longer accepting offers');
     }
 
+    // 'WITHDRAWN' is not a valid SupplierOfferStatus value in the enum (PENDING/ACCEPTED/REJECTED/EXPIRED).
+    // Filter out REJECTED offers so a supplier can re-submit after being rejected.
     const existing = await this.prisma.supplierOffer.findFirst({
-      where: { requirementId, supplierId: userId, status: { not: 'WITHDRAWN' as SupplierOfferStatus } },
+      where: {
+        requirementId,
+        supplierId: userId,
+        status: { notIn: [SupplierOfferStatus.REJECTED] },
+      },
     });
     if (existing) throw new ConflictException('You have already submitted an offer for this requirement');
 
@@ -458,7 +464,13 @@ export class TendersService {
     );
 
     return this.prisma.supplierOffer.create({
-      data: { requirementId, supplierId: userId, companyId, status: 'PENDING', ...safeData } as any,
+      data: {
+        requirementId,
+        supplierId: userId,
+        companyId,
+        status: SupplierOfferStatus.PENDING,
+        ...safeData,
+      } as Prisma.SupplierOfferCreateInput & { requirementId: string; supplierId: string },
     });
   }
 

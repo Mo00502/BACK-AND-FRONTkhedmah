@@ -422,31 +422,44 @@ export class EventListenerService {
     const providerNet = parseFloat((payload.amount - platformFee).toFixed(2));
 
     try {
-      // Fetch both wallets up front (getOrCreate is idempotent and safe outside tx)
-      const [customerWallet, providerWallet] = await Promise.all([
+      // Ensure both wallets exist before entering the transaction (idempotent).
+      // getOrCreate is safe outside the tx — it uses upsert internally.
+      await Promise.all([
         this.wallet.getOrCreate(payload.customerId),
         this.wallet.getOrCreate(payload.providerId),
       ]);
 
-      const customerAvailable = new Decimal(customerWallet.balance).minus(customerWallet.heldBalance);
-      if (customerAvailable.lessThan(payload.amount)) {
-        this.logger.error(
-          `onConsultationChargeRequired: insufficient balance for customer ${payload.customerId} on consultation ${payload.consultationId}`,
-        );
-        return;
-      }
+      // Use an interactive transaction so the balance check and the debits/credits
+      // happen atomically. This eliminates the TOCTOU race where two concurrent
+      // charge events both pass the balance check before either write commits.
+      await this.prisma.$transaction(async (tx) => {
+        // Re-fetch inside the transaction to get a consistent snapshot.
+        const customerWallet = await tx.wallet.findUnique({
+          where: { userId: payload.customerId },
+        });
+        if (!customerWallet) throw new Error(`Customer wallet not found: ${payload.customerId}`);
 
-      const customerNewBalance = new Decimal(customerWallet.balance).minus(payload.amount);
-      const providerNewBalance = new Decimal(providerWallet.balance).plus(providerNet);
+        const customerAvailable = new Decimal(customerWallet.balance).minus(customerWallet.heldBalance);
+        if (customerAvailable.lessThan(payload.amount)) {
+          throw new Error(
+            `Insufficient balance: customer ${payload.customerId} has ${customerAvailable} but needs ${payload.amount}`,
+          );
+        }
 
-      // Atomic: debit customer AND credit provider in a single transaction —
-      // if either write fails, both are rolled back and no money is lost.
-      await this.prisma.$transaction([
-        this.prisma.wallet.update({
+        const providerWallet = await tx.wallet.findUnique({
+          where: { userId: payload.providerId },
+        });
+        if (!providerWallet) throw new Error(`Provider wallet not found: ${payload.providerId}`);
+
+        const customerNewBalance = new Decimal(customerWallet.balance).minus(payload.amount);
+        const providerNewBalance = new Decimal(providerWallet.balance).plus(providerNet);
+
+        // Debit customer
+        await tx.wallet.update({
           where: { id: customerWallet.id },
           data: { balance: customerNewBalance },
-        }),
-        this.prisma.walletTransaction.create({
+        });
+        await tx.walletTransaction.create({
           data: {
             walletId: customerWallet.id,
             type: WalletTxType.DEBIT,
@@ -456,12 +469,14 @@ export class EventListenerService {
             refId: payload.consultationId,
             refType: 'consultation',
           },
-        }),
-        this.prisma.wallet.update({
+        });
+
+        // Credit provider
+        await tx.wallet.update({
           where: { id: providerWallet.id },
           data: { balance: providerNewBalance },
-        }),
-        this.prisma.walletTransaction.create({
+        });
+        await tx.walletTransaction.create({
           data: {
             walletId: providerWallet.id,
             type: WalletTxType.CREDIT,
@@ -471,8 +486,8 @@ export class EventListenerService {
             refId: payload.consultationId,
             refType: 'consultation',
           },
-        }),
-      ]);
+        });
+      });
 
       this.logger.log(`Consultation charged: customer -${payload.amount} SAR, provider +${providerNet} SAR`);
     } catch (err) {

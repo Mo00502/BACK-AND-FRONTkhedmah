@@ -735,6 +735,14 @@
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
     <script>
+        function escHtml(s) {
+          if (s == null) return '';
+          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+        function escAttr(s) {
+          if (s == null) return '';
+          return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
         function showToast(msg) {
             let t = document.getElementById('pageToast');
             if (!t) { t = document.createElement('div'); t.id = 'pageToast'; document.body.appendChild(t); }

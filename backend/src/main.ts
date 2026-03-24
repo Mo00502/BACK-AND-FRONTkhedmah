@@ -80,16 +80,16 @@ async function bootstrap() {
   app.use(compression({ threshold: 1024 }));
 
   // ── CORS ─────────────────────────────────────────────────────────────────
-  const allowedOrigins = config
-    .get<string>('ALLOWED_ORIGINS', 'http://localhost:5173')
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:4200')
     .split(',')
-    .map((o) => o.trim());
+    .map((o) => o.trim())
+    .filter(Boolean);
 
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin) || !isProd) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       callback(new Error(`CORS: origin '${origin}' not allowed`));

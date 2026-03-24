@@ -8,7 +8,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MaterialsPaymentStatus } from '@prisma/client';
+import {
+  MaterialsPaymentStatus,
+  MaterialsAdjustmentStatus,
+  MaterialsUsageReviewStatus,
+  ReceiptFileType,
+  PaymentMethod,
+  PaymentStatus,
+} from '@prisma/client';
 
 const ADJUSTMENT_EXPIRY_HOURS = 24; // customer has 24h to respond
 
@@ -99,7 +106,7 @@ export class MaterialsPaymentService {
           description,
           purchasedAt,
           loggedById: providerId,
-          reviewStatus: 'PENDING',
+          reviewStatus: MaterialsUsageReviewStatus.PENDING,
         },
       }),
       this.prisma.materialsPayment.update({
@@ -132,11 +139,16 @@ export class MaterialsPaymentService {
     if (!log) throw new NotFoundException('Usage log not found');
     if (log.loggedById !== providerId) throw new ForbiddenException('Not your usage log');
 
+    const validFileTypes = Object.values(ReceiptFileType);
+    const resolvedFileType: ReceiptFileType = validFileTypes.includes(fileType as ReceiptFileType)
+      ? (fileType as ReceiptFileType)
+      : ReceiptFileType.RECEIPT;
+
     return this.prisma.materialsReceipt.create({
       data: {
         usageLogId,
         fileUrl,
-        fileType: (fileType ?? 'RECEIPT') as any,
+        fileType: resolvedFileType,
         uploadedById: providerId,
         notes,
       },
@@ -155,7 +167,7 @@ export class MaterialsPaymentService {
 
     // Only one pending adjustment at a time
     const existing = await this.prisma.materialsAdjustmentRequest.findFirst({
-      where: { materialsPaymentId: mp.id, status: 'PENDING' },
+      where: { materialsPaymentId: mp.id, status: MaterialsAdjustmentStatus.PENDING },
     });
     if (existing) {
       throw new BadRequestException('An adjustment request is already pending customer approval');
@@ -171,7 +183,7 @@ export class MaterialsPaymentService {
         reason,
         itemBreakdown,
         expiresAt,
-        status: 'PENDING',
+        status: MaterialsAdjustmentStatus.PENDING,
       },
     });
 
@@ -196,7 +208,7 @@ export class MaterialsPaymentService {
     if (adj.materialsPayment.request.customerId !== customerId) {
       throw new ForbiddenException('Only the order customer can respond to adjustment requests');
     }
-    if (adj.status !== 'PENDING') {
+    if (adj.status !== MaterialsAdjustmentStatus.PENDING) {
       throw new BadRequestException('Adjustment request is no longer pending');
     }
     if (new Date() > adj.expiresAt) {
@@ -209,8 +221,8 @@ export class MaterialsPaymentService {
     // Atomic claim: updateMany with status=PENDING + expiresAt > now guard
     // prevents a race where the request expires between the check above and the write.
     const { count } = await this.prisma.materialsAdjustmentRequest.updateMany({
-      where: { id: adjustmentId, status: 'PENDING' as any, expiresAt: { gt: now } },
-      data: { status: newStatus as any, respondedAt: now, respondedById: customerId },
+      where: { id: adjustmentId, status: MaterialsAdjustmentStatus.PENDING, expiresAt: { gt: now } },
+      data: { status: newStatus as MaterialsAdjustmentStatus, respondedAt: now, respondedById: customerId },
     });
     if (count === 0) {
       throw new BadRequestException('Adjustment request has expired or was already responded to');
@@ -241,7 +253,7 @@ export class MaterialsPaymentService {
     if (adj.materialsPayment.request.customerId !== customerId) {
       throw new ForbiddenException('Only the order customer can pay for this adjustment');
     }
-    if ((adj.status as string) !== 'APPROVED') {
+    if (adj.status !== MaterialsAdjustmentStatus.APPROVED) {
       throw new BadRequestException('Adjustment must be in APPROVED status before payment');
     }
     if (new Date() > adj.expiresAt) {
@@ -256,8 +268,8 @@ export class MaterialsPaymentService {
       data: {
         requestId,
         amount,
-        method: method as any,
-        status: 'PENDING',
+        method: method as PaymentMethod,
+        status: PaymentStatus.PENDING,
         metadata: {
           type: 'materials_adjustment',
           adjustmentId,
@@ -314,7 +326,7 @@ export class MaterialsPaymentService {
     const updated = await this.prisma.materialsUsageLog.update({
       where: { id: usageLogId },
       data: {
-        reviewStatus: newStatus as any,
+        reviewStatus: newStatus as MaterialsUsageReviewStatus,
         reviewedById: adminId,
         reviewedAt: new Date(),
         reviewNotes: notes,

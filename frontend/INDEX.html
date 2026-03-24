@@ -537,6 +537,14 @@
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
 
     <script>
+        function escHtml(s) {
+          if (s == null) return '';
+          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+        function escAttr(s) {
+          if (s == null) return '';
+          return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
         // If already logged in, redirect to correct dashboard
         try {
             const demo = localStorage.getItem('khedmah_demo');

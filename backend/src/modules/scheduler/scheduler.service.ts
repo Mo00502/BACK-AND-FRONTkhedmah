@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
 import { QuoteStatus, RentalStatus, DisputeStatus, MaterialsPaymentStatus, JobStatus } from '@prisma/client';
+import * as Sentry from '@sentry/node';
 
 @Injectable()
 export class SchedulerService {
@@ -352,5 +353,9 @@ export class SchedulerService {
         data: { jobName, status, message, duration },
       })
       .catch((err) => { this.logger.warn(`Failed to write job log for ${jobName}: ${err?.message}`); });
+
+    if (status === JobStatus.FAILED) {
+      Sentry.captureMessage(`Cron job failed: ${jobName} — ${message}`, 'error');
+    }
   }
 }
