@@ -1021,6 +1021,18 @@ function openConv(convKey, el) {
     if (!data) return;
     activeConv = convKey;
 
+    // If this is a real API conversation, load messages and start polling
+    const realId = data._realId || null;
+    if (realId) {
+        _realConvId = realId;
+        loadMessages(realId);
+        startMessagePolling(realId);
+    } else {
+        // Demo conversation — stop any active real polling
+        stopMessagePolling();
+        _realConvId = null;
+    }
+
     // Show chat area, hide empty state
     document.getElementById('emptyState').style.display = 'none';
     const area = document.getElementById('activeChatArea');
@@ -1146,10 +1158,18 @@ async function sendMessage() {
     input.value = '';
     input.style.height = 'auto';
 
+    // Resolve real conversation ID: prefer module-level var, then CONVS entry
+    const convData = CONVS[activeConv] || {};
+    const sendToRealId = _realConvId || convData._realId || null;
+
     // Send via real API if we have a real conversation
-    if (_realConvId) {
-        API.chat.send(_realConvId, { content: text }).catch(() => {});
-        return; // Real messages arrive back via Socket.io
+    if (sendToRealId) {
+        API.chat.send(sendToRealId, { content: text, type: 'TEXT' }).catch(() => {
+            API.toast('فشل إرسال الرسالة', 'danger');
+        });
+        // Invalidate dedup cache so polling picks up the new message
+        _lastMsgId[sendToRealId] = null;
+        return; // Real messages arrive back via Socket.io or next poll
     }
 
     // Demo auto-reply fallback
@@ -1245,8 +1265,214 @@ function showToast(msg) {
     clearTimeout(t._t); t._t = setTimeout(() => t.style.opacity = '0', 2800);
 }
 
+// ─── Real API integration ─────────────────────────────────────────────────────
+
+// Map real conversation IDs → demo conv keys (populated by loadConversations)
+const _realConvMap = {}; // realId → convKey
+// Track last message ID seen per real conv (for dedup during polling)
+const _lastMsgId = {};
+// Active polling interval
+let _msgPollInterval = null;
+
+/** Format a UTC date string or timestamp into a short Arabic time string */
+function _fmtTime(ts) {
+    if (!ts) return '';
+    try {
+        const d = new Date(ts);
+        return d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+    } catch(e) { return ''; }
+}
+
+/** Find the "other" participant name from an API conversation object */
+function _otherName(conv) {
+    const me = API.currentUser();
+    const myId = me?.id;
+    if (conv.participants && Array.isArray(conv.participants)) {
+        const other = conv.participants.find(p => p.id !== myId || conv.participants.length === 1);
+        if (other) {
+            return other.name || other.firstName
+                ? ((other.firstName || '') + ' ' + (other.lastName || '')).trim()
+                : (other.email || 'مستخدم');
+        }
+    }
+    return conv.name || conv.title || 'محادثة';
+}
+
+/** Determine the module type badge for a real conversation */
+function _convModule(conv) {
+    if (conv.type === 'TENDER' || conv.tenderId)      return 'tender';
+    if (conv.type === 'CONSULTATION' || conv.consultationId) return 'consult';
+    if (conv.type === 'EQUIPMENT' || conv.equipmentId) return 'equip';
+    return 'service';
+}
+
+/** Render real API conversations into the contacts sidebar */
+function renderConversationList(convList) {
+    const me = API.currentUser();
+    const myId = me?.id;
+    const container = document.getElementById('contactsList');
+    if (!container) return;
+
+    // Insert a section label for real conversations at the top
+    let realSection = document.getElementById('_realConvsSection');
+    if (!realSection) {
+        realSection = document.createElement('div');
+        realSection.id = '_realConvsSection';
+        container.prepend(realSection);
+    }
+    realSection.innerHTML = '';
+
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.dataset.section = 'all';
+    label.textContent = '💬 محادثاتي';
+    realSection.appendChild(label);
+
+    convList.forEach(conv => {
+        const convKey = 'real-' + conv.id;
+        const mod = _convModule(conv);
+        const name = _otherName(conv);
+        const initial = name.charAt(0) || '؟';
+        const preview = conv.lastMessage?.content
+            ? escHtml(conv.lastMessage.content).substring(0, 60)
+            : 'لا توجد رسائل بعد';
+        const unread = conv.unreadCount || 0;
+        const timeStr = _fmtTime(conv.lastMessage?.createdAt || conv.updatedAt);
+
+        // Badge class and icon per module
+        const badgeClass = { service: 'badge-service', tender: 'badge-tender', consult: 'badge-consult', equip: 'badge-equip' }[mod] || 'badge-service';
+        const badgeLabel = { service: 'خدمة', tender: 'مناقصة', consult: 'استشارة', equip: 'معدات' }[mod] || 'خدمة';
+
+        // Gradient per module
+        const grad = {
+            service: 'linear-gradient(135deg,#028090,#02C39A)',
+            tender:  'linear-gradient(135deg,#4f46e5,#818cf8)',
+            consult: 'linear-gradient(135deg,#7c3aed,#a78bfa)',
+            equip:   'linear-gradient(135deg,#059669,#34d399)',
+        }[mod] || 'linear-gradient(135deg,#028090,#02C39A)';
+
+        // Context link
+        const ctxLinks = {
+            service: 'order-tracking.html',
+            tender:  conv.tenderId ? `tender-detail.html?id=${conv.tenderId}` : 'tenders.html',
+            consult: 'consultations.html',
+            equip:   'equipment.html',
+        };
+
+        // Build CONVS entry so openConv() works
+        _realConvMap[conv.id] = convKey;
+        CONVS[convKey] = {
+            peer:         escHtml(name),
+            initial:      escHtml(initial),
+            avatarGrad:   grad,
+            status:       '⚫ —',
+            ctxClass:     mod,
+            ctxIcon:      { service:'🔧', tender:'📋', consult:'💼', equip:'🏗️' }[mod] || '💬',
+            ctxText:      escHtml(conv.title || name),
+            ctxLink:      ctxLinks[mod] || '#',
+            ctxLinkLabel: 'عرض التفاصيل ←',
+            quickReplies: ['شكراً', 'حسناً', 'سأتواصل معك قريباً'],
+            messages:     [],
+            _realId:      conv.id,
+        };
+
+        // Build DOM element
+        const item = document.createElement('div');
+        item.className = 'contact-item';
+        item.dataset.module = mod;
+        item.dataset.conv   = convKey;
+        item.onclick = function() { openConv(convKey, this); };
+        item.innerHTML = `
+            <div class="c-avatar" style="background:${grad}">${escHtml(initial)}</div>
+            <div class="c-info">
+                <div class="c-name">${escHtml(name)} <span class="c-type-badge ${badgeClass}">${badgeLabel}</span></div>
+                <div class="c-preview">${preview}</div>
+            </div>
+            <div class="c-meta">
+                <div class="c-time">${escHtml(timeStr)}</div>
+                ${unread > 0 ? `<div class="unread">${unread}</div>` : ''}
+            </div>`;
+        realSection.appendChild(item);
+    });
+}
+
+/** Load real messages for a given real conversation ID and render them */
+async function loadMessages(realConvId) {
+    if (!realConvId) return;
+    try {
+        const raw  = await API.chat.messages(realConvId);
+        const msgs = raw?.data || raw?.messages || raw?.items || (Array.isArray(raw) ? raw : []);
+        if (!msgs.length) return;
+
+        const me   = API.currentUser();
+        const myId = me?.id;
+        const area = document.getElementById('messagesArea');
+        if (!area) return;
+
+        // Find corresponding CONVS key for the active real conv
+        const convKey = _realConvMap[realConvId];
+        const convData = (convKey && CONVS[convKey]) ? CONVS[convKey] : (CONVS[activeConv] || {});
+
+        // Dedup: only re-render when new messages have arrived
+        const lastMsg = msgs[msgs.length - 1];
+        const lastId  = lastMsg?.id;
+        if (_lastMsgId[realConvId] === lastId) return; // nothing new
+        _lastMsgId[realConvId] = lastId;
+
+        // Full re-render of messages area
+        const wasAtBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 60;
+        area.innerHTML = '';
+
+        msgs.forEach(msg => {
+            const isOut = msg.senderId === myId;
+            const ts    = _fmtTime(msg.createdAt);
+            const text  = msg.content || '';
+            renderMessage({ from: isOut ? 'out' : 'in', text, time: ts }, convData);
+        });
+
+        if (wasAtBottom) area.scrollTop = area.scrollHeight;
+    } catch(e) { /* silently keep whatever was displayed */ }
+}
+
+/** Start polling messages every 5s for a real conversation */
+function startMessagePolling(realConvId) {
+    stopMessagePolling();
+    if (!realConvId) return;
+    _msgPollInterval = setInterval(async () => {
+        if (document.visibilityState !== 'visible') return;
+        await loadMessages(realConvId);
+    }, 5000);
+}
+
+/** Stop active polling */
+function stopMessagePolling() {
+    if (_msgPollInterval) {
+        clearInterval(_msgPollInterval);
+        _msgPollInterval = null;
+    }
+}
+
+// Stop polling when tab is hidden; resume when visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') stopMessagePolling();
+    else if (_realConvId) startMessagePolling(_realConvId);
+});
+
+/** Load real conversations on page load; fall back to demo list on error */
+async function loadConversations() {
+    try {
+        const raw  = await API.chat.conversations();
+        const list = raw?.data || raw?.items || (Array.isArray(raw) ? raw : []);
+        if (list.length > 0) {
+            renderConversationList(list);
+        }
+        // else: keep demo conversations visible
+    } catch(e) { /* keep demo */ }
+}
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 initFromURL();
+loadConversations();
 
 // ─── Real-time: try to connect Socket.io if token available ──────────────────
 (async function initRealTime() {
@@ -1260,14 +1486,23 @@ initFromURL();
         // Looks like a real UUID — load or create conversation
         try {
             const convs = await API.chat.conversations();
-            const list = convs?.items ?? convs ?? [];
-            const found = list.find(c => c.requestId === reqId || c.serviceRequestId === reqId);
+            const convList = convs?.data || convs?.items ?? convs ?? [];
+            const found = convList.find(c => c.requestId === reqId || c.serviceRequestId === reqId);
             if (found) {
                 _realConvId = found.id;
+                // Load initial messages for this conv
+                await loadMessages(_realConvId);
+                startMessagePolling(_realConvId);
             } else if (reqId) {
                 // Create conversation for this request
-                const created = await API.chat.create({ requestId: reqId });
-                _realConvId = created?.id || null;
+                try {
+                    const created = await API.chat.createForRequest(reqId);
+                    _realConvId = created?.id || null;
+                    if (_realConvId) {
+                        await loadMessages(_realConvId);
+                        startMessagePolling(_realConvId);
+                    }
+                } catch(e2) { /* no real conv, stay on demo */ }
             }
         } catch(e) { /* fallback to demo */ }
     }
@@ -1285,9 +1520,11 @@ initFromURL();
         if (!msg || msg.conversationId !== _realConvId) return;
         const isMine = msg.senderId === API.auth.currentUser()?.id;
         if (isMine) return; // already rendered optimistically
+        // Invalidate dedup cache so next poll (or direct render) picks it up
+        _lastMsgId[_realConvId] = null;
         const data = CONVS[activeConv] || {};
         const now = new Date(msg.createdAt || Date.now());
-        const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        const time = _fmtTime(msg.createdAt || Date.now());
         renderMessage({ from: 'in', text: msg.content, time }, data);
         document.getElementById('messagesArea').scrollTop = 999999;
     });

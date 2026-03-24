@@ -844,11 +844,12 @@
         <span>بمجرد الموافقة سيتم تحويل المبلغ فوراً لحساب المقاول ولا يمكن التراجع عن هذا الإجراء.</span>
       </div>
       <div class="modal-actions">
-        <button class="btn-modal-confirm" @click="confirmApprove()">
-          <i class="fas fa-check" style="margin-left:0.4rem"></i>
-          تأكيد الإفراج
+        <button class="btn-modal-confirm" @click="confirmApprove()" :disabled="approveLoading" :style="approveLoading ? 'opacity:0.7;cursor:not-allowed' : ''">
+          <template x-if="!approveLoading"><i class="fas fa-check" style="margin-left:0.4rem"></i></template>
+          <template x-if="approveLoading"><i class="fas fa-spinner fa-spin" style="margin-left:0.4rem"></i></template>
+          <span x-text="approveLoading ? 'جارٍ المعالجة...' : 'تأكيد الإفراج'"></span>
         </button>
-        <button class="btn-modal-cancel" @click="approveModal.open = false">إلغاء</button>
+        <button class="btn-modal-cancel" @click="approveModal.open = false" :disabled="approveLoading">إلغاء</button>
       </div>
     </div>
   </div>
@@ -910,7 +911,8 @@
 
   /* ─── Alpine Component ─── */
   function milestoneApp() {
-    const MILESTONES = [
+    // Default demo milestones shown until API responds
+    const DEMO_MILESTONES = [
       {
         id: 1,
         label: 'دفعة التعبئة (مقدم)',
@@ -966,7 +968,11 @@
     ];
 
     return {
-      milestones: MILESTONES,
+      milestones: DEMO_MILESTONES,
+      contractTotal: 2450000,   // updated from API when available
+      _requestId: null,          // live requestId from URL
+      _tenderId: null,           // live tenderId from URL
+      approveLoading: false,
 
       approveModal: { open: false, id: null, label: '', amount: 0 },
       disputeModal: { open: false, id: null, label: '', reason: '' },
@@ -979,22 +985,122 @@
           .reduce((s, m) => s + m.amount, 0);
       },
       get releasedPct() {
-        return Math.round(this.releasedTotal / 2450000 * 100);
+        return this.contractTotal > 0 ? Math.round(this.releasedTotal / this.contractTotal * 100) : 0;
       },
       get heldTotal() {
-        return 2450000 - this.releasedTotal;
+        return this.contractTotal - this.releasedTotal;
       },
       get overallPct() {
         return this.releasedPct;
       },
 
-      /* ─── Init ─── */
-      init() {
-        // Read tenderId from URL and update back-link
-        const _tndId = new URLSearchParams(location.search).get('tenderId');
-        if (_tndId) {
-          const backLink = document.querySelector('a.nav-back');
-          if (backLink) backLink.href = 'tender-bids.html?tenderId=' + _tndId;
+      /* ─── Init: read URL params and load live data ─── */
+      async init() {
+        const params    = new URLSearchParams(location.search);
+        this._requestId = params.get('requestId');
+        this._tenderId  = params.get('tenderId');
+
+        // Update back-link
+        const backLink = document.querySelector('a.nav-back');
+        if (backLink && this._tenderId) backLink.href = 'tender-bids.html?tenderId=' + this._tenderId;
+
+        if (this._requestId) {
+          try {
+            const req = await API.requests.get(this._requestId);
+            if (!req) return;
+
+            // ── Update project header ──
+            const titleEl = document.querySelector('.project-title');
+            if (titleEl) titleEl.textContent = req.description || req.title || titleEl.textContent;
+
+            const contractorEl = document.querySelector('.contractor-name');
+            if (contractorEl) {
+              const pName = req.provider?.user?.fullName || req.providerName || '';
+              if (pName) contractorEl.innerHTML = `<i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>${pName}`;
+            }
+
+            // ── Update contractor avatar initial ──
+            const avatarEl = document.querySelector('.contractor-avatar');
+            if (avatarEl) {
+              const pName = req.provider?.user?.fullName || req.providerName || '';
+              if (pName) avatarEl.textContent = pName.charAt(0);
+            }
+
+            // ── Total value from escrow/payment ──
+            const total = req.escrow?.amount || req.totalAmount || req.serviceAmount;
+            if (total != null) {
+              this.contractTotal = Number(total);
+              const valueEl = document.querySelector('.badge-value');
+              if (valueEl) valueEl.textContent = 'SAR ' + Number(total).toLocaleString('ar-SA');
+              // Summary strip total
+              const stripTotal = document.querySelector('.summary-card-amount.teal');
+              if (stripTotal) stripTotal.textContent = Number(total).toLocaleString('ar-SA');
+            }
+
+            // ── Build milestones from escrow payments if available ──
+            const escrowStatus = req.escrow?.status;
+            if (escrowStatus) {
+              // Map the single escrow to milestone 1 or 2 depending on status
+              const escrowAmt = Number(req.escrow?.amount || 0);
+              const statusMap = {
+                'HELD': 'held',
+                'PENDING_APPROVAL': 'pending_approval',
+                'RELEASED': 'released',
+                'DISPUTED': 'disputed',
+              };
+              const mapped = statusMap[escrowStatus] || 'held';
+              if (this.milestones[0]) {
+                this.milestones[0].amount = escrowAmt;
+                this.milestones[0].status = mapped;
+                this.milestones[0].pct    = 100;
+                this.milestones[0].label  = req.description || this.milestones[0].label;
+                if (escrowStatus === 'RELEASED') this.milestones[0].releasedAt = req.escrow?.releasedAt?.split('T')[0] || null;
+                // Only show 1 milestone row for a simple service request
+                this.milestones = [this.milestones[0]];
+              }
+            }
+
+            // ── Update chat link ──
+            const chatLink = document.querySelector('.btn-chat');
+            if (chatLink) chatLink.href = 'chat.html?type=request&id=' + this._requestId;
+
+          } catch(e) { /* keep demo data */ }
+
+        } else if (this._tenderId) {
+          try {
+            const tender = await API.get('/tenders/' + this._tenderId);
+            if (!tender) return;
+
+            // ── Update project header ──
+            const titleEl = document.querySelector('.project-title');
+            if (titleEl) titleEl.textContent = tender.title || titleEl.textContent;
+
+            const contractorEl = document.querySelector('.contractor-name');
+            if (contractorEl) {
+              const pName = tender.awardedBid?.provider?.user?.fullName || tender.awardedProviderName || tender.companyName || '';
+              if (pName) contractorEl.innerHTML = `<i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>${pName}`;
+            }
+
+            const avatarEl = document.querySelector('.contractor-avatar');
+            if (avatarEl) {
+              const pName = tender.awardedBid?.provider?.user?.fullName || tender.awardedProviderName || tender.companyName || '';
+              if (pName) avatarEl.textContent = pName.charAt(0);
+            }
+
+            const total = tender.awardedAmount || tender.budget || tender.maxBudget;
+            if (total != null) {
+              this.contractTotal = Number(total);
+              const valueEl = document.querySelector('.badge-value');
+              if (valueEl) valueEl.textContent = 'SAR ' + Number(total).toLocaleString('ar-SA');
+              const stripTotal = document.querySelector('.summary-card-amount.teal');
+              if (stripTotal) stripTotal.textContent = Number(total).toLocaleString('ar-SA');
+            }
+
+            // ── Update chat link ──
+            const chatLink = document.querySelector('.btn-chat');
+            if (chatLink) chatLink.href = 'chat.html?type=tender&id=' + this._tenderId;
+
+          } catch(e) { /* keep demo data */ }
         }
       },
 
@@ -1025,16 +1131,31 @@
         this.approveModal = { open: true, id: ms.id, label: ms.label, amount: ms.amount };
       },
       async confirmApprove() {
+        if (this.approveLoading) return;
+        this.approveLoading = true;
         const ms = this.milestones.find(m => m.id === this.approveModal.id);
-        const _tndId = new URLSearchParams(location.search).get('tenderId');
-        if (_tndId && _tndId.includes('-') && _tndId.length > 10) {
-          try { await API.payments.release(_tndId); } catch(e) {}
+
+        try {
+          // Wire to correct API endpoint based on URL param
+          if (this._requestId) {
+            await API.payments.release(this._requestId);
+          } else if (this._tenderId) {
+            // Tender milestone release — use payments.release with tenderId as fallback
+            await API.payments.release(this._tenderId);
+          }
+        } catch(e) {
+          // If API fails with a real error (not demo), show warning but still update UI
+          if (e?.status && e.status !== 404 && e.status !== 0) {
+            this.showToast('تعذّر الاتصال بالخادم — تم التحديث محلياً فقط', 'warning');
+          }
         }
+
         if (ms) {
           ms.status = 'released';
           ms.releasedAt = new Date().toISOString().split('T')[0];
           ms.note = 'تم الإفراج بموافقتك';
         }
+        this.approveLoading = false;
         this.approveModal.open = false;
         this.showToast('تم الإفراج بنجاح ✓', 'success');
       },

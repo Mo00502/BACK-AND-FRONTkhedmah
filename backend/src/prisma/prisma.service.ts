@@ -67,11 +67,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     await this.$disconnect();
   }
 
-  /** Expose a typed executeRaw for raw SQL when needed */
-  async executeRaw<T = any>(sql: string, ...params: any[]): Promise<T[]> {
-    return this.$queryRawUnsafe<T[]>(sql, ...params);
-  }
-
   /** Use ONLY in tests — never in production */
   async cleanDatabase() {
     if (this.config.get('NODE_ENV') === 'production') {

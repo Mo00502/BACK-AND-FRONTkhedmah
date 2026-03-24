@@ -192,6 +192,20 @@ export class AdminController {
     return this.admin.getConsultations(+page, +limit, status);
   }
 
+  @Get('audit')
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Get audit trail (SUPER_ADMIN only)' })
+  @Roles(UserRole.SUPER_ADMIN)
+  getAuditLogs(
+    @Query('page') page = 1,
+    @Query('limit') limit = 50,
+    @Query('action') action?: string,
+    @Query('entityType') entityType?: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.admin.getAuditLogs(+page, +limit, { action, entityType, userId });
+  }
+
   @Patch('consultations/:consultationId/cancel')
   @ThrottleStrict()
   @ApiOperation({ summary: 'Admin: force-cancel a consultation with a reason' })

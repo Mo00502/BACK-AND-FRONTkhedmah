@@ -466,6 +466,28 @@ export class AdminService {
     return { items, total, page, pages: Math.ceil(total / limit) };
   }
 
+  // ── Audit log viewer ─────────────────────────────────────────────────────
+  async getAuditLogs(page: number, limit: number, filters: { action?: string; entityType?: string; userId?: string }) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (filters.action) where.action = filters.action;
+    if (filters.entityType) where.entityType = filters.entityType;
+    if (filters.userId) where.userId = filters.userId;
+
+    const [logs, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where,
+        include: { user: { select: { id: true, email: true, role: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+
+    return { data: logs, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
   async cancelConsultationByAdmin(consultationId: string, adminId: string, reason: string) {
     const c = await this.prisma.consultation.findUnique({ where: { id: consultationId } });
     if (!c) throw new NotFoundException('Consultation not found');

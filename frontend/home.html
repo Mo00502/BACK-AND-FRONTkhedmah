@@ -544,17 +544,17 @@
                 </div>
                 <!-- Quick tags -->
                 <div class="quick-tags">
-                    <a href="search-services.html?q=كهرباء">⚡ كهرباء</a>
-                    <a href="search-services.html?q=سباكة">🚿 سباكة</a>
-                    <a href="search-services.html?q=تكييف">❄️ تكييف</a>
-                    <a href="search-services.html?q=دهانات">🎨 دهانات</a>
-                    <a href="search-services.html?q=نجارة">🪵 نجارة</a>
+                    <a href="search-services.html?category=electrical&q=كهرباء">⚡ كهرباء</a>
+                    <a href="search-services.html?category=plumbing&q=سباكة">🚿 سباكة</a>
+                    <a href="search-services.html?category=ac&q=تكييف">❄️ تكييف</a>
+                    <a href="search-services.html?category=painting&q=دهانات">🎨 دهانات</a>
+                    <a href="search-services.html?category=carpentry&q=نجارة">🪵 نجارة</a>
                 </div>
             </div>
 
             <!-- Trust pills -->
             <div class="trust-pills">
-                <span>✓ 438 مزود معتمد</span>
+                <span id="statProviders">✓ 438 مزود معتمد</span>
                 <span>✓ دفع آمن</span>
                 <span>✓ ضمان الجودة</span>
             </div>
@@ -593,18 +593,18 @@
             <!-- Expandable sub-categories -->
             <div class="cats-all" x-show="allOpen" x-transition>
                 <div class="cats-all-grid">
-                    <a href="search-services.html?q=كهرباء" class="sub-cat">⚡ كهرباء</a>
-                    <a href="search-services.html?q=سباكة" class="sub-cat">🚿 سباكة</a>
-                    <a href="search-services.html?q=تكييف" class="sub-cat">❄️ تكييف</a>
-                    <a href="search-services.html?q=دهانات" class="sub-cat">🎨 دهانات</a>
-                    <a href="search-services.html?q=نجارة" class="sub-cat">🪵 نجارة</a>
-                    <a href="search-services.html?q=تنظيف" class="sub-cat">🧹 تنظيف</a>
-                    <a href="search-services.html?q=حراسة" class="sub-cat">🛡️ حراسة</a>
-                    <a href="search-services.html?q=زراعة" class="sub-cat">🌿 زراعة</a>
-                    <a href="search-services.html?q=سباكة حمامات" class="sub-cat">🛁 حمامات</a>
-                    <a href="search-services.html?q=أجهزة منزلية" class="sub-cat">📺 أجهزة</a>
-                    <a href="search-services.html?q=طاقة شمسية" class="sub-cat">☀️ طاقة شمسية</a>
-                    <a href="search-services.html?q=أمن وكاميرات" class="sub-cat">📷 أمن وكاميرات</a>
+                    <a href="search-services.html?category=electrical&q=كهرباء" class="sub-cat">⚡ كهرباء</a>
+                    <a href="search-services.html?category=plumbing&q=سباكة" class="sub-cat">🚿 سباكة</a>
+                    <a href="search-services.html?category=ac&q=تكييف" class="sub-cat">❄️ تكييف</a>
+                    <a href="search-services.html?category=painting&q=دهانات" class="sub-cat">🎨 دهانات</a>
+                    <a href="search-services.html?category=carpentry&q=نجارة" class="sub-cat">🪵 نجارة</a>
+                    <a href="search-services.html?category=cleaning&q=تنظيف" class="sub-cat">🧹 تنظيف</a>
+                    <a href="search-services.html?category=security&q=حراسة" class="sub-cat">🛡️ حراسة</a>
+                    <a href="search-services.html?category=landscaping&q=زراعة" class="sub-cat">🌿 زراعة</a>
+                    <a href="search-services.html?category=bathrooms&q=سباكة حمامات" class="sub-cat">🛁 حمامات</a>
+                    <a href="search-services.html?category=appliances&q=أجهزة منزلية" class="sub-cat">📺 أجهزة</a>
+                    <a href="search-services.html?category=solar&q=طاقة شمسية" class="sub-cat">☀️ طاقة شمسية</a>
+                    <a href="search-services.html?category=cameras&q=أمن وكاميرات" class="sub-cat">📷 أمن وكاميرات</a>
                 </div>
             </div>
 
@@ -650,11 +650,11 @@
     <!-- ── STATS STRIP ─────────────────────────────────────────── -->
     <div class="stats-strip">
         <div class="stat-item">
-            <div class="stat-num">+10K</div>
+            <div class="stat-num" id="stripProviders">+10K</div>
             <div class="stat-lbl">مزود معتمد</div>
         </div>
         <div class="stat-item">
-            <div class="stat-num">+50K</div>
+            <div class="stat-num" id="stripCustomers">+50K</div>
             <div class="stat-lbl">عميل راضٍ</div>
         </div>
         <div class="stat-item stat-hide-mobile">
@@ -662,8 +662,8 @@
             <div class="stat-lbl">دعم مستمر</div>
         </div>
         <div class="stat-item stat-hide-mobile">
-            <div class="stat-num">4.9★</div>
-            <div class="stat-lbl">متوسط التقييم</div>
+            <div class="stat-num" id="stripCompleted">4.9★</div>
+            <div class="stat-lbl" id="stripCompletedLbl">متوسط التقييم</div>
         </div>
     </div>
 
@@ -725,6 +725,8 @@
             const q = document.getElementById('heroSearch').value.trim();
             const city = document.getElementById('heroCity').value;
             if (!q) return;
+            const btn = document.querySelector('.search-box button');
+            if (btn) { btn.disabled = true; btn.textContent = '...'; }
             location.href = 'search-services.html?q=' + encodeURIComponent(q) + '&city=' + encodeURIComponent(city);
         }
 
@@ -745,6 +747,52 @@
                 if (btn) btn.textContent = '☀️';
             }
         })();
+
+        // ── Dynamic stats from admin dashboard ──────────────────────────────
+        function fmtCount(n) {
+            if (!n || isNaN(n)) return null;
+            if (n >= 1000) return '+' + Math.floor(n / 1000) + 'K';
+            return String(n);
+        }
+
+        async function loadHomeStats() {
+            try {
+                const stats = await fetch('/api/v1/admin/dashboard')
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null);
+
+                if (stats) {
+                    const d = stats.data || stats;
+
+                    // Trust pills — provider count
+                    const providers = d.totalProviders;
+                    if (providers) {
+                        const pill = document.getElementById('statProviders');
+                        if (pill) pill.textContent = '✓ ' + providers + ' مزود معتمد';
+                    }
+
+                    // Stats strip — providers
+                    const stripP = document.getElementById('stripProviders');
+                    if (stripP && providers) stripP.textContent = fmtCount(providers) || stripP.textContent;
+
+                    // Stats strip — customers (totalUsers minus providers as approximation)
+                    const users = d.totalUsers;
+                    const stripC = document.getElementById('stripCustomers');
+                    if (stripC && users) stripC.textContent = fmtCount(users) || stripC.textContent;
+
+                    // Stats strip — completed services
+                    const completed = d.completedRequests;
+                    const stripDone = document.getElementById('stripCompleted');
+                    const stripDoneLbl = document.getElementById('stripCompletedLbl');
+                    if (stripDone && completed) {
+                        stripDone.textContent = fmtCount(completed) || stripDone.textContent;
+                        if (stripDoneLbl) stripDoneLbl.textContent = 'خدمة مكتملة';
+                    }
+                }
+            } catch (e) { /* keep demo numbers */ }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadHomeStats);
     </script>
 </body>
 </html>

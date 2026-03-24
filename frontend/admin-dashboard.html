@@ -738,26 +738,59 @@
             if (btn) btn.classList.add('active');
             document.getElementById('pageTitle').textContent = sectionTitles[name] || '';
             if (name === 'reports') buildCharts();
+            // Update URL hash for bookmarkable navigation
+            if (history.replaceState) history.replaceState(null, '', '#' + name);
         }
 
-        // ── Charts (pure CSS bars) ──
-        const months = ['أكتوبر','نوفمبر','ديسمبر','يناير','فبراير','مارس'];
-        const reqData = [142, 178, 205, 247, 298, 347];
-        const revData = [9800, 13200, 16100, 19400, 24100, 28600];
+        // ── Restore section from URL hash on load ──
+        (function restoreHashSection() {
+            const hash = location.hash.replace('#', '');
+            if (hash && document.getElementById('section-' + hash)) {
+                // Find the matching nav button and activate it
+                const navBtns = document.querySelectorAll('.nav-item');
+                let matchBtn = null;
+                navBtns.forEach(b => {
+                    const onclick = b.getAttribute('onclick') || '';
+                    if (onclick.includes("'" + hash + "'") || onclick.includes('"' + hash + '"')) matchBtn = b;
+                });
+                showSection(hash, matchBtn);
+            }
+        })();
 
-        function buildChart(id, data, color) {
+        // ── Charts (pure CSS bars) ──
+        // Default data shown until API responds
+        let _chartMonths = ['أكتوبر','نوفمبر','ديسمبر','يناير','فبراير','مارس'];
+        let _reqData = [142, 178, 205, 247, 298, 347];
+        let _revData = [9800, 13200, 16100, 19400, 24100, 28600];
+
+        function buildChart(id, data, labels, color) {
             const el = document.getElementById(id); if (!el) return;
-            const maxVal = Math.max(...data);
+            const maxVal = Math.max(...data) || 1;
             el.innerHTML = data.map((v, i) => `
                 <div class="bar-col">
-                    <div class="bar-value">${v.toLocaleString()}</div>
+                    <div class="bar-value">${Number(v).toLocaleString()}</div>
                     <div class="bar" style="height:${Math.round((v/maxVal)*100)}%;background:${color}"></div>
-                    <div class="bar-label">${months[i]}</div>
+                    <div class="bar-label">${labels[i]}</div>
                 </div>`).join('');
         }
         function buildCharts() {
-            buildChart('requestsChart', reqData, 'linear-gradient(to top, #028090, #02C39A)');
-            buildChart('revenueChart', revData, 'linear-gradient(to top, #d97706, #fbbf24)');
+            buildChart('requestsChart', _reqData, _chartMonths, 'linear-gradient(to top, #028090, #02C39A)');
+            buildChart('revenueChart', _revData, _chartMonths, 'linear-gradient(to top, #d97706, #fbbf24)');
+        }
+
+        async function loadMonthlyStats() {
+            try {
+                const data = await API.admin.monthlyStats();
+                if (!data) return;
+                // Backend may return an array or an object with arrays
+                const rows = Array.isArray(data) ? data : (data.months || data.data || []);
+                if (!rows.length) return;
+                _chartMonths = rows.map(r => r.month || r.label || '');
+                _reqData     = rows.map(r => Number(r.requests || r.totalRequests || 0));
+                _revData     = rows.map(r => Number(r.revenue || r.platformRevenue || 0));
+                // If reports section is currently visible, redraw immediately
+                if (document.getElementById('section-reports').style.display !== 'none') buildCharts();
+            } catch(e) { /* keep defaults */ }
         }
 
         // ── Toast ──
@@ -908,10 +941,13 @@
         }
 
         // ── Misc ──
-        function refreshData() {
+        async function refreshData() {
             const btn = event.currentTarget;
             btn.textContent = '⏳ جارٍ التحديث...'; btn.disabled = true;
-            setTimeout(() => { btn.textContent = '🔄 تحديث'; btn.disabled = false; toast('✅ تم تحديث البيانات'); }, 1200);
+            await loadDashboardStats().catch(() => {});
+            await loadMonthlyStats().catch(() => {});
+            btn.textContent = '🔄 تحديث'; btn.disabled = false;
+            toast('✅ تم تحديث البيانات');
         }
         async function logout() {
             if (confirm('تسجيل الخروج من لوحة الإدارة؟')) {
@@ -927,23 +963,176 @@
         // Apply saved theme icon
         if (localStorage.getItem('khedmah_theme') === 'dark') document.getElementById('themeToggle').textContent = '☀️';
 
-        // ── Load real stats from API ──
-        (async function initAdminStats() {
+        // ── Load real KPI stats + health from API ──
+        async function loadDashboardStats() {
             try {
-                const stats = await API.admin.stats();
-                if (!stats) return;
+                const [stats, health] = await Promise.all([
+                    API.admin.dashboard(),
+                    API.admin.health(),
+                ]);
+
+                // ── KPI cards (by index — order matches HTML) ──
                 const kpiValues = document.querySelectorAll('.kpi-value');
-                if (kpiValues[0] && stats.totalUsers    != null) kpiValues[0].textContent = Number(stats.totalUsers).toLocaleString('ar-SA');
-                if (kpiValues[1] && stats.totalProviders != null) kpiValues[1].textContent = Number(stats.totalProviders).toLocaleString('ar-SA');
-                if (kpiValues[2] && stats.totalRequests  != null) kpiValues[2].textContent = Number(stats.totalRequests).toLocaleString('ar-SA');
-                if (kpiValues[3] && stats.platformRevenue != null) kpiValues[3].textContent = Number(stats.platformRevenue).toLocaleString('ar-SA');
-                if (kpiValues[4] && stats.openDisputes   != null) kpiValues[4].textContent = stats.openDisputes;
-                if (kpiValues[5] && stats.pendingVerifications != null) kpiValues[5].textContent = stats.pendingVerifications;
-                // Update nav badges
-                if (stats.pendingVerifications) { const b = document.getElementById('badge-verify'); if (b) b.textContent = stats.pendingVerifications; }
-                if (stats.openDisputes)          { const b = document.getElementById('badge-disputes'); if (b) b.textContent = stats.openDisputes; }
-                if (stats.pendingWithdrawals)    { const b = document.getElementById('badge-wd'); if (b) b.textContent = stats.pendingWithdrawals; }
-            } catch(e) { /* silent — admin may not have API access yet */ }
+                if (kpiValues[0] && stats?.totalUsers        != null) kpiValues[0].textContent = Number(stats.totalUsers).toLocaleString('ar-SA');
+                if (kpiValues[1] && stats?.activeProviders   != null) kpiValues[1].textContent = Number(stats.activeProviders).toLocaleString('ar-SA');
+                else if (kpiValues[1] && stats?.totalProviders != null) kpiValues[1].textContent = Number(stats.totalProviders).toLocaleString('ar-SA');
+                if (kpiValues[2] && stats?.totalRequests     != null) kpiValues[2].textContent = Number(stats.totalRequests).toLocaleString('ar-SA');
+                if (kpiValues[3] && stats?.platformRevenue   != null) kpiValues[3].textContent = Number(stats.platformRevenue).toLocaleString('ar-SA');
+                else if (kpiValues[3] && stats?.monthlyRevenue != null) kpiValues[3].textContent = Number(stats.monthlyRevenue).toLocaleString('ar-SA');
+                if (kpiValues[4] && stats?.openDisputes      != null) kpiValues[4].textContent = stats.openDisputes;
+                if (kpiValues[5] && stats?.pendingVerifications != null) kpiValues[5].textContent = stats.pendingVerifications;
+
+                // ── Nav badges ──
+                const pv = stats?.pendingVerifications;
+                const od = stats?.openDisputes;
+                const pw = stats?.pendingWithdrawals;
+                const bv = document.getElementById('badge-verify');
+                const bd = document.getElementById('badge-disputes');
+                const bw = document.getElementById('badge-wd');
+                if (bv) { if (pv) { bv.textContent = pv; bv.style.display = ''; } else bv.style.display = 'none'; }
+                if (bd) { if (od) { bd.textContent = od; bd.style.display = ''; } else bd.style.display = 'none'; }
+                if (bw) { if (pw) { bw.textContent = pw; bw.style.display = ''; } else bw.style.display = 'none'; }
+
+                // ── Dashboard inline health panel (today's numbers) ──
+                const healthMetrics = document.querySelectorAll('#section-dashboard .health-metric-value');
+                // healthMetrics: [new users today, requests today, failed payments, held escrow, pending withdrawals, response time]
+                if (health) {
+                    if (healthMetrics[0] && health.newUsersToday    != null) healthMetrics[0].textContent = health.newUsersToday;
+                    if (healthMetrics[1] && health.requestsToday    != null) healthMetrics[1].textContent = health.requestsToday;
+                    if (healthMetrics[2] && health.failedPayments   != null) { healthMetrics[2].textContent = health.failedPayments; healthMetrics[2].className = 'health-metric-value ' + (health.failedPayments > 0 ? 'warn' : 'ok'); }
+                    if (healthMetrics[3] && health.heldEscrow       != null) healthMetrics[3].textContent = Number(health.heldEscrow).toLocaleString('ar-SA') + ' ر.س';
+                    if (healthMetrics[4] && (health.pendingWithdrawals ?? pw) != null) { const wv = health.pendingWithdrawals ?? pw; healthMetrics[4].textContent = wv; healthMetrics[4].className = 'health-metric-value ' + (wv > 0 ? 'warn' : 'ok'); }
+                    if (healthMetrics[5] && health.avgResponseMs    != null) healthMetrics[5].textContent = health.avgResponseMs + ' مللث';
+                }
+
+                // ── Dedicated Health section ──
+                const allHealthMetrics = document.querySelectorAll('#section-health .health-metric-value');
+                if (health && allHealthMetrics.length >= 6) {
+                    if (health.newUsersToday    != null) allHealthMetrics[0].textContent = health.newUsersToday;
+                    if (health.requestsToday    != null) allHealthMetrics[1].textContent = health.requestsToday;
+                    if (health.completedToday   != null) allHealthMetrics[2].textContent = health.completedToday;
+                    if (health.failedPayments   != null) { allHealthMetrics[3].textContent = health.failedPayments; allHealthMetrics[3].className = 'health-metric-value ' + (health.failedPayments > 0 ? 'warn' : 'ok'); }
+                    if (od                      != null) { allHealthMetrics[4].textContent = od; allHealthMetrics[4].className = 'health-metric-value ' + (od > 0 ? 'warn' : 'ok'); }
+                    if (health.heldEscrow       != null) allHealthMetrics[5].textContent = Number(health.heldEscrow).toLocaleString('ar-SA') + ' ر.س';
+                    // Performance panel (second health grid)
+                    if (allHealthMetrics.length >= 12) {
+                        if (health.avgResponseMs   != null) allHealthMetrics[6].textContent  = health.avgResponseMs + ' مللث';
+                        if (health.apiStatus       != null) allHealthMetrics[7].textContent  = health.apiStatus === 'ok' ? '✓ يعمل' : '✗ خطأ';
+                        if (health.redisStatus     != null) allHealthMetrics[8].textContent  = health.redisStatus === 'ok' ? '✓ متصل' : '✗ منقطع';
+                        if (health.dbStatus        != null) allHealthMetrics[9].textContent  = health.dbStatus === 'ok' ? '✓ متصل' : '✗ منقطع';
+                        if (health.cronStatus      != null) allHealthMetrics[10].textContent = health.cronStatus === 'ok' ? '✓ تعمل' : '✗ متوقفة';
+                        if (pw                     != null) { allHealthMetrics[11].textContent = pw; allHealthMetrics[11].className = 'health-metric-value ' + (pw > 0 ? 'warn' : 'ok'); }
+                    }
+                }
+
+                // ── 30-day stat row in dashboard ──
+                const statBigs = document.querySelectorAll('#section-dashboard .stat-big');
+                if (stats) {
+                    if (statBigs[0] && stats.last30DaysRequests  != null) statBigs[0].textContent = Number(stats.last30DaysRequests).toLocaleString('ar-SA');
+                    if (statBigs[1] && stats.last30DaysCompleted != null) statBigs[1].textContent = Number(stats.last30DaysCompleted).toLocaleString('ar-SA');
+                    if (statBigs[2] && stats.last30DaysRevenue   != null) statBigs[2].textContent = Number(stats.last30DaysRevenue).toLocaleString('ar-SA');
+                }
+            } catch(e) { /* silent — keep demo numbers */ }
+        }
+
+        // ── Wire pending verifications table ──
+        async function loadPendingVerifications() {
+            try {
+                const data = await API.admin.pendingProviders();
+                const list = Array.isArray(data) ? data : (data?.items || data?.data || []);
+                if (!list.length) return;
+                const container = document.getElementById('verify-pending');
+                if (!container) return;
+                container.innerHTML = list.map(p => {
+                    const name  = p.user?.fullName || p.providerName || p.name || 'مزود';
+                    const id    = p.id || p.providerId || '';
+                    const city  = p.city || p.user?.city || '';
+                    const skill = p.mainSkill || p.skills?.[0] || '';
+                    const days  = p.daysSinceSubmission != null ? `منذ ${p.daysSinceSubmission} أيام` : '';
+                    const init  = name.charAt(0);
+                    const safeId   = id.replace(/'/g, "\\'");
+                    const safeName = name.replace(/'/g, "\\'");
+                    return `<div class="verify-item" data-id="${id}">
+                        <div class="verify-avatar">${init}</div>
+                        <div class="verify-info">
+                            <div class="verify-name">${name}</div>
+                            <div class="verify-meta">${skill}${city ? ' • ' + city : ''}${days ? ' • ' + days : ''}</div>
+                        </div>
+                        <div class="verify-actions">
+                            <button class="btn-xs btn-review" data-id="${id}" data-name="${name}" onclick="startReview(this,'${safeName}','${safeId}')">مراجعة</button>
+                            <button class="btn-xs btn-approve" data-id="${id}" data-name="${name}" onclick="approveProvider(this,'${safeName}','${safeId}')">قبول ✓</button>
+                        </div>
+                    </div>`;
+                }).join('');
+                // Update badge + panel badge
+                const badge = document.getElementById('badge-verify');
+                if (badge) { badge.textContent = list.length; badge.style.display = ''; }
+                const panelBadge = container.closest('.panel')?.querySelector('.badge-pending');
+                if (panelBadge) panelBadge.textContent = list.length;
+                // Pagination note
+                const total = data?.total || data?.count || list.length;
+                const pages = Math.ceil(total / (data?.limit || list.length || 1)) || 1;
+                let pg = container.parentElement.querySelector('.pagination-note');
+                if (!pg) { pg = document.createElement('div'); pg.className = 'pagination-note'; pg.style.cssText = 'font-size:0.75rem;color:var(--gray);padding:0.5rem 0 0;text-align:left'; container.parentElement.appendChild(pg); }
+                pg.textContent = `صفحة 1 من ${pages}`;
+            } catch(e) { /* keep demo rows */ }
+        }
+
+        // ── Wire disputes table ──
+        async function loadDisputes() {
+            try {
+                const data = await API.admin.disputes({ status: 'OPEN' });
+                const list = Array.isArray(data) ? data : (data?.items || data?.data || []);
+                if (!list.length) return;
+                const container = document.getElementById('disputes-list');
+                if (!container) return;
+                container.innerHTML = list.map(d => {
+                    const id         = d.id || '';
+                    const title      = d.title || d.description?.substring(0, 40) || 'نزاع';
+                    const requestId  = d.requestId || d.serviceRequestId || '';
+                    const reporter   = d.reporter?.fullName || d.reporterName || 'عميل';
+                    const against    = d.against?.fullName  || d.againstName  || 'مزود';
+                    const amount     = d.escrow?.amount != null ? Number(d.escrow.amount).toLocaleString('ar-SA') + ' ر.س' : '—';
+                    const desc       = d.description || '';
+                    const safeId     = String(id).replace(/'/g, "\\'");
+                    return `<div class="dispute-item" data-id="${id}">
+                        <div class="dispute-top">
+                            <div class="dispute-title">${title}${requestId ? ' — #' + requestId.substring(0,8) : ''}</div>
+                            <span class="badge badge-open">مفتوح</span>
+                        </div>
+                        <div class="dispute-meta">📌 ${reporter} (عميل) ← ${against} (مزود) • مبلغ: ${amount}</div>
+                        ${desc ? `<div class="dispute-desc">${desc.substring(0, 150)}</div>` : ''}
+                        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                            <button class="btn-xs btn-approve" onclick="resolveDispute(this,'${safeId}','تحرير')">✅ تحرير للمزود</button>
+                            <button class="btn-xs btn-reject"  onclick="resolveDispute(this,'${safeId}','استرداد')">↩️ استرداد للعميل</button>
+                            <button class="btn-xs btn-review"  onclick="resolveDispute(this,'${safeId}','تقسيم')">⚖️ تقسيم المبلغ</button>
+                        </div>
+                    </div>`;
+                }).join('');
+                // Update badge
+                const badge = document.getElementById('badge-disputes');
+                const openBadge = container.closest('.panel')?.querySelector('.badge-open');
+                if (badge) { badge.textContent = list.length; badge.style.display = ''; }
+                if (openBadge) openBadge.textContent = list.length + ' مفتوح';
+                // Pagination note
+                const total = data?.total || data?.count || list.length;
+                const pages = Math.ceil(total / (data?.limit || list.length || 1)) || 1;
+                let pg = container.parentElement.querySelector('.pagination-note');
+                if (!pg) { pg = document.createElement('div'); pg.className = 'pagination-note'; pg.style.cssText = 'font-size:0.75rem;color:var(--gray);padding:0.5rem 0 0;text-align:left'; container.parentElement.appendChild(pg); }
+                pg.textContent = `صفحة 1 من ${pages}`;
+            } catch(e) { /* keep demo rows */ }
+        }
+
+        // ── Initial load + auto-refresh every 30 seconds ──
+        (function init() {
+            loadDashboardStats();
+            loadMonthlyStats();
+            loadPendingVerifications();
+            loadDisputes();
+            setInterval(() => {
+                loadDashboardStats();
+                loadMonthlyStats();
+            }, 30000);
         })();
     </script>
 </body>
