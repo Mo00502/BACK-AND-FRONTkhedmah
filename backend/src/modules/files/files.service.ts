@@ -44,12 +44,25 @@ export class FilesService {
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       throw new BadRequestException(`File type ${file.mimetype} not allowed`);
     }
+
+    const MIME_TO_EXT: Record<string, string[]> = {
+      'image/jpeg': ['jpg', 'jpeg'],
+      'image/png': ['png'],
+      'image/webp': ['webp'],
+      'image/gif': ['gif'],
+      'application/pdf': ['pdf'],
+    };
+    const allowedExts = MIME_TO_EXT[file.mimetype] ?? [];
+    const ext = (file.originalname.split('.').pop() ?? '').toLowerCase();
+    if (allowedExts.length > 0 && !allowedExts.includes(ext)) {
+      throw new BadRequestException(`File extension .${ext} does not match MIME type ${file.mimetype}`);
+    }
+
     if (file.size > this.maxBytes) {
       const limitMb = this.config.get<number>('S3_MAX_FILE_SIZE_MB', 20);
       throw new BadRequestException(`File size exceeds ${limitMb} MB limit`);
     }
 
-    const ext = file.originalname.split('.').pop();
     const key = `uploads/${userId}/${uuidv4()}.${ext}`;
 
     await this.s3.send(

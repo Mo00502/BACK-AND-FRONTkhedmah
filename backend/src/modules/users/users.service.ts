@@ -163,8 +163,8 @@ export class UsersService {
     return {
       totalRequests,
       completedRequests: completed,
-      totalSpent: totalSpent._sum.amount || 0,
-      ratingAvg: providerProfile?.ratingAvg || null,
+      totalSpent: Number(totalSpent._sum.amount ?? 0),
+      ratingAvg: providerProfile ? Number(providerProfile.ratingAvg) || null : null,
       completedJobs: providerProfile?.completedJobs || null,
     };
   }
