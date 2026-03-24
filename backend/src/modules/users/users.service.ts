@@ -76,10 +76,19 @@ export class UsersService {
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     await this.findById(userId);
+    const safeData = {
+      ...(dto.nameAr !== undefined && { nameAr: dto.nameAr }),
+      ...(dto.nameEn !== undefined && { nameEn: dto.nameEn }),
+      ...(dto.gender !== undefined && { gender: dto.gender }),
+      ...(dto.langPref !== undefined && { langPref: dto.langPref }),
+      ...(dto.city !== undefined && { city: dto.city }),
+      ...(dto.avatarUrl !== undefined && { avatarUrl: dto.avatarUrl }),
+      ...(dto.bio !== undefined && { bio: dto.bio }),
+    };
     return this.prisma.userProfile.upsert({
       where: { userId },
-      update: dto,
-      create: { userId, ...dto },
+      update: safeData,
+      create: { userId, ...safeData },
     });
   }
 

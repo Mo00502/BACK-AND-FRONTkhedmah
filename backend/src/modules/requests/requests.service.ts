@@ -108,10 +108,30 @@ export class RequestsService {
       );
     }
 
-    return this.prisma.serviceRequest.update({
+    const updated = await this.prisma.serviceRequest.update({
       where: { id: requestId },
       data: { status: RequestStatus.CANCELLED },
     });
+
+    // Check for held escrow and trigger refund
+    const escrow = await this.prisma.escrow.findFirst({
+      where: { requestId: request.id, status: 'HELD' },
+    });
+    if (escrow) {
+      // Mark escrow as REFUNDED and emit refund event
+      await this.prisma.escrow.update({
+        where: { id: escrow.id },
+        data: { status: 'REFUNDED' },
+      });
+      this.events.emit('escrow.refund_on_cancel', {
+        escrowId: escrow.id,
+        requestId: request.id,
+        customerId: request.customerId,
+        amount: escrow.amount,
+      });
+    }
+
+    return updated;
   }
 
   async submitQuote(providerId: string, requestId: string, dto: CreateQuoteDto) {

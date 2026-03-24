@@ -157,8 +157,10 @@ export class InvoicesService {
   }
 
   // ── My invoices list ────────────────────────────────────────────────────
-  async listMyInvoices(userId: string) {
-    const [serviceRequests, tenderCommissions, rentals] = await Promise.all([
+  async listMyInvoices(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+
+    const [serviceRequests, tenderCommissions, rentals, consultations] = await Promise.all([
       this.prisma.serviceRequest.findMany({
         where: {
           OR: [{ customerId: userId }, { providerId: userId }],
@@ -167,7 +169,8 @@ export class InvoicesService {
         },
         select: { id: true, service: { select: { nameAr: true } }, completedAt: true },
         orderBy: { completedAt: 'desc' },
-        take: 20,
+        skip,
+        take: limit,
       }),
       this.prisma.tenderCommission.findMany({
         where: {
@@ -184,7 +187,8 @@ export class InvoicesService {
           paidAt: true,
         },
         orderBy: { paidAt: 'desc' },
-        take: 20,
+        skip,
+        take: limit,
       }),
       this.prisma.equipmentRental.findMany({
         where: {
@@ -198,35 +202,121 @@ export class InvoicesService {
           completedAt: true,
         },
         orderBy: { completedAt: 'desc' },
-        take: 20,
+        skip,
+        take: limit,
+      }),
+      this.prisma.consultation.findMany({
+        where: {
+          OR: [{ customerId: userId }, { providerId: userId }],
+          status: 'COMPLETED' as any,
+          totalAmount: { not: null },
+        },
+        select: {
+          id: true,
+          topic: true,
+          totalAmount: true,
+          completedAt: true,
+          provider: { select: { profile: { select: { nameAr: true, nameEn: true } } } },
+        },
+        orderBy: { completedAt: 'desc' },
+        skip,
+        take: limit,
       }),
     ]);
 
+    const homeServicesData = serviceRequests.map((r) => ({
+      type: 'HOME_SERVICE',
+      ref: `HS-${r.id.slice(0, 8).toUpperCase()}`,
+      id: r.id,
+      label: r.service.nameAr,
+      date: r.completedAt,
+    }));
+
+    const tendersData = tenderCommissions.map((c) => ({
+      type: 'TENDER_COMMISSION',
+      ref: `TC-${c.id.slice(0, 8).toUpperCase()}`,
+      id: c.id,
+      label: c.tender.title,
+      amount: c.commissionAmount,
+      date: c.paidAt,
+    }));
+
+    const equipmentData = rentals.map((r) => ({
+      type: 'EQUIPMENT_RENTAL',
+      ref: `EQ-${r.id.slice(0, 8).toUpperCase()}`,
+      id: r.id,
+      label: r.equipment.name,
+      amount: r.totalPrice,
+      date: r.completedAt,
+    }));
+
+    const consultationsData = consultations.map((c) => ({
+      type: 'CONSULTATION',
+      ref: `CN-${c.id.slice(0, 8).toUpperCase()}`,
+      id: c.id,
+      label: c.topic,
+      amount: c.totalAmount,
+      date: c.completedAt,
+      consultantName: c.provider?.profile?.nameAr ?? c.provider?.profile?.nameEn ?? null,
+    }));
+
+    const data = [
+      ...homeServicesData,
+      ...tendersData,
+      ...equipmentData,
+      ...consultationsData,
+    ].sort((a, b) => {
+      const da = a.date ? new Date(a.date).getTime() : 0;
+      const db = b.date ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
+
     return {
-      homeServices: serviceRequests.map((r) => ({
-        type: 'HOME_SERVICE',
-        ref: `HS-${r.id.slice(0, 8).toUpperCase()}`,
-        id: r.id,
-        label: r.service.nameAr,
-        date: r.completedAt,
-      })),
-      tenders: tenderCommissions.map((c) => ({
-        type: 'TENDER_COMMISSION',
-        ref: `TC-${c.id.slice(0, 8).toUpperCase()}`,
-        id: c.id,
-        label: c.tender.title,
-        amount: c.commissionAmount,
-        date: c.paidAt,
-      })),
-      equipment: rentals.map((r) => ({
-        type: 'EQUIPMENT_RENTAL',
-        ref: `EQ-${r.id.slice(0, 8).toUpperCase()}`,
-        id: r.id,
-        label: r.equipment.name,
-        amount: r.totalPrice,
-        date: r.completedAt,
-      })),
+      data,
+      total: data.length,
+      page,
+      limit,
     };
+  }
+
+  // ── Consultation invoice ─────────────────────────────────────────────────
+  async getConsultationInvoice(consultationId: string, userId: string) {
+    const c = await this.prisma.consultation.findUnique({
+      where: { id: consultationId },
+      include: {
+        provider: { include: { profile: true } },
+        customer: { include: { profile: true } },
+        service: true,
+      },
+    });
+    if (!c) throw new NotFoundException('الاستشارة غير موجودة');
+    if (c.customerId !== userId && c.providerId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const subtotal = Number(c.totalAmount ?? 0);
+    const vat = +(subtotal * VAT_RATE).toFixed(2);
+    const total = +(subtotal + vat).toFixed(2);
+
+    return this._buildInvoice({
+      invoiceType: 'CONSULTATION',
+      invoiceRef: `CN-${consultationId.slice(0, 8).toUpperCase()}`,
+      issuedAt: c.completedAt || new Date(),
+      customer: c.customer,
+      provider: c.provider,
+      lineItems: [
+        {
+          description: `استشارة: ${c.topic}`,
+          quantity: 1,
+          unitPrice: subtotal,
+          total: subtotal,
+        },
+      ],
+      subtotal,
+      vat,
+      total,
+      consultationType: c.mode,
+    });
   }
 
   // ── Private builder ─────────────────────────────────────────────────────

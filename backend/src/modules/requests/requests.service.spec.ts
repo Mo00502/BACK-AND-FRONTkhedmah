@@ -27,6 +27,10 @@ const mockPrisma = {
     update: jest.fn(),
     updateMany: jest.fn(),
   },
+  escrow: {
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
   $transaction: jest.fn(),
 };
 
@@ -96,10 +100,12 @@ describe('RequestsService', () => {
 
     it('cancels PENDING request successfully', async () => {
       mockPrisma.serviceRequest.findUnique.mockResolvedValue({
+        id: 'req-1',
         customerId: 'cust-1',
         status: 'PENDING',
       });
       mockPrisma.serviceRequest.update.mockResolvedValue({ id: 'req-1', status: 'CANCELLED' });
+      mockPrisma.escrow.findFirst.mockResolvedValue(null); // no held escrow
 
       const result = await service.cancel('req-1', 'cust-1');
       expect(result.status).toBe('CANCELLED');

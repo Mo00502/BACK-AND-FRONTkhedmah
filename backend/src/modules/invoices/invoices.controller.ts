@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { InvoicesService } from './invoices.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -15,8 +15,16 @@ export class InvoicesController {
   @Get()
   @ThrottleDefault()
   @ApiOperation({ summary: 'List all my invoices across all verticals' })
-  myInvoices(@CurrentUser('id') userId: string) {
-    return this.invoices.listMyInvoices(userId);
+  myInvoices(
+    @CurrentUser('id') userId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.invoices.listMyInvoices(
+      userId,
+      page ? Math.max(1, parseInt(page, 10)) : 1,
+      limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 20,
+    );
   }
 
   @Get('service/:requestId')
@@ -38,5 +46,15 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Get equipment rental invoice' })
   equipmentInvoice(@CurrentUser('id') userId: string, @Param('rentalId') rentalId: string) {
     return this.invoices.getEquipmentInvoice(userId, rentalId);
+  }
+
+  @Get('consultation/:consultationId')
+  @ThrottleDefault()
+  @ApiOperation({ summary: 'Get consultation invoice' })
+  consultationInvoice(
+    @CurrentUser('id') userId: string,
+    @Param('consultationId') consultationId: string,
+  ) {
+    return this.invoices.getConsultationInvoice(consultationId, userId);
   }
 }

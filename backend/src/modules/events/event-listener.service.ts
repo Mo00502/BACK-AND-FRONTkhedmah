@@ -68,6 +68,15 @@ export class EventListenerService {
     }
   }
 
+  @OnEvent('escrow.refund_on_cancel')
+  async onEscrowRefundOnCancel(payload: { escrowId: string; requestId: string; customerId: string; amount: any }) {
+    try {
+      await this.wallet.credit(payload.customerId, Number(payload.amount), 'REFUND', `استرداد مبلغ الطلب ${payload.requestId}`);
+    } catch (err) {
+      this.logger.error(`onEscrowRefundOnCancel failed: ${err}`);
+    }
+  }
+
   // ── Tender events ───────────────────────────────────────────────────────
 
   @OnEvent('commissions.overdue_batch')

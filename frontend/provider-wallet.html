@@ -451,9 +451,20 @@
   var demo = localStorage.getItem('khedmah_demo');
   if (!demo) { window.location.href = 'login.html'; return; }
   try {
-    var u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-    if (u.role !== 'provider') { window.location.href = 'home.html'; }
-  } catch(e) { window.location.href = 'login.html'; }
+    var user = JSON.parse(localStorage.getItem('khedmah_user') || 'null');
+    if (!user || !user.role) {
+      // Invalid session state — force re-login
+      localStorage.removeItem('khedmah_demo');
+      localStorage.removeItem('khedmah_user');
+      window.location.href = 'login.html';
+      return;
+    }
+    if (user.role !== 'provider') { window.location.href = 'home.html'; }
+  } catch(e) {
+    localStorage.removeItem('khedmah_demo');
+    localStorage.removeItem('khedmah_user');
+    window.location.href = 'login.html';
+  }
 })();
 </script>
 

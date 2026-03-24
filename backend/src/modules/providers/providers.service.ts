@@ -89,6 +89,10 @@ export class ProvidersService {
   }
 
   async addSkill(userId: string, dto: AddSkillDto) {
+    if (dto.hourlyRate !== undefined && dto.hourlyRate <= 0) {
+      throw new BadRequestException('يجب أن يكون السعر بالساعة أكبر من صفر');
+    }
+
     const profile = await this.prisma.providerProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Provider profile not found. Create it first.');
 

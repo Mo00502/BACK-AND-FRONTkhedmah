@@ -716,9 +716,16 @@
         }
 
         document.getElementById('confirmBtn').addEventListener('click', async function() {
-            if (!confirm(`هل أنت متأكد من تأكيد إتمام الخدمة؟\n\nسيتم إطلاق رسوم الخدمة (${_serviceAmount} ريال) لمزود الخدمة فوراً ولن تتمكن من التراجع.`)) return;
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn.disabled) return; // already processing
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'جارٍ التأكيد...';
+            if (!confirm(`هل أنت متأكد من تأكيد إتمام الخدمة؟\n\nسيتم إطلاق رسوم الخدمة (${_serviceAmount} ريال) لمزود الخدمة فوراً ولن تتمكن من التراجع.`)) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'تأكيد الاكتمال وتحرير الدفع';
+                return;
+            }
             this.innerHTML = 'جاري تأكيد الإطلاق...';
-            this.disabled = true;
             try {
                 await API.payments.release(_pageRequestId);
                 this.innerHTML = '✅ تم تأكيد الخدمة وإطلاق المبلغ!';
@@ -739,8 +746,8 @@
                     </a>`;
                 actionButtons.appendChild(successLinks);
             } catch(err) {
-                this.innerHTML = '✓ تأكيد إتمام الخدمة وإطلاق المبلغ';
-                this.disabled = false;
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'تأكيد الاكتمال وتحرير الدفع';
                 API.toast('❌ ' + API.errorMsg(err));
             }
         });

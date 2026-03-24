@@ -256,6 +256,7 @@
     acceptQuote: (id, quoteId)        => http.patch(`/requests/${id}/quotes/${quoteId}/accept`),
     start:       (id)                 => http.patch(`/requests/${id}/start`),
     complete:    (id)                 => http.patch(`/requests/${id}/complete`),
+    confirm:     (id)                 => http.post(`/requests/${id}/confirm`),
   };
 
   const payments = {
@@ -273,16 +274,18 @@
   };
 
   const providers = {
-    getProfile:   (id)       => http.get(`/providers/${id}`),
-    myProfile:    ()         => http.get('/providers/me/profile'),
-    myEarnings:   ()         => http.get('/providers/me/earnings'),
-    updateBank:   (data)     => http.patch('/providers/me/profile', data),
-    submitDocs:   (data)     => http.post('/providers/me/documents', data),
-    services:     ()         => http.get('/providers/me/skills'),
-    addService:   (data)     => http.post('/providers/me/skills', data),
-    removeService: (id)      => http.delete(`/providers/me/skills/${id}`),
-    schedule:     ()         => http.get('/providers/me/availability'),
-    saveSchedule: (data)     => http.patch('/providers/me/availability', data),
+    getProfile:        (id)       => http.get(`/providers/${id}`),
+    myProfile:         ()         => http.get('/providers/me/profile'),
+    myEarnings:        ()         => http.get('/providers/me/earnings'),
+    earningsDashboard: ()         => http.get('/providers/me/earnings/dashboard'),
+    updateBank:        (data)     => http.patch('/providers/me/bank', data),
+    submitDocs:        (data)     => http.post('/providers/me/documents', data),
+    services:          ()         => http.get('/providers/me/skills'),
+    addService:        (data)     => http.post('/providers/me/skills', data),
+    updateSkill:       (id, data) => http.patch(`/providers/me/skills/${id}`, data),
+    removeService:     (id)       => http.delete(`/providers/me/skills/${id}`),
+    schedule:          ()         => http.get('/providers/me/availability'),
+    saveSchedule:      (data)     => http.patch('/providers/me/availability', data),
   };
 
   const services = {
@@ -358,8 +361,24 @@
   };
 
   const invoices = {
-    list:      (p = {}) => http.get('/invoices?' + new URLSearchParams(p)),
-    get:       (id)     => http.get(`/invoices/${id}`),
+    list:         (params)  => http.get('/invoices/my', { params }),
+    get:          (id)      => http.get(`/invoices/${id}`),
+    service:      (id)      => http.get(`/invoices/service/${id}`),
+    tender:       (id)      => http.get(`/invoices/tender/${id}`),
+    equipment:    (id)      => http.get(`/invoices/equipment/${id}`),
+    consultation: (id)      => http.get(`/invoices/consultation/${id}`),
+  };
+
+  const referrals = {
+    my:    ()         => http.get('/referrals/my'),
+    list:  (params)   => http.get('/referrals', { params }),
+    stats: ()         => http.get('/referrals/stats'),
+  };
+
+  const rewards = {
+    my:       ()       => http.get('/rewards/my'),
+    referrals: ()      => http.get('/rewards/referrals'),
+    redeem:   (amount) => http.post('/rewards/redeem', { amount }),
   };
 
   const equipment = {
@@ -452,7 +471,7 @@
     // Domain namespaces
     auth, requests, payments, wallet, providers, services,
     search, reviews, notifications, chat, admin, tenders,
-    invoices, equipment, consultations, disputes, support, maps,
+    invoices, referrals, rewards, equipment, consultations, disputes, support, maps,
 
     // Auth helpers (frequently needed in guards)
     isLoggedIn:  auth.isLoggedIn,

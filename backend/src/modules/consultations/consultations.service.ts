@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -102,9 +103,39 @@ export class ConsultationsService {
   // ── Provider: accept consultation request ────────────────────────────────
   async accept(providerId: string, consultationId: string) {
     const providerProfile = await this.prisma.providerProfile.findFirst({
-      where: { userId: providerId, verificationStatus: 'APPROVED' as any, suspendedAt: null },
+      where: {
+        userId: providerId,
+        verificationStatus: 'APPROVED' as any,
+        user: { suspended: false, deletedAt: null },
+      },
     });
     if (!providerProfile) throw new ForbiddenException('Provider is not approved to accept consultations');
+
+    // Fetch the consultation to check for scheduling conflicts
+    const consultation = await this.prisma.consultation.findUnique({
+      where: { id: consultationId },
+      select: { scheduledAt: true, durationMinutes: true },
+    });
+    if (!consultation) throw new BadRequestException('Consultation is no longer available');
+
+    // Check provider doesn't have an overlapping consultation
+    if (consultation.scheduledAt) {
+      const scheduledAt = consultation.scheduledAt;
+      const durationMs = (consultation.durationMinutes || 60) * 60 * 1000;
+      const endTime = new Date(scheduledAt.getTime() + durationMs);
+
+      const conflict = await this.prisma.consultation.findFirst({
+        where: {
+          providerId,
+          id: { not: consultationId },
+          status: { in: ['ACCEPTED', 'IN_SESSION'] as any },
+          scheduledAt: { gte: scheduledAt, lt: endTime },
+        },
+      });
+      if (conflict) {
+        throw new ConflictException('لديك استشارة أخرى مجدولة في نفس الوقت');
+      }
+    }
 
     const { count } = await this.prisma.consultation.updateMany({
       where: { id: consultationId, status: ConsultationStatus.PENDING },
@@ -174,6 +205,9 @@ export class ConsultationsService {
     let totalAmount = c.totalAmount;
     if (c.startedAt && c.pricePerHour) {
       const hoursElapsed = (Date.now() - c.startedAt.getTime()) / (1000 * 60 * 60);
+      if (!isFinite(hoursElapsed) || hoursElapsed < 0) {
+        throw new BadRequestException('مدة الاستشارة غير صحيحة');
+      }
       totalAmount = parseFloat((Number(c.pricePerHour) * Math.max(hoursElapsed, 0.25)).toFixed(2)) as any; // min 15 min charge, rounded to 2dp
     }
 

@@ -537,6 +537,22 @@
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
 
     <script>
+        // If already logged in, redirect to correct dashboard
+        try {
+            const demo = localStorage.getItem('khedmah_demo');
+            if (demo) {
+                const admin = JSON.parse(localStorage.getItem('khedmah_admin') || '{}');
+                if (admin.loggedIn) {
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    const user = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
+                    const role = user && user.role ? user.role.toLowerCase() : null;
+                    if (role === 'provider') { window.location.href = 'provider-dashboard.html'; }
+                    else if (role === 'customer') { window.location.href = 'customer-dashboard.html'; }
+                }
+            }
+        } catch(e) {}
+
         function toggleTheme() {
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');

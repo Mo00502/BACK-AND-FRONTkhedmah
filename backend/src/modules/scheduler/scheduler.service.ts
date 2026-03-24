@@ -276,6 +276,52 @@ export class SchedulerService {
     );
   }
 
+  /** Every 2 hours: auto-cancel PENDING equipment rentals older than 24h */
+  @Cron('0 */2 * * *')
+  async cancelStalePendingRentals() {
+    const start = Date.now();
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Fetch PENDING rentals older than 24h to get their equipment IDs
+    const staleRentals = await this.prisma.equipmentRental.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: { lte: cutoff },
+      },
+      select: { id: true, equipmentId: true },
+    });
+
+    if (staleRentals.length === 0) {
+      await this.logJob('cancel_stale_pending_rentals', 'SUCCESS', 'No stale rentals found', Date.now() - start);
+      return;
+    }
+
+    const rentalIds = staleRentals.map((r) => r.id);
+    const equipmentIds = [...new Set(staleRentals.map((r) => r.equipmentId))];
+
+    const [cancelResult] = await this.prisma.$transaction([
+      this.prisma.equipmentRental.updateMany({
+        where: { id: { in: rentalIds }, status: 'PENDING' },
+        data: { status: 'CANCELLED', cancelledAt: new Date() },
+      }),
+      this.prisma.equipment.updateMany({
+        where: { id: { in: equipmentIds } },
+        data: { isAvailable: true },
+      }),
+    ]);
+
+    await this.logJob(
+      'cancel_stale_pending_rentals',
+      'SUCCESS',
+      `Cancelled ${cancelResult.count} stale PENDING rentals; restored ${equipmentIds.length} equipment items`,
+      Date.now() - start,
+    );
+
+    if (cancelResult.count > 0) {
+      this.logger.log(`Auto-cancelled ${cancelResult.count} stale PENDING equipment rentals`);
+    }
+  }
+
   /** Every hour: reject quotes whose expiresAt has passed and are still PENDING */
   @Cron(CronExpression.EVERY_HOUR)
   async expireStaleQuotes() {

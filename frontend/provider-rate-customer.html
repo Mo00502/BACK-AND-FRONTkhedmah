@@ -313,6 +313,11 @@
             if (u.role && u.role !== 'provider') window.location.href = 'customer-dashboard.html';
         } catch(e) {}
     })();
+    const _rateRequestId = new URLSearchParams(window.location.search).get('requestId');
+    if (!_rateRequestId) {
+        // No requestId — redirect back
+        window.location.href = 'provider-dashboard.html';
+    }
 </script>
     <div class="rating-container">
         <div class="rating-header">
