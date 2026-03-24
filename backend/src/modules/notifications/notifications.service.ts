@@ -88,7 +88,10 @@ export class NotificationsService {
       where: { userId, active: true },
       select: { token: true },
     });
-    if (!tokens.length) return;
+    if (!tokens.length) {
+      this.logger.debug(`No active device tokens for user ${userId}`);
+      return;
+    }
 
     try {
       const messaging = await getFirebaseMessaging(serviceAccount);

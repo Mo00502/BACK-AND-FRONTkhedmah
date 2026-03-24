@@ -9,7 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateProviderDto, AddSkillDto, SetAvailabilityDto } from './dto/update-provider.dto';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, ProviderVerificationStatus, UserStatus } from '@prisma/client';
 
 const HOME_SERVICES_COMMISSION = 0.15; // 15%
 
@@ -57,8 +57,8 @@ export class ProvidersService {
     const profile = await this.prisma.providerProfile.findFirst({
       where: {
         userId,
-        verificationStatus: 'APPROVED' as any,
-        user: { deletedAt: null, suspended: false, status: 'ACTIVE' as any },
+        verificationStatus: ProviderVerificationStatus.APPROVED,
+        user: { deletedAt: null, suspended: false, status: UserStatus.ACTIVE },
       },
       include: {
         user: { include: { profile: true } },
@@ -272,8 +272,8 @@ export class ProvidersService {
         requestId: e.request.id,
         service: e.request.service?.nameAr ?? 'خدمة',
         customerName:
-          (e.request.customer as any)?.profile?.nameAr ??
-          (e.request.customer as any)?.profile?.nameEn ??
+          e.request.customer?.profile?.nameAr ??
+          e.request.customer?.profile?.nameEn ??
           'عميل',
         completedAt: e.request.completedAt ?? e.releasedAt,
         gross,

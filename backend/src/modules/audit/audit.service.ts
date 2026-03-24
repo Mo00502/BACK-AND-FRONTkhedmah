@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditAction } from '@prisma/client';
@@ -14,6 +14,8 @@ interface AuditEvent {
 
 @Injectable()
 export class AuditService {
+  private readonly logger = new Logger(AuditService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async log(event: AuditEvent) {
@@ -23,7 +25,7 @@ export class AuditService {
   // ── Generic audit event ────────────────────────────────────────────────────
   @OnEvent('audit.log')
   handleAuditEvent(event: AuditEvent) {
-    this.log(event).catch(console.error);
+    this.log(event).catch((err) => this.logger.error('Audit log failed', err));
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────

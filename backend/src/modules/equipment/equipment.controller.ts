@@ -19,6 +19,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ThrottleDefault, ThrottleRelaxed } from '../../common/decorators/throttle.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { CreateEquipmentDto } from './dto/create-equipment.dto';
+import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { CreateRentalDto } from './dto/create-rental.dto';
 
 @ApiTags('equipment')
 @ApiBearerAuth()
@@ -118,14 +121,14 @@ export class EquipmentController {
   @Post()
   @ThrottleDefault()
   @ApiOperation({ summary: 'Create equipment listing (goes to pending review)' })
-  create(@CurrentUser() user: any, @Body() body: Record<string, any>) {
+  create(@CurrentUser() user: any, @Body() body: CreateEquipmentDto) {
     return this.equipment.create(user.id, body);
   }
 
   @Patch(':id')
   @ThrottleDefault()
   @ApiOperation({ summary: 'Update equipment listing' })
-  update(@Param('id') id: string, @CurrentUser() user: any, @Body() body: Record<string, any>) {
+  update(@Param('id') id: string, @CurrentUser() user: any, @Body() body: UpdateEquipmentDto) {
     return this.equipment.update(id, user.id, body);
   }
 
@@ -181,7 +184,7 @@ export class EquipmentController {
   createRental(
     @Param('id') id: string,
     @CurrentUser() user: any,
-    @Body() body: Record<string, any>,
+    @Body() body: CreateRentalDto,
   ) {
     return this.equipment.createRental(id, user.id, body);
   }

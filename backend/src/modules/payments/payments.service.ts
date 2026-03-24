@@ -13,6 +13,18 @@ import { MaterialsPaymentService } from '../materials-payment/materials-payment.
 import axios from 'axios';
 import * as crypto from 'crypto';
 
+interface MoyasarWebhookPayload {
+  type: string;
+  id?: string;
+  data: {
+    id: string;
+    status: string;
+    amount: number;
+    metadata?: Record<string, any>;
+    [key: string]: any;
+  };
+}
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -144,7 +156,7 @@ export class PaymentsService {
     }
   }
 
-  async handleWebhook(payload: any, signature: string, rawBody: Buffer) {
+  async handleWebhook(payload: MoyasarWebhookPayload, signature: string, rawBody: Buffer) {
     const secret = this.config.getOrThrow('MOYASAR_WEBHOOK_SECRET');
     const expected = crypto
       .createHmac('sha256', secret)
@@ -162,7 +174,7 @@ export class PaymentsService {
           provider: 'moyasar',
           eventId,
           eventType: payload.type,
-          payload,
+          payload: payload as unknown as import('@prisma/client').Prisma.InputJsonValue,
         },
       });
     } catch {

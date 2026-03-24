@@ -8,7 +8,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { UserRole } from '@prisma/client';
-import { IsString, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PaymentMethod } from '@prisma/client';
 import {
@@ -42,6 +42,16 @@ class RefundPaymentDto {
   @ApiProperty()
   @IsString()
   reason: string;
+}
+
+class WebhookDto {
+  @ApiProperty()
+  @IsString()
+  type: string;
+
+  @ApiProperty()
+  @IsObject()
+  data: Record<string, any>;
 }
 
 @ApiTags('payments')
@@ -115,7 +125,7 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Moyasar payment webhook (Moyasar calls this)' })
   webhook(
     @Req() req: RawBodyRequest<Request>,
-    @Body() payload: any,
+    @Body() payload: WebhookDto,
     @Headers('x-moyasar-signature') sig: string,
   ) {
     return this.payments.handleWebhook(payload, sig, req.rawBody ?? Buffer.from(JSON.stringify(payload)));
