@@ -506,7 +506,11 @@
             const file = input.files[0];
             if (!file) return;
             const url = URL.createObjectURL(file);
-            slots[idx].innerHTML = `<img src="${url}" alt="preview">`;
+            slots[idx].innerHTML = '';
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'preview';
+            slots[idx].appendChild(img);
             slots[idx].classList.add('filled');
         }
 

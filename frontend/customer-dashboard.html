@@ -723,8 +723,8 @@
                             </div>
                             <div><div class="quote-price">${amount} ر.س <small>+ ضريبة</small></div></div>
                             <div class="request-actions">
-                                <button class="btn-sm btn-primary" onclick="acceptQuote('${reqId}','${quoteId}','${svcName}')">قبول</button>
-                                <button class="btn-sm" style="background:transparent;color:#ef4444;border:1.5px solid #ef4444;" onclick="rejectQuote('${reqId}','${quoteId}',this)">رفض</button>
+                                <button class="btn-sm btn-primary btn-accept-quote" data-req-id="${reqId}" data-quote-id="${quoteId}" data-svc-name="${svcName}">قبول</button>
+                                <button class="btn-sm btn-reject-quote" style="background:transparent;color:#ef4444;border:1.5px solid #ef4444;" data-req-id="${reqId}" data-quote-id="${quoteId}">رفض</button>
                             </div>
                         </div>`);
                     });
@@ -752,6 +752,24 @@
             btn.closest('.quote-card')?.remove();
         } catch(err) { API.toast('❌ ' + API.errorMsg(err)); }
     }
+
+    // Delegated listeners for dynamically-rendered quote action buttons
+    document.addEventListener('click', function(e) {
+        const acceptBtn = e.target.closest('.btn-accept-quote');
+        if (acceptBtn) {
+            const reqId = acceptBtn.dataset.reqId;
+            const quoteId = acceptBtn.dataset.quoteId;
+            const svcName = acceptBtn.dataset.svcName;
+            acceptQuote(reqId, quoteId, svcName);
+            return;
+        }
+        const rejectBtn = e.target.closest('.btn-reject-quote');
+        if (rejectBtn) {
+            const reqId = rejectBtn.dataset.reqId;
+            const quoteId = rejectBtn.dataset.quoteId;
+            rejectQuote(reqId, quoteId, rejectBtn);
+        }
+    });
 
     function dismissQuote(btn) {
             const card = btn.closest('.quote-card');

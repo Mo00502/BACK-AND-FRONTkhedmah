@@ -45,7 +45,8 @@ export class PortfolioController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @Post('portfolio')
   @ApiOperation({ summary: 'Add portfolio item (provider only)' })
@@ -54,7 +55,8 @@ export class PortfolioController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @Delete('portfolio/:itemId')
   @ApiOperation({ summary: 'Remove portfolio item' })
@@ -72,7 +74,8 @@ export class PortfolioController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @Post('certifications')
   @ApiOperation({ summary: 'Add certification (provider only)' })
@@ -88,7 +91,8 @@ export class PortfolioController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @Delete('certifications/:certId')
   @ApiOperation({ summary: 'Remove certification' })

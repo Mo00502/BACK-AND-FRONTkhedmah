@@ -338,31 +338,45 @@ export class MaterialsPaymentService {
     const mp = await this.prisma.materialsPayment.findUnique({ where: { requestId } });
     if (!mp) throw new NotFoundException('Materials payment not found');
 
-    if (
-      (
-        [
-          MaterialsPaymentStatus.REFUNDED_FULL,
-          MaterialsPaymentStatus.REFUNDED_PARTIAL,
-          MaterialsPaymentStatus.FULLY_USED,
-        ] as MaterialsPaymentStatus[]
-      ).includes(mp.status)
-    ) {
-      throw new BadRequestException('Materials payment already reconciled');
+    // Atomically claim this record for reconciliation by transitioning from a
+    // non-terminal status to RECONCILED in a single updateMany. If two concurrent
+    // calls reach this point simultaneously, only one will get count === 1; the
+    // other sees count === 0 and returns early — preventing a double refund.
+    const { count } = await this.prisma.materialsPayment.updateMany({
+      where: {
+        requestId,
+        status: {
+          notIn: [
+            MaterialsPaymentStatus.REFUNDED_FULL,
+            MaterialsPaymentStatus.REFUNDED_PARTIAL,
+            MaterialsPaymentStatus.FULLY_USED,
+            MaterialsPaymentStatus.RECONCILED,
+          ] as MaterialsPaymentStatus[],
+        },
+      },
+      data: { status: MaterialsPaymentStatus.RECONCILED },
+    });
+    if (count === 0) {
+      // Either already reconciled or in a terminal state — safe to no-op.
+      return { message: 'Already reconciled' };
     }
 
-    const unused = Number(mp.paidAmount) - Number(mp.usedAmount) - Number(mp.refundedAmount);
+    // Re-fetch the freshest snapshot after the atomic claim.
+    const claimed = await this.prisma.materialsPayment.findUnique({ where: { requestId } });
+
+    const unused = Number(claimed!.paidAmount) - Number(claimed!.usedAmount) - Number(claimed!.refundedAmount);
 
     let newStatus: MaterialsPaymentStatus;
     if (unused <= 0) {
       newStatus = MaterialsPaymentStatus.FULLY_USED;
-    } else if (Number(mp.usedAmount) > 0) {
+    } else if (Number(claimed!.usedAmount) > 0) {
       newStatus = MaterialsPaymentStatus.REFUNDED_PARTIAL;
     } else {
       newStatus = MaterialsPaymentStatus.REFUNDED_FULL;
     }
 
     const updated = await this.prisma.materialsPayment.update({
-      where: { id: mp.id },
+      where: { id: claimed!.id },
       data: {
         status: newStatus,
         refundedAmount: { increment: unused > 0 ? unused : 0 },
@@ -379,7 +393,7 @@ export class MaterialsPaymentService {
     }
 
     this.logger.log(
-      `Materials reconciled for request ${requestId}: used=${mp.usedAmount}, refund=${unused.toFixed(2)} SAR`,
+      `Materials reconciled for request ${requestId}: used=${claimed!.usedAmount}, refund=${unused.toFixed(2)} SAR`,
     );
 
     return { ...updated, refundTriggered: unused > 0, refundAmount: +unused.toFixed(2) };

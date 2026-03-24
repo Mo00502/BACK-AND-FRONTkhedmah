@@ -105,6 +105,7 @@ enum MaterialsPaymentStatus {
   REFUNDED_PARTIAL
   REFUNDED_FULL
   FROZEN
+  RECONCILED
 }
 
 enum MaterialsUsageReviewStatus {
