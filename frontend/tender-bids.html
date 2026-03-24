@@ -576,7 +576,7 @@ const BIDS = [
             <div style="font-size:2rem;margin-bottom:0.5rem">🏆</div>
             <h3>تم اختيار الفائز</h3>
             <p>قم بإغلاق المناقصة وإبلاغ جميع المتقدمين</p>
-            <button class="btn-close-tender" onclick="showToast('✅ تم إغلاق المناقصة وإبلاغ جميع المزودين')">إغلاق المناقصة ✓</button>
+            <button class="btn-close-tender" onclick="closeTender()">إغلاق المناقصة ✓</button>
         </div>
     </div>
 
@@ -613,6 +613,21 @@ function showToast(msg) {
     let t = document.getElementById('pageToast');
     t.textContent = msg; t.style.display = 'block';
     setTimeout(() => t.style.display = 'none', 3000);
+}
+
+async function closeTender() {
+    if (!confirm('هل أنت متأكد من إغلاق المناقصة؟ لن تتمكن من استقبال عروض جديدة.')) return;
+    const btn = document.querySelector('.btn-close-tender');
+    btn.disabled = true;
+    const _tid = new URLSearchParams(location.search).get('tenderId') || TENDER.id;
+    try {
+        await API.tenders.close(_tid);
+        showToast('✅ تم إغلاق المناقصة');
+        setTimeout(() => window.location.href = 'tender-detail.html?id=' + _tid, 1500);
+    } catch (err) {
+        showToast('❌ ' + API.errorMsg(err));
+        btn.disabled = false;
+    }
 }
 
 function toggleTheme() {

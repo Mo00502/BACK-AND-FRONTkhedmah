@@ -16,8 +16,11 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { EquipmentService } from './equipment.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { ThrottleDefault, ThrottleRelaxed } from '../../common/decorators/throttle.decorator';
+import { UserRole } from '@prisma/client';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
@@ -119,6 +122,8 @@ export class EquipmentController {
   // ── Listing management ────────────────────────────────────────────────────
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Create equipment listing (goes to pending review)' })
   create(@CurrentUser() user: any, @Body() body: CreateEquipmentDto) {
@@ -126,6 +131,8 @@ export class EquipmentController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Update equipment listing' })
   update(@Param('id') id: string, @CurrentUser() user: any, @Body() body: UpdateEquipmentDto) {
@@ -133,6 +140,8 @@ export class EquipmentController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Archive (soft-delete) equipment listing' })
@@ -166,6 +175,8 @@ export class EquipmentController {
   }
 
   @Patch('inquiries/:inquiryId/status')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Mark inquiry as replied or closed (owner only)' })
   updateInquiryStatus(
@@ -179,6 +190,8 @@ export class EquipmentController {
   // ── Rentals ───────────────────────────────────────────────────────────────
 
   @Post(':id/rentals')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.CUSTOMER, UserRole.PROVIDER)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Book equipment rental' })
   createRental(
@@ -190,6 +203,8 @@ export class EquipmentController {
   }
 
   @Patch('rentals/:id/status')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER, UserRole.CUSTOMER)
   @ThrottleDefault()
   @ApiOperation({
     summary: 'Update rental status — owner: confirm/complete; renter or owner: cancel',

@@ -360,6 +360,7 @@
     award:      (id, bidId)   => http.post(`/tenders/${id}/award/${bidId}`),
     milestones: (id)          => http.get(`/tenders/${id}/milestones`),
     releaseMilestone: (tenderId, milestoneId) => http.post(`/tenders/${tenderId}/milestones/${milestoneId}/release`),
+    close:      (id)          => http.patch(`/tenders/${id}/close`, {}),
   };
 
   const invoices = {
