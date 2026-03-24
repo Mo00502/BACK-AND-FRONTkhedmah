@@ -353,11 +353,13 @@
   };
 
   const tenders = {
-    list:     (p = {})      => http.get('/tenders?' + new URLSearchParams(p)),
-    get:      (id)          => http.get(`/tenders/${id}`),
-    create:   (data)        => http.post('/tenders', data),
-    bid:      (id, data)    => http.post(`/tenders/${id}/bids`, data),
-    award:    (id, bidId)   => http.post(`/tenders/${id}/award/${bidId}`),
+    list:       (p = {})      => http.get('/tenders?' + new URLSearchParams(p)),
+    get:        (id)          => http.get(`/tenders/${id}`),
+    create:     (data)        => http.post('/tenders', data),
+    bid:        (id, data)    => http.post(`/tenders/${id}/bids`, data),
+    award:      (id, bidId)   => http.post(`/tenders/${id}/award/${bidId}`),
+    milestones: (id)          => http.get(`/tenders/${id}/milestones`),
+    releaseMilestone: (tenderId, milestoneId) => http.post(`/tenders/${tenderId}/milestones/${milestoneId}/release`),
   };
 
   const invoices = {

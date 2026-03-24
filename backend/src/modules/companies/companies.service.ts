@@ -81,7 +81,17 @@ export class CompaniesService {
     if (existing) throw new ConflictException('A company with this CR number already exists');
 
     return this.prisma.company.create({
-      data: { ownerId: userId, ...dto } as any,
+      data: {
+        ownerId: userId,
+        nameAr: dto.nameAr,
+        nameEn: dto.nameEn,
+        crNumber: dto.crNumber,
+        city: dto.city,
+        logoUrl: dto.logoUrl,
+        phone: dto.phone,
+        email: dto.email,
+        website: dto.website,
+      },
     });
   }
 

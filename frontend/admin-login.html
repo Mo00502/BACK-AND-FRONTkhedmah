@@ -358,8 +358,8 @@
 
             try {
                 const user = await API.auth.login(username, password);
-                const role = (user.role || '').toLowerCase();
-                if (role !== 'admin' && role !== 'super_admin' && role !== 'support') {
+                const role = (user.role || '').toUpperCase();
+                if (!['ADMIN', 'SUPER_ADMIN', 'SUPPORT'].includes(role)) {
                     // Not an admin — clear tokens and show error
                     await API.auth.logout().catch(() => {});
                     throw new Error('ليس لديك صلاحية الوصول للوحة الإدارة');

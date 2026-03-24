@@ -56,10 +56,14 @@ export class RewardsService {
 
     // Credit both wallets (only reached by the one caller that won the race).
     // wallet.creditReferralReward() already emits 'referral.rewarded' — do NOT emit here.
+    const rewardAmt = Number(referral.rewardAmount);
+    if (!rewardAmt || rewardAmt <= 0) {
+      throw new BadRequestException('مبلغ المكافأة غير صالح');
+    }
     await this.wallet.creditReferralReward(
       referral.referrerId,
       refereeId,
-      Number(referral.rewardAmount),
+      rewardAmt,
     );
 
     return { ok: true, reward: referral.rewardAmount };

@@ -508,14 +508,12 @@
         const vacation = document.getElementById('vacationToggle').checked;
         const vacFrom = document.getElementById('vacFrom').value;
         const vacTo = document.getElementById('vacTo').value;
-        localStorage.setItem('khedmah_availability', JSON.stringify({ schedule, vacation, vacFrom, vacTo }));
         try {
             await API.providers.saveSchedule({ schedule, vacation, vacFrom, vacTo });
+            localStorage.setItem('khedmah_availability', JSON.stringify({ schedule, vacation, vacFrom, vacTo }));
             showToast('✓ تم حفظ جدول التوفر بنجاح');
         } catch(e) {
-            // Local save succeeded; API failed — notify but don't block
-            API.toast('تعذّر حفظ الجدول على الخادم، سيُعاد المحاولة لاحقاً', 'warning');
-            showToast('✓ تم الحفظ محلياً');
+            showToast('❌ ' + (API.errorMsg ? API.errorMsg(e) : 'تعذّر حفظ الجدول على الخادم'));
         } finally {
             if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 حفظ الجدول'; }
         }

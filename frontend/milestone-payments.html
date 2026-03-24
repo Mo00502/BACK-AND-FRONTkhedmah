@@ -588,6 +588,7 @@
     html.dark .evidence-file:hover { background: #134e4a; }
     html.dark .section-title { color: #e2e8f0; }
     html.dark .breakdown-title { color: #e2e8f0; }
+    html.dark .loading-overlay { background: rgba(15,23,42,0.92) !important; }
   </style>
 </head>
 <body>
@@ -618,9 +619,9 @@
   <nav>
     <div class="nav-inner">
       <div class="nav-right">
-        <a href="tender-bids.html" class="nav-back">
+        <a :href="backHref" class="nav-back">
           <i class="fas fa-arrow-right"></i>
-          <span>العروض</span>
+          <span>تفاصيل المناقصة</span>
         </a>
         <a href="home.html" class="logo">خدمة</a>
       </div>
@@ -628,17 +629,26 @@
     </div>
   </nav>
 
+  <!-- ─── LOADING OVERLAY ─── -->
+  <div x-show="loading" style="position:fixed;inset:0;background:rgba(248,250,252,0.92);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.75rem" class="loading-overlay">
+    <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary)"></i>
+    <span style="font-size:0.9rem;color:var(--gray)">جارٍ تحميل البيانات...</span>
+  </div>
+
   <!-- ─── PROJECT HEADER ─── -->
   <div class="project-header">
     <div class="project-header-inner">
       <div class="project-header-top">
-        <div class="contractor-avatar">م</div>
+        <div class="contractor-avatar" x-text="contractorInitial">م</div>
         <div style="flex:1">
-          <div class="project-title">إنشاء مبنى إداري متعدد الطوابق</div>
-          <div class="contractor-name"><i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>شركة المتميز للمقاولات</div>
+          <div class="project-title" x-text="projectTitle">إنشاء مبنى إداري متعدد الطوابق</div>
+          <div class="contractor-name">
+            <i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>
+            <span x-text="contractorName">شركة المتميز للمقاولات</span>
+          </div>
           <div class="header-badges">
             <span class="badge-executing"><i class="fas fa-circle" style="font-size:0.5rem;color:#86efac"></i> قيد التنفيذ</span>
-            <span class="badge-value">SAR 2,450,000</span>
+            <span class="badge-value" x-text="'SAR ' + fmt(contractTotal)">SAR 2,450,000</span>
           </div>
         </div>
       </div>
@@ -659,7 +669,7 @@
     <div class="summary-strip-inner">
       <div class="summary-card">
         <div class="summary-card-label">إجمالي العقد</div>
-        <div class="summary-card-amount teal">2,450,000</div>
+        <div class="summary-card-amount teal" x-text="fmt(contractTotal)">2,450,000</div>
         <div class="summary-card-sub">ريال سعودي</div>
       </div>
       <div class="summary-card">
@@ -704,7 +714,7 @@
               </template>
               <!-- held / pending: number -->
               <template x-if="ms.status === 'held' || ms.status === 'pending'">
-                <span x-text="ms.id"></span>
+                <span x-text="idx + 1"></span>
               </template>
             </div>
             <div class="timeline-line"></div>
@@ -793,19 +803,19 @@
 
       <div class="breakdown-row">
         <span class="breakdown-label">أجرة العمل (الإجمالي)</span>
-        <span class="breakdown-amount teal">SAR 2,100,000</span>
+        <span class="breakdown-amount teal" x-text="'SAR ' + fmt(contractTotal)"></span>
       </div>
       <div class="breakdown-row">
         <span class="breakdown-label">رسوم المنصة (15%)</span>
-        <span class="breakdown-amount">SAR 315,000</span>
+        <span class="breakdown-amount" x-text="'SAR ' + fmt(Math.round(contractTotal * 0.15))"></span>
       </div>
       <div class="breakdown-row">
         <span class="breakdown-label">ضريبة القيمة المضافة (15%)</span>
-        <span class="breakdown-amount">SAR 362,250</span>
+        <span class="breakdown-amount" x-text="'SAR ' + fmt(Math.round(contractTotal * 0.15 * 1.15))"></span>
       </div>
       <div class="breakdown-row total-row">
         <span>الإجمالي</span>
-        <span class="breakdown-amount teal">SAR 2,777,250</span>
+        <span class="breakdown-amount teal" x-text="'SAR ' + fmt(Math.round(contractTotal + contractTotal * 0.15 + contractTotal * 0.15 * 1.15))"></span>
       </div>
 
       <div class="breakdown-note">
@@ -823,7 +833,7 @@
   <!-- ─── STICKY CHAT ─── -->
   <div class="sticky-chat">
     <div class="sticky-chat-inner">
-      <a href="chat.html?type=tender&id=1" class="btn-chat">
+      <a :href="chatHref" class="btn-chat">
         <i class="fas fa-comment-dots"></i>
         تواصل مع المقاول
       </a>
@@ -909,69 +919,99 @@
     if (btn) btn.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
   });
 
+  /* ─── XSS helper ─── */
+  function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  /* ─── Demo milestone data (fallback when API is unavailable) ─── */
+  const DEMO_MILESTONES = [
+    {
+      id: 1,
+      label: 'دفعة التعبئة (مقدم)',
+      amount: 490000,
+      pct: 20,
+      dueDate: '2025-02-01',
+      status: 'released',
+      releasedAt: '2025-02-03',
+      evidence: null,
+      note: 'تم الإفراج تلقائياً بعد توقيع العقد'
+    },
+    {
+      id: 2,
+      label: 'اكتمال الأساسات',
+      amount: 612500,
+      pct: 25,
+      dueDate: '2025-04-15',
+      status: 'pending_approval',
+      submittedAt: '2025-04-12',
+      evidence: ['تقرير الأساسات.pdf', 'صور الأساسات.zip'],
+      note: 'تم رفع الأدلة، بانتظار موافقتك'
+    },
+    {
+      id: 3,
+      label: 'اكتمال الهيكل الإنشائي',
+      amount: 612500,
+      pct: 25,
+      dueDate: '2025-06-01',
+      status: 'held',
+      evidence: null,
+      note: 'محجوز — في انتظار إتمام المرحلة'
+    },
+    {
+      id: 4,
+      label: 'اكتمال التشطيبات',
+      amount: 490000,
+      pct: 20,
+      dueDate: '2025-08-01',
+      status: 'pending',
+      evidence: null,
+      note: 'لم تبدأ بعد'
+    },
+    {
+      id: 5,
+      label: 'التسليم النهائي (احتجاز)',
+      amount: 245000,
+      pct: 10,
+      dueDate: '2025-09-15',
+      status: 'pending',
+      evidence: null,
+      note: 'احتجاز — يُفرج عنه بعد انتهاء فترة الضمان'
+    }
+  ];
+
+  /* ─── Normalise a raw API milestone into the shape the template expects ─── */
+  function normaliseMilestone(m, idx, total) {
+    const statusMap = {
+      RELEASED: 'released', PENDING_APPROVAL: 'pending_approval',
+      HELD: 'held', PENDING: 'pending', DISPUTED: 'disputed',
+    };
+    const amt = Number(m.amount ?? m.value ?? 0);
+    return {
+      id:          m.id,
+      label:       escHtml(m.title || m.name || m.label || ('مرحلة ' + (idx + 1))),
+      amount:      amt,
+      pct:         total > 0 ? Math.round(amt / total * 100) : m.percentage || 0,
+      dueDate:     (m.dueDate || m.due_date || m.deadline || '').split('T')[0],
+      status:      statusMap[m.status] || (m.status || 'pending').toLowerCase(),
+      releasedAt:  m.releasedAt ? m.releasedAt.split('T')[0] : null,
+      submittedAt: m.submittedAt ? m.submittedAt.split('T')[0] : null,
+      evidence:    Array.isArray(m.evidence) ? m.evidence.map(f => escHtml(typeof f === 'string' ? f : f.name || f.url || '')) : null,
+      note:        escHtml(m.note || m.description || m.notes || ''),
+    };
+  }
+
   /* ─── Alpine Component ─── */
   function milestoneApp() {
-    // Default demo milestones shown until API responds
-    const DEMO_MILESTONES = [
-      {
-        id: 1,
-        label: 'دفعة التعبئة (مقدم)',
-        amount: 490000,
-        pct: 20,
-        dueDate: '2025-02-01',
-        status: 'released',
-        releasedAt: '2025-02-03',
-        evidence: null,
-        note: 'تم الإفراج تلقائياً بعد توقيع العقد'
-      },
-      {
-        id: 2,
-        label: 'اكتمال الأساسات',
-        amount: 612500,
-        pct: 25,
-        dueDate: '2025-04-15',
-        status: 'pending_approval',
-        submittedAt: '2025-04-12',
-        evidence: ['تقرير الأساسات.pdf', 'صور الأساسات.zip'],
-        note: 'تم رفع الأدلة، بانتظار موافقتك'
-      },
-      {
-        id: 3,
-        label: 'اكتمال الهيكل الإنشائي',
-        amount: 612500,
-        pct: 25,
-        dueDate: '2025-06-01',
-        status: 'held',
-        evidence: null,
-        note: 'محجوز — في انتظار إتمام المرحلة'
-      },
-      {
-        id: 4,
-        label: 'اكتمال التشطيبات',
-        amount: 490000,
-        pct: 20,
-        dueDate: '2025-08-01',
-        status: 'pending',
-        evidence: null,
-        note: 'لم تبدأ بعد'
-      },
-      {
-        id: 5,
-        label: 'التسليم النهائي (احتجاز)',
-        amount: 245000,
-        pct: 10,
-        dueDate: '2025-09-15',
-        status: 'pending',
-        evidence: null,
-        note: 'احتجاز — يُفرج عنه بعد انتهاء فترة الضمان'
-      }
-    ];
-
     return {
       milestones: DEMO_MILESTONES,
-      contractTotal: 2450000,   // updated from API when available
-      _requestId: null,          // live requestId from URL
-      _tenderId: null,           // live tenderId from URL
+      contractTotal: 2450000,
+      loading: true,
+      projectTitle: 'إنشاء مبنى إداري متعدد الطوابق',
+      contractorName: 'شركة المتميز للمقاولات',
+      contractorInitial: 'م',
+      _requestId: null,
+      _tenderId: null,
       approveLoading: false,
 
       approveModal: { open: false, id: null, label: '', amount: 0 },
@@ -982,7 +1022,7 @@
       get releasedTotal() {
         return this.milestones
           .filter(m => m.status === 'released')
-          .reduce((s, m) => s + m.amount, 0);
+          .reduce((s, m) => s + Number(m.amount), 0);
       },
       get releasedPct() {
         return this.contractTotal > 0 ? Math.round(this.releasedTotal / this.contractTotal * 100) : 0;
@@ -993,6 +1033,16 @@
       get overallPct() {
         return this.releasedPct;
       },
+      get backHref() {
+        if (this._tenderId) return 'tender-detail.html?id=' + this._tenderId;
+        if (this._requestId) return 'customer-dashboard.html';
+        return 'tenders.html';
+      },
+      get chatHref() {
+        if (this._tenderId) return 'chat.html?type=tender&id=' + this._tenderId;
+        if (this._requestId) return 'chat.html?type=request&id=' + this._requestId;
+        return 'chat.html';
+      },
 
       /* ─── Init: read URL params and load live data ─── */
       async init() {
@@ -1000,122 +1050,88 @@
         this._requestId = params.get('requestId');
         this._tenderId  = params.get('tenderId');
 
-        // Update back-link
-        const backLink = document.querySelector('a.nav-back');
-        if (backLink && this._tenderId) backLink.href = 'tender-bids.html?tenderId=' + this._tenderId;
-
         if (this._requestId) {
-          try {
-            const req = await API.requests.get(this._requestId);
-            if (!req) return;
-
-            // ── Update project header ──
-            const titleEl = document.querySelector('.project-title');
-            if (titleEl) titleEl.textContent = req.description || req.title || titleEl.textContent;
-
-            const contractorEl = document.querySelector('.contractor-name');
-            if (contractorEl) {
-              const pName = req.provider?.user?.fullName || req.providerName || '';
-              if (pName) {
-                contractorEl.innerHTML = '';
-                const icon = document.createElement('i');
-                icon.className = 'fas fa-hard-hat';
-                icon.style.cssText = 'font-size:0.75rem;margin-left:0.3rem';
-                contractorEl.appendChild(icon);
-                contractorEl.appendChild(document.createTextNode(pName));
-              }
-            }
-
-            // ── Update contractor avatar initial ──
-            const avatarEl = document.querySelector('.contractor-avatar');
-            if (avatarEl) {
-              const pName = req.provider?.user?.fullName || req.providerName || '';
-              if (pName) avatarEl.textContent = pName.charAt(0);
-            }
-
-            // ── Total value from escrow/payment ──
-            const total = req.escrow?.amount || req.totalAmount || req.serviceAmount;
-            if (total != null) {
-              this.contractTotal = Number(total);
-              const valueEl = document.querySelector('.badge-value');
-              if (valueEl) valueEl.textContent = 'SAR ' + Number(total).toLocaleString('ar-SA');
-              // Summary strip total
-              const stripTotal = document.querySelector('.summary-card-amount.teal');
-              if (stripTotal) stripTotal.textContent = Number(total).toLocaleString('ar-SA');
-            }
-
-            // ── Build milestones from escrow payments if available ──
-            const escrowStatus = req.escrow?.status;
-            if (escrowStatus) {
-              // Map the single escrow to milestone 1 or 2 depending on status
-              const escrowAmt = Number(req.escrow?.amount || 0);
-              const statusMap = {
-                'HELD': 'held',
-                'PENDING_APPROVAL': 'pending_approval',
-                'RELEASED': 'released',
-                'DISPUTED': 'disputed',
-              };
-              const mapped = statusMap[escrowStatus] || 'held';
-              if (this.milestones[0]) {
-                this.milestones[0].amount = escrowAmt;
-                this.milestones[0].status = mapped;
-                this.milestones[0].pct    = 100;
-                this.milestones[0].label  = req.description || this.milestones[0].label;
-                if (escrowStatus === 'RELEASED') this.milestones[0].releasedAt = req.escrow?.releasedAt?.split('T')[0] || null;
-                // Only show 1 milestone row for a simple service request
-                this.milestones = [this.milestones[0]];
-              }
-            }
-
-            // ── Update chat link ──
-            const chatLink = document.querySelector('.btn-chat');
-            if (chatLink) chatLink.href = 'chat.html?type=request&id=' + this._requestId;
-
-          } catch(e) { /* keep demo data */ }
-
+          await this._loadFromRequest(this._requestId);
         } else if (this._tenderId) {
-          try {
-            const tender = await API.get('/tenders/' + this._tenderId);
-            if (!tender) return;
-
-            // ── Update project header ──
-            const titleEl = document.querySelector('.project-title');
-            if (titleEl) titleEl.textContent = tender.title || titleEl.textContent;
-
-            const contractorEl = document.querySelector('.contractor-name');
-            if (contractorEl) {
-              const pName = tender.awardedBid?.provider?.user?.fullName || tender.awardedProviderName || tender.companyName || '';
-              if (pName) {
-                contractorEl.innerHTML = '';
-                const icon = document.createElement('i');
-                icon.className = 'fas fa-hard-hat';
-                icon.style.cssText = 'font-size:0.75rem;margin-left:0.3rem';
-                contractorEl.appendChild(icon);
-                contractorEl.appendChild(document.createTextNode(pName));
-              }
-            }
-
-            const avatarEl = document.querySelector('.contractor-avatar');
-            if (avatarEl) {
-              const pName = tender.awardedBid?.provider?.user?.fullName || tender.awardedProviderName || tender.companyName || '';
-              if (pName) avatarEl.textContent = pName.charAt(0);
-            }
-
-            const total = tender.awardedAmount || tender.budget || tender.maxBudget;
-            if (total != null) {
-              this.contractTotal = Number(total);
-              const valueEl = document.querySelector('.badge-value');
-              if (valueEl) valueEl.textContent = 'SAR ' + Number(total).toLocaleString('ar-SA');
-              const stripTotal = document.querySelector('.summary-card-amount.teal');
-              if (stripTotal) stripTotal.textContent = Number(total).toLocaleString('ar-SA');
-            }
-
-            // ── Update chat link ──
-            const chatLink = document.querySelector('.btn-chat');
-            if (chatLink) chatLink.href = 'chat.html?type=tender&id=' + this._tenderId;
-
-          } catch(e) { /* keep demo data */ }
+          await this._loadFromTender(this._tenderId);
         }
+
+        this.loading = false;
+      },
+
+      /* ─── Load milestones from a service request (escrow-based) ─── */
+      async _loadFromRequest(requestId) {
+        try {
+          const req = await API.requests.get(requestId);
+          if (!req) return;
+
+          this.projectTitle     = escHtml(req.description || req.title || this.projectTitle);
+          const pName           = req.provider?.user?.fullName || req.providerName || '';
+          if (pName) {
+            this.contractorName    = escHtml(pName);
+            this.contractorInitial = escHtml(pName.charAt(0));
+          }
+
+          const total = req.escrow?.amount || req.totalAmount || req.serviceAmount;
+          if (total != null) this.contractTotal = Number(total);
+
+          // Map single escrow → single milestone row
+          const escrowStatus = req.escrow?.status;
+          if (escrowStatus) {
+            const statusMap = {
+              HELD: 'held', PENDING_APPROVAL: 'pending_approval',
+              RELEASED: 'released', DISPUTED: 'disputed',
+            };
+            const escrowAmt = Number(req.escrow?.amount || 0);
+            const mapped    = statusMap[escrowStatus] || 'held';
+            this.milestones = [{
+              id:         req.escrow?.id || 1,
+              label:      escHtml(req.description || DEMO_MILESTONES[0].label),
+              amount:     escrowAmt,
+              pct:        100,
+              dueDate:    (req.completedAt || req.dueDate || '').split('T')[0],
+              status:     mapped,
+              releasedAt: escrowStatus === 'RELEASED'
+                            ? (req.escrow?.releasedAt || '').split('T')[0] || null
+                            : null,
+              submittedAt: escrowStatus === 'PENDING_APPROVAL'
+                            ? (req.updatedAt || '').split('T')[0] || null
+                            : null,
+              evidence:   null,
+              note:       escHtml(req.completionNote || ''),
+            }];
+          }
+        } catch(e) { /* keep demo data on any error */ }
+      },
+
+      /* ─── Load milestones from a tender ─── */
+      async _loadFromTender(tenderId) {
+        try {
+          const tender = await API.tenders.get(tenderId);
+          if (!tender) return;
+
+          this.projectTitle     = escHtml(tender.title || this.projectTitle);
+          const pName           = tender.awardedBid?.provider?.user?.fullName
+                                  || tender.awardedProviderName
+                                  || tender.companyName || '';
+          if (pName) {
+            this.contractorName    = escHtml(pName);
+            this.contractorInitial = escHtml(pName.charAt(0));
+          }
+
+          const total = tender.awardedAmount || tender.budget || tender.maxBudget;
+          if (total != null) this.contractTotal = Number(total);
+        } catch(e) { /* keep demo header on error */ }
+
+        // Fetch milestones separately — 404 is expected in demo; fall back gracefully
+        try {
+          const raw = await API.tenders.milestones(tenderId);
+          const items = Array.isArray(raw) ? raw : (raw?.data || raw?.items || raw?.milestones || []);
+          if (items.length > 0) {
+            this.milestones = items.map((m, i) => normaliseMilestone(m, i, this.contractTotal));
+          }
+          // else keep DEMO_MILESTONES
+        } catch(e) { /* 404 / network error → keep DEMO_MILESTONES */ }
       },
 
       /* ─── Helpers ─── */
@@ -1124,7 +1140,9 @@
       },
       formatDate(d) {
         if (!d) return '';
-        const [y, m, day] = d.split('-');
+        const parts = d.split('-');
+        if (parts.length < 3) return d;
+        const [y, m, day] = parts;
         const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
                         'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
         return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
@@ -1150,28 +1168,38 @@
         const ms = this.milestones.find(m => m.id === this.approveModal.id);
 
         try {
-          // Wire to correct API endpoint based on URL param
           if (this._requestId) {
+            // Service-request escrow release
             await API.payments.release(this._requestId);
           } else if (this._tenderId) {
-            // Tender milestone release — use payments.release with tenderId as fallback
-            await API.payments.release(this._tenderId);
+            // Tender milestone release — pass milestone id if available
+            await API.tenders.releaseMilestone(this._tenderId, this.approveModal.id);
           }
+          // Success: update local state
+          if (ms) {
+            ms.status = 'released';
+            ms.releasedAt = new Date().toISOString().split('T')[0];
+            ms.note = 'تم الإفراج بموافقتك';
+          }
+          this.approveLoading = false;
+          this.approveModal.open = false;
+          this.showToast('تم الإفراج بنجاح', 'success');
         } catch(e) {
-          // If API fails with a real error (not demo), show warning but still update UI
+          this.approveLoading = false;
+          // On demo/404 still update UI; on real server errors show warning
           if (e?.status && e.status !== 404 && e.status !== 0) {
-            this.showToast('تعذّر الاتصال بالخادم — تم التحديث محلياً فقط', 'warning');
+            this.showToast('تعذّر الاتصال بالخادم — ' + (e.message || 'حاول مرة أخرى'), 'warning');
+          } else {
+            // Offline / demo mode: update UI anyway
+            if (ms) {
+              ms.status = 'released';
+              ms.releasedAt = new Date().toISOString().split('T')[0];
+              ms.note = 'تم الإفراج بموافقتك';
+            }
+            this.approveModal.open = false;
+            this.showToast('تم الإفراج بنجاح', 'success');
           }
         }
-
-        if (ms) {
-          ms.status = 'released';
-          ms.releasedAt = new Date().toISOString().split('T')[0];
-          ms.note = 'تم الإفراج بموافقتك';
-        }
-        this.approveLoading = false;
-        this.approveModal.open = false;
-        this.showToast('تم الإفراج بنجاح ✓', 'success');
       },
 
       /* ─── Dispute flow ─── */

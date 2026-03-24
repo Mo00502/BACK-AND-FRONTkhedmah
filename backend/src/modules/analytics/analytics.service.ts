@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { CommissionStatus, ProviderVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -18,7 +19,7 @@ export class AnalyticsService {
       topCities,
     ] = await Promise.all([
       this.prisma.user.count({ where: { deletedAt: null } }),
-      this.prisma.providerProfile.count({ where: { verificationStatus: 'APPROVED' } }),
+      this.prisma.providerProfile.count({ where: { verificationStatus: ProviderVerificationStatus.APPROVED } }),
       this.prisma.serviceRequest.count({ where: { status: 'COMPLETED' } }),
 
       // Home Services vertical (15% platform fee)
@@ -29,7 +30,7 @@ export class AnalyticsService {
 
       // Tender vertical (2% commission)
       this.prisma.tenderCommission.aggregate({
-        where: { status: 'PAID' as any },
+        where: { status: CommissionStatus.PAID },
         _sum: { commissionAmount: true },
       }),
 
@@ -129,7 +130,7 @@ export class AnalyticsService {
   // ── Provider performance leaderboard ───────────────────────────────────
   async getTopProviders(limit = 10) {
     return this.prisma.providerProfile.findMany({
-      where: { verificationStatus: 'APPROVED', user: { status: 'ACTIVE', suspended: false } },
+      where: { verificationStatus: ProviderVerificationStatus.APPROVED, user: { status: 'ACTIVE', suspended: false } },
       orderBy: [{ completedJobs: 'desc' }, { ratingAvg: 'desc' }],
       take: limit,
       include: {

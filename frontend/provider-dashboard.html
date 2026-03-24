@@ -609,6 +609,7 @@
                     </div>
                     <span class="badge badge-new">جديد</span>
                     <div class="req-actions">
+                        <a href="order-tracking.html?id=${reqId}" class="btn-sm btn-outline">عرض التفاصيل</a>
                         <button class="btn-sm btn-primary" onclick="acceptRequest(this)">✅ قبول</button>
                         <button class="btn-sm btn-ghost" onclick="dismissRequest(this)">رفض</button>
                     </div>
@@ -709,6 +710,11 @@
                 card.querySelector('.badge').textContent = 'مكتمل';
                 btn.textContent = '✅ تم';
                 API.toast('✅ تم إشعار العميل — في انتظار تأكيد الاستلام', 'success');
+                setTimeout(() => {
+                    if (confirm('هل تريد تقييم العميل الآن؟')) {
+                        window.location.href = 'provider-rate-customer.html?requestId=' + reqId;
+                    }
+                }, 1500);
                 const actionsEl = card.querySelector('.req-actions');
                 if (actionsEl) {
                     const chatBtn = document.createElement('a');

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Logger } from '@nestjs/common';
+import { ProviderVerificationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 // ── Badge definitions ────────────────────────────────────────────────────────
@@ -33,7 +34,7 @@ export class LeaderboardService {
   async getLeaderboard(category: 'OVERALL' | 'WEEKLY' | 'MONTHLY' = 'OVERALL', limit = 20) {
     const since = this._sinceDate(category);
     const where: any = {
-      verificationStatus: 'APPROVED' as any,
+      verificationStatus: ProviderVerificationStatus.APPROVED,
       user: { deletedAt: null, suspended: false, status: 'ACTIVE' },
     };
 
