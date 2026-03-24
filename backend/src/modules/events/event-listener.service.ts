@@ -5,6 +5,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WalletService } from '../wallet/wallet.service';
 import { PaymentsService } from '../payments/payments.service';
+import { Decimal } from '@prisma/client/runtime/library';
+import { WalletTxType } from '@prisma/client';
 
 /**
  * Central event listener — handles cross-cutting notifications and
@@ -419,32 +421,62 @@ export class EventListenerService {
     const platformFee = parseFloat((payload.amount * CONSULTATION_FEE_RATE).toFixed(2));
     const providerNet = parseFloat((payload.amount - platformFee).toFixed(2));
 
-    let debited = false;
     try {
-      await this.wallet.debit(
-        payload.customerId,
-        payload.amount,
-        `رسوم استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
-        payload.consultationId,
-      );
-      debited = true;
+      // Fetch both wallets up front (getOrCreate is idempotent and safe outside tx)
+      const [customerWallet, providerWallet] = await Promise.all([
+        this.wallet.getOrCreate(payload.customerId),
+        this.wallet.getOrCreate(payload.providerId),
+      ]);
 
-      await this.wallet.credit(
-        payload.providerId,
-        providerNet,
-        `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
-        payload.consultationId,
-      );
+      const customerAvailable = new Decimal(customerWallet.balance).minus(customerWallet.heldBalance);
+      if (customerAvailable.lessThan(payload.amount)) {
+        this.logger.error(
+          `onConsultationChargeRequired: insufficient balance for customer ${payload.customerId} on consultation ${payload.consultationId}`,
+        );
+        return;
+      }
+
+      const customerNewBalance = new Decimal(customerWallet.balance).minus(payload.amount);
+      const providerNewBalance = new Decimal(providerWallet.balance).plus(providerNet);
+
+      // Atomic: debit customer AND credit provider in a single transaction —
+      // if either write fails, both are rolled back and no money is lost.
+      await this.prisma.$transaction([
+        this.prisma.wallet.update({
+          where: { id: customerWallet.id },
+          data: { balance: customerNewBalance },
+        }),
+        this.prisma.walletTransaction.create({
+          data: {
+            walletId: customerWallet.id,
+            type: WalletTxType.DEBIT,
+            amount: payload.amount,
+            balanceAfter: customerNewBalance,
+            description: `رسوم استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
+            refId: payload.consultationId,
+            refType: 'consultation',
+          },
+        }),
+        this.prisma.wallet.update({
+          where: { id: providerWallet.id },
+          data: { balance: providerNewBalance },
+        }),
+        this.prisma.walletTransaction.create({
+          data: {
+            walletId: providerWallet.id,
+            type: WalletTxType.CREDIT,
+            amount: providerNet,
+            balanceAfter: providerNewBalance,
+            description: `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
+            refId: payload.consultationId,
+            refType: 'consultation',
+          },
+        }),
+      ]);
 
       this.logger.log(`Consultation charged: customer -${payload.amount} SAR, provider +${providerNet} SAR`);
     } catch (err) {
-      if (debited) {
-        this.logger.error(
-          `CRITICAL: consultation ${payload.consultationId} — customer debited ${payload.amount} SAR but provider credit FAILED. Manual intervention required. Error: ${err}`,
-        );
-      } else {
-        this.logger.error(`onConsultationChargeRequired debit failed for ${payload.consultationId}: ${err}`);
-      }
+      this.logger.error(`onConsultationChargeRequired failed for ${payload.consultationId}: ${err}`);
     }
   }
 

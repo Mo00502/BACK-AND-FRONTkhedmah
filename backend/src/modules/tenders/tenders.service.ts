@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -15,6 +16,8 @@ const COMMISSION_RATE = 0.02;
 
 @Injectable()
 export class TendersService {
+  private readonly logger = new Logger(TendersService.name);
+
   constructor(
     private prisma: PrismaService,
     private companies: CompaniesService,
@@ -230,7 +233,10 @@ export class TendersService {
     try {
       const co = await this.companies.getMyCompany(userId);
       companyId = co.id;
-    } catch {}
+    } catch (e) {
+      // No company profile — bid will be submitted without a linked company
+      this.logger.warn(`submitBid: no company for user ${userId}: ${String(e)}`);
+    }
 
     // Prevent duplicate bids — check by companyId (when available) or by submittedBy
     const existing = await this.prisma.tenderBid.findFirst({
@@ -431,7 +437,7 @@ export class TendersService {
     }
 
     const existing = await this.prisma.supplierOffer.findFirst({
-      where: { requirementId, supplierId: userId, status: { not: 'WITHDRAWN' as any } },
+      where: { requirementId, supplierId: userId, status: { not: 'WITHDRAWN' as SupplierOfferStatus } },
     });
     if (existing) throw new ConflictException('You have already submitted an offer for this requirement');
 
@@ -439,7 +445,10 @@ export class TendersService {
     try {
       const co = await this.companies.getMyCompany(userId);
       companyId = co.id;
-    } catch {}
+    } catch (e) {
+      // No company profile — offer will be submitted without a linked company
+      this.logger.warn(`submitOffer: no company for user ${userId}: ${String(e)}`);
+    }
 
     // Allowlist: only supplier-supplied fields. status is always 'PENDING' — never from input.
     const { priceTotal, pricePerUnit, availableFrom, durationDays, notes } = data;

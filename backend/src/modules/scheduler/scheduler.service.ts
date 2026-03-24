@@ -351,6 +351,6 @@ export class SchedulerService {
       .create({
         data: { jobName, status, message, duration },
       })
-      .catch(() => {});
+      .catch((err) => { this.logger.warn(`Failed to write job log for ${jobName}: ${err?.message}`); });
   }
 }

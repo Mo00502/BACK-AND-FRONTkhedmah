@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EquipmentVisibility, EquipmentInquiryStatus } from '@prisma/client';
+import { EquipmentVisibility, EquipmentInquiryStatus, EquipmentCategory, EquipmentStatus, RentalStatus } from '@prisma/client';
 import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 
 // Fields safe to show in marketplace listings (no internal bookkeeping fields)
@@ -87,7 +87,7 @@ export class EquipmentService {
     const where: any = {
       status: 'ACTIVE',
       visibility: EquipmentVisibility.PUBLIC,
-      category: (category as any) || undefined,
+      category: (category as EquipmentCategory) || undefined,
       region: region || undefined,
       city: city || undefined,
       isAvailable: available ?? undefined,
@@ -174,7 +174,7 @@ export class EquipmentService {
 
   async create(userId: string, data: Record<string, any>) {
     return this.prisma.equipment.create({
-      data: { ownerId: userId, status: 'PENDING', isAvailable: true, ...data } as any,
+      data: { ownerId: userId, status: EquipmentStatus.PENDING, isAvailable: true, ...data } as any,
     });
   }
 
@@ -350,7 +350,7 @@ export class EquipmentService {
         throw new BadRequestException('Equipment was just booked by another customer');
 
       return tx.equipmentRental.create({
-        data: { equipmentId, renterId: userId, status: 'PENDING', ...data } as any,
+        data: { equipmentId, renterId: userId, status: RentalStatus.PENDING, ...data } as any,
       });
     });
 
@@ -392,7 +392,7 @@ export class EquipmentService {
 
     const updated = await this.prisma.equipmentRental.update({
       where: { id },
-      data: { status: status as any, ...timestamps },
+      data: { status: status as RentalStatus, ...timestamps },
     });
 
     if (status === 'COMPLETED') {

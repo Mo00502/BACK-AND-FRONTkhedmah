@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
-import { QuoteStatus } from '@prisma/client';
+import { QuoteStatus, PaymentMethod, RequestStatus } from '@prisma/client';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
@@ -99,7 +99,7 @@ export class PaymentsService {
         amount: totalAmount,
         serviceAmount,
         materialsAmount,
-        method: method as any,
+        method: method as PaymentMethod,
         status: 'PENDING',
       },
     });
@@ -367,7 +367,7 @@ export class PaymentsService {
       // updateMany returns count=1 only if we are the one transitioning to COMPLETED.
       // If completeWork() already committed, count=0 and we skip the increment.
       const { count: transitioned } = await tx.serviceRequest.updateMany({
-        where: { id: requestId, status: { not: 'COMPLETED' as any } },
+        where: { id: requestId, status: { not: RequestStatus.COMPLETED } },
         data: { status: 'COMPLETED', completedAt: new Date() },
       });
 

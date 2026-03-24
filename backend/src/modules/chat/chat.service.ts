@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Language } from '@prisma/client';
+import { Language, MessageType } from '@prisma/client';
 
 @Injectable()
 export class ChatService {
@@ -101,7 +101,7 @@ export class ChatService {
       data: {
         conversationId,
         senderId,
-        type: (data.type as any) || 'TEXT',
+        type: (data.type as MessageType) || MessageType.TEXT,
         content: data.content,
         mediaUrl: data.mediaUrl,
         langOriginal: (data.langOriginal as Language) || Language.AR,
