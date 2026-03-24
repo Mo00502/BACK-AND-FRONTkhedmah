@@ -287,6 +287,7 @@
         step: 1,
         totalSteps: 7,
         submitted: false,
+        submitting: false,
 
         /* Step 1 — Account */
         fullName: '',
@@ -472,6 +473,8 @@
             this.step++; window.scrollTo(0, 0);
         },
         async submitForm() {
+            if (this.submitting) return; // prevent double-submit
+            this.submitting = true;
             const username = this.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') + Math.floor(Math.random()*900+100);
             try {
                 await API.auth.registerProvider({
@@ -484,6 +487,7 @@
                 this.submitted = true;
                 window.scrollTo(0, 0);
             } catch(err) {
+                this.submitting = false;
                 API.toast('❌ ' + API.errorMsg(err));
             }
         }
@@ -1070,8 +1074,7 @@
         <button class="btn-next" x-show="step < 7" @click="goNext()">
             التالي <i class="fa fa-arrow-left"></i>
         </button>
-        <button class="btn-submit-final" x-show="step === 7" @click="submitForm()">
-            إنشاء الحساب وإرسال الطلب ✓
+        <button class="btn-submit-final" x-show="step === 7" @click="submitForm()" :disabled="submitting" x-text="submitting ? 'جاري الإرسال...' : 'إنشاء الحساب وإرسال الطلب ✓'">
         </button>
     </div>
 

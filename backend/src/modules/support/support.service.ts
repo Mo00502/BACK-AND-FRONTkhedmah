@@ -91,24 +91,26 @@ export class SupportService {
     if (ticket.status === 'CLOSED')
       throw new BadRequestException('Cannot reply to a closed ticket');
 
-    const message = await this.prisma.supportMessage.create({
-      data: { ticketId, senderId: userId, content, isStaff: isAdmin },
-    });
-
-    // Auto-reopen if customer replies to resolved ticket
-    if (!isAdmin && ticket.status === 'RESOLVED') {
-      await this.prisma.supportTicket.update({
+    const [message] = await this.prisma.$transaction([
+      this.prisma.supportMessage.create({
+        data: { ticketId, senderId: userId, content, isStaff: isAdmin },
+      }),
+      // Merge status update (if needed) and lastReplyAt into one atomic write
+      this.prisma.supportTicket.update({
         where: { id: ticketId },
-        data: { status: 'OPEN', resolvedAt: null },
-      });
+        data: {
+          lastReplyAt: new Date(),
+          ...(!isAdmin && ticket.status === 'RESOLVED'
+            ? { status: 'OPEN', resolvedAt: null }
+            : {}),
+        },
+      }),
+    ]);
+
+    // Emit event AFTER the transaction commits so the state is consistent
+    if (!isAdmin && ticket.status === 'RESOLVED') {
       this.events.emit('support.ticket_reopened', { ticketId, userId });
     }
-
-    // Update ticket's updatedAt
-    await this.prisma.supportTicket.update({
-      where: { id: ticketId },
-      data: { lastReplyAt: new Date() },
-    });
 
     return message;
   }

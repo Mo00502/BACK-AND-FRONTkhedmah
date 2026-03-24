@@ -80,14 +80,19 @@ export class LeaderboardService {
 
   // ── Provider stats card (for profile page) ────────────────────────────────
   async getProviderStats(providerId: string) {
-    const [profile, monthlyJobs, repeatCustomers] = await Promise.all([
-      this.prisma.providerProfile.findUnique({
-        where: { id: providerId },
-        select: { completedJobs: true, ratingAvg: true, createdAt: true },
-      }),
+    // First resolve the userId — serviceRequest.providerId stores the User.id,
+    // but this endpoint receives the ProviderProfile.id (used in public URLs).
+    const profile = await this.prisma.providerProfile.findUnique({
+      where: { id: providerId },
+      select: { completedJobs: true, ratingAvg: true, createdAt: true, userId: true },
+    });
+
+    const userId = profile?.userId ?? providerId; // fall back if not found
+
+    const [monthlyJobs, repeatCustomers] = await Promise.all([
       this.prisma.serviceRequest.count({
         where: {
-          providerId,
+          providerId: userId,
           status: 'COMPLETED',
           completedAt: { gte: new Date(new Date().setDate(1)) }, // this month
         },
@@ -97,7 +102,7 @@ export class LeaderboardService {
         FROM (
           SELECT customer_id, COUNT(*) as job_count
           FROM service_requests
-          WHERE provider_id = ${providerId} AND status = 'COMPLETED'
+          WHERE provider_id = ${userId} AND status = 'COMPLETED'
           GROUP BY customer_id HAVING COUNT(*) > 1
         ) t
       `,

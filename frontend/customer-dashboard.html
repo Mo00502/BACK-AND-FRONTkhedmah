@@ -697,12 +697,16 @@
                 }).join('');
             }
 
-            // Render pending quotes
+            // Render pending quotes — fetch all request details in parallel (avoid N+1)
             const quotesList = document.getElementById('quotesList');
             if (quotesList && quotedReqs.length > 0) {
                 quotesList.innerHTML = '';
-                for (const req of quotedReqs) {
-                    const detail = await API.requests.get(req.id).catch(() => null);
+                const details = await Promise.all(
+                    quotedReqs.map(r => API.requests.get(r.id).catch(() => null))
+                );
+                for (let i = 0; i < quotedReqs.length; i++) {
+                    const req    = quotedReqs[i];
+                    const detail = details[i];
                     if (!detail?.quotes?.length) continue;
                     detail.quotes.filter(q => q.status === 'PENDING').forEach(q => {
                         const pName = escHtml(q.provider?.profile?.nameAr || q.provider?.username || 'مزود');

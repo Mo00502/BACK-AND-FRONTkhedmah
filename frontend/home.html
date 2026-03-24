@@ -482,7 +482,13 @@
   if (!demo) { window.location.href = 'login.html'; return; }
   try {
     var u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-    if (u.role !== 'customer') { window.location.href = 'provider-dashboard.html'; }
+    var role = (u.role || '').toLowerCase();
+    if (role === 'admin' || role === 'super_admin' || role === 'support') {
+      window.location.href = 'admin-dashboard.html';
+    } else if (role === 'provider') {
+      window.location.href = 'provider-dashboard.html';
+    }
+    // customers land here — no redirect needed
   } catch(e) { window.location.href = 'login.html'; }
 })();
 </script>
