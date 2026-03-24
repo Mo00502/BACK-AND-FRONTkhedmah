@@ -40,33 +40,37 @@ export class ReviewsService {
     });
     if (existing) throw new ConflictException('You already reviewed this request');
 
-    const review = await this.prisma.review.create({
-      data: {
-        requestId,
-        raterId,
-        rateeId,
-        score: dto.score,
-        comment: dto.comment,
-        photos: dto.photos || [],
-      },
-    });
-
-    // Update provider rating average
-    if (isCustomer) {
-      const stats = await this.prisma.review.aggregate({
-        where: { rateeId },
-        _avg: { score: true },
-        _count: { id: true },
-      });
-      const roundedAvg = Math.round((stats._avg.score ?? 0) * 100) / 100;
-      await this.prisma.providerProfile.update({
-        where: { userId: rateeId },
+    const review = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.review.create({
         data: {
-          ratingAvg: new Decimal(roundedAvg),
-          ratingCount: stats._count.id,
+          requestId,
+          raterId,
+          rateeId,
+          score: dto.score,
+          comment: dto.comment,
+          photos: dto.photos || [],
         },
       });
-    }
+
+      // Update provider rating average inside the transaction to prevent race conditions
+      if (isCustomer) {
+        const stats = await tx.review.aggregate({
+          where: { rateeId },
+          _avg: { score: true },
+          _count: { id: true },
+        });
+        const roundedAvg = Math.round((stats._avg.score ?? 0) * 100) / 100;
+        await tx.providerProfile.update({
+          where: { userId: rateeId },
+          data: {
+            ratingAvg: new Decimal(roundedAvg),
+            ratingCount: stats._count.id,
+          },
+        });
+      }
+
+      return created;
+    });
 
     this.events.emit('review.submitted', {
       reviewId: review.id,

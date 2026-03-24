@@ -216,13 +216,9 @@ export class WalletService {
     const newBalance = new Decimal(wallet.balance).minus(wr.amount);
     const newHeldBalance = new Decimal(wallet.heldBalance).minus(wr.amount);
 
-    // Set PROCESSING + debit balance atomically so a crash between the two
-    // cannot leave the record in PENDING (allowing duplicate approvals).
+    // Debit balance + mark COMPLETED atomically so a crash cannot leave
+    // the record stuck in PROCESSING with funds already debited.
     await this.prisma.$transaction(async (tx) => {
-      await tx.withdrawalRequest.update({
-        where: { id: withdrawalId },
-        data: { status: WithdrawalStatus.PROCESSING },
-      });
       await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: newBalance, heldBalance: newHeldBalance },
@@ -238,17 +234,15 @@ export class WalletService {
           refType: 'withdrawal',
         },
       });
-    });
-
-    // Only mark COMPLETED after the atomic block succeeds
-    await this.prisma.withdrawalRequest.update({
-      where: { id: withdrawalId },
-      data: {
-        status: WithdrawalStatus.COMPLETED,
-        processedBy: adminId,
-        processedAt: new Date(),
-        adminNote,
-      },
+      await tx.withdrawalRequest.update({
+        where: { id: withdrawalId },
+        data: {
+          status: WithdrawalStatus.COMPLETED,
+          processedBy: adminId,
+          processedAt: new Date(),
+          adminNote,
+        },
+      });
     });
 
     this.events.emit('wallet.withdrawal_completed', {

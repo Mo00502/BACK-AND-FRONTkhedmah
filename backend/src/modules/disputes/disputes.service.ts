@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class DisputesService {
@@ -53,7 +54,7 @@ export class DisputesService {
     return dispute;
   }
 
-  async getDispute(userId: string, disputeId: string) {
+  async getDispute(userId: string, disputeId: string, role?: UserRole) {
     const dispute = await this.prisma.dispute.findUnique({
       where: { id: disputeId },
       include: {
@@ -64,8 +65,12 @@ export class DisputesService {
     });
     if (!dispute) throw new NotFoundException('Dispute not found');
 
-    // Only participants or admins can view
-    if (dispute.reporterId !== userId && dispute.againstId !== userId) {
+    // Admins and support staff can view any dispute; participants can view their own
+    const isPrivileged =
+      role === UserRole.ADMIN ||
+      role === UserRole.SUPER_ADMIN ||
+      role === UserRole.SUPPORT;
+    if (!isPrivileged && dispute.reporterId !== userId && dispute.againstId !== userId) {
       throw new ForbiddenException('Access denied');
     }
     return dispute;

@@ -1016,7 +1016,14 @@
             const contractorEl = document.querySelector('.contractor-name');
             if (contractorEl) {
               const pName = req.provider?.user?.fullName || req.providerName || '';
-              if (pName) contractorEl.innerHTML = `<i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>${pName}`;
+              if (pName) {
+                contractorEl.innerHTML = '';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-hard-hat';
+                icon.style.cssText = 'font-size:0.75rem;margin-left:0.3rem';
+                contractorEl.appendChild(icon);
+                contractorEl.appendChild(document.createTextNode(pName));
+              }
             }
 
             // ── Update contractor avatar initial ──
@@ -1078,7 +1085,14 @@
             const contractorEl = document.querySelector('.contractor-name');
             if (contractorEl) {
               const pName = tender.awardedBid?.provider?.user?.fullName || tender.awardedProviderName || tender.companyName || '';
-              if (pName) contractorEl.innerHTML = `<i class="fas fa-hard-hat" style="font-size:0.75rem;margin-left:0.3rem"></i>${pName}`;
+              if (pName) {
+                contractorEl.innerHTML = '';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-hard-hat';
+                icon.style.cssText = 'font-size:0.75rem;margin-left:0.3rem';
+                contractorEl.appendChild(icon);
+                contractorEl.appendChild(document.createTextNode(pName));
+              }
             }
 
             const avatarEl = document.querySelector('.contractor-avatar');

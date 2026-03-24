@@ -119,6 +119,11 @@ export class NotificationsService {
   }
 
   async registerDeviceToken(userId: string, token: string, platform: 'IOS' | 'ANDROID' | 'WEB') {
+    // Deactivate token if it currently belongs to a different user (device handoff / FCM token recycling)
+    await this.prisma.deviceToken.updateMany({
+      where: { token, userId: { not: userId } },
+      data: { active: false },
+    });
     return this.prisma.deviceToken.upsert({
       where: { token },
       update: { userId, active: true, platform },

@@ -50,8 +50,12 @@ export class DisputesController {
   @ThrottleRelaxed()
   @Get(':disputeId')
   @ApiOperation({ summary: 'Get dispute details' })
-  getOne(@CurrentUser('id') userId: string, @Param('disputeId') disputeId: string) {
-    return this.disputes.getDispute(userId, disputeId);
+  getOne(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+    @Param('disputeId') disputeId: string,
+  ) {
+    return this.disputes.getDispute(userId, disputeId, role as any);
   }
 
   @ThrottleDefault()
