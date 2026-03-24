@@ -952,9 +952,9 @@ function initFromURL() {
                 <div class="c-info">
                     <div class="c-name">مزود الخدمة <span class="c-type-badge badge-service">جديد</span></div>
                     <div class="c-preview">جارٍ تعيين مزود...</div>
-                    <div class="c-ctx">${service} · ${escHtml(reqId)}</div>
+                    <div class="c-ctx">${escHtml(service)} · ${escHtml(reqId)}</div>
                 </div>
-                <div class="c-meta"><div class="c-time">${timeStr}</div></div>`;
+                <div class="c-meta"><div class="c-time">${escHtml(timeStr)}</div></div>`;
             contactList.querySelectorAll('.contact-item').forEach(c => c.classList.remove('active'));
             contactList.prepend(newItem);
         }

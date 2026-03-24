@@ -680,6 +680,7 @@
     function escHtml(s) {
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+    function escAttr(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     let selectedPriceType = 'hour';
     let deleteTargetId = null;
@@ -843,7 +844,7 @@
                     <div class="toggle-wrapper">
                         <span class="toggle-label" id="lbl-${newId}">نشط</span>
                         <label class="toggle">
-                            <input type="checkbox" checked onchange="toggleService(${newId}, this)">
+                            <input type="checkbox" checked data-skill-id="${escAttr(newId)}">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -857,8 +858,8 @@
                 <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${escHtml(durationText)}</div>
                 <div class="service-desc-text">${escHtml(desc)}</div>
                 <div class="card-actions">
-                    <button class="btn-edit" onclick="openEditModal(${newId})">✏️ تعديل</button>
-                    <button class="btn-delete" onclick="openDeleteConfirm(${newId})">🗑️ حذف</button>
+                    <button class="btn-edit" data-skill-id="${escAttr(newId)}">✏️ تعديل</button>
+                    <button class="btn-delete" data-skill-id="${escAttr(newId)}">🗑️ حذف</button>
                 </div>`;
             document.getElementById('servicesGrid').appendChild(newCard);
             updateStats();
@@ -954,7 +955,7 @@
                 <div class="toggle-wrapper">
                     <span class="toggle-label" id="lbl-${id}">${isActive ? 'نشط' : 'موقوف'}</span>
                     <label class="toggle">
-                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleService('${id}', this)">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} data-skill-id="${escAttr(id)}">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -968,8 +969,8 @@
             <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${escHtml(duration)}</div>
             <div class="service-desc-text">${escHtml(desc)}</div>
             <div class="card-actions">
-                <button class="btn-edit" onclick="openEditModal('${id}')">✏️ تعديل</button>
-                <button class="btn-delete" onclick="openDeleteConfirm('${id}')">🗑️ حذف</button>
+                <button class="btn-edit" data-skill-id="${escAttr(id)}">✏️ تعديل</button>
+                <button class="btn-delete" data-skill-id="${escAttr(id)}">🗑️ حذف</button>
             </div>`;
         return card;
     }
@@ -1002,6 +1003,26 @@
     });
     document.getElementById('deleteOverlay').addEventListener('click', function(e) {
         if (e.target === this) closeDeleteConfirm();
+    });
+
+    // Delegated handlers for dynamically generated skill buttons
+    document.addEventListener('click', function(e) {
+        const editBtn = e.target.closest('.btn-edit');
+        if (editBtn && editBtn.dataset.skillId) {
+            openEditModal(editBtn.dataset.skillId);
+            return;
+        }
+        const delBtn = e.target.closest('.btn-delete');
+        if (delBtn && delBtn.dataset.skillId) {
+            openDeleteConfirm(delBtn.dataset.skillId);
+            return;
+        }
+    });
+    document.addEventListener('change', function(e) {
+        const cb = e.target.closest('input[type="checkbox"][data-skill-id]');
+        if (cb) {
+            toggleService(cb.dataset.skillId, cb);
+        }
     });
 
     function toggleTheme() {
