@@ -15,7 +15,7 @@ export class ReportsService {
   ) {}
 
   // ── Weekly report cron (every Monday 07:00 Riyadh = 04:00 UTC) ────────────
-  @Cron('0 4 * * MON')
+  @Cron('0 4 * * MON', { timeZone: 'Asia/Riyadh' })
   async sendWeeklyReport() {
     this.logger.log('Generating weekly platform report…');
     try {

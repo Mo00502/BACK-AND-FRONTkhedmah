@@ -70,7 +70,7 @@ export class MapsService {
         placeId: result.place_id,
       };
     } catch (err: any) {
-      this.logger.error('Geocode failed', err?.message);
+      this.logger.error('Geocode failed', err instanceof Error ? err.stack : String(err));
       return null;
     }
   }
@@ -95,7 +95,7 @@ export class MapsService {
         placeId: result.place_id,
       };
     } catch (err: any) {
-      this.logger.error('Reverse geocode failed', err?.message);
+      this.logger.error('Reverse geocode failed', err instanceof Error ? err.stack : String(err));
       return null;
     }
   }
@@ -136,7 +136,7 @@ export class MapsService {
         durationText: element.duration.text,
       };
     } catch (err: any) {
-      this.logger.error('Distance Matrix failed', err?.message);
+      this.logger.error('Distance Matrix failed', err instanceof Error ? err.stack : String(err));
       return null;
     }
   }
@@ -194,7 +194,7 @@ export class MapsService {
         secondaryText: p.structured_formatting?.secondary_text ?? '',
       }));
     } catch (err: any) {
-      this.logger.error('Autocomplete failed', err?.message);
+      this.logger.error('Autocomplete failed', err instanceof Error ? err.stack : String(err));
       return [];
     }
   }

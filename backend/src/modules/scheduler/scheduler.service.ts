@@ -63,7 +63,7 @@ export class SchedulerService {
   }
 
   /** Every day at 8am: mark overdue commissions */
-  @Cron('0 8 * * *')
+  @Cron('0 8 * * *', { timeZone: 'Asia/Riyadh' })
   async markOverdueCommissions() {
     const start = Date.now();
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days
@@ -135,7 +135,7 @@ export class SchedulerService {
   }
 
   /** Every day: update provider rating averages */
-  @Cron('0 3 * * *')
+  @Cron('0 3 * * *', { timeZone: 'Asia/Riyadh' })
   async recalcProviderRatings() {
     const start = Date.now();
 

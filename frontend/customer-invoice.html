@@ -483,6 +483,20 @@
 </div>
 
 <script>
+    function showToast(msg) {
+        let t = document.getElementById('invoiceToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'invoiceToast';
+            t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#F59E0B;color:white;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.9rem;font-weight:600;z-index:9999;font-family:Tajawal,sans-serif;box-shadow:0 4px 20px rgba(245,158,11,0.35);white-space:nowrap;pointer-events:none;';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.display = 'block';
+        t.style.opacity = '1';
+        setTimeout(() => { if (t) t.style.display = 'none'; }, 5000);
+    }
+
     function toggleTheme() {
         const isDark = document.documentElement.classList.toggle('dark');
         localStorage.setItem('khedmah_theme', isDark ? 'dark' : 'light');
@@ -586,9 +600,9 @@
         const discountAmt = Number(inv.discountAmount || 0);
         const totalAmt    = Number(inv.totalAmount || inv.grandTotal || 0);
 
-        if (tbodyEl && serviceName) {
+        if (tbodyEl) {
             let rows = '';
-            if (serviceAmt > 0) {
+            if (serviceName && serviceAmt > 0) {
                 rows += `<tr>
                     <td><div class="service-name">${escHtml(serviceName)}</div></td>
                     <td>1</td>
@@ -648,6 +662,7 @@
         } catch(e) {
             // Fetch failed — fall back to demo data
             calcInvoiceFromRows();
+            showToast('⚠️ تعذّر تحميل الفاتورة الحقيقية — يتم عرض بيانات تجريبية');
         }
     });
 </script>

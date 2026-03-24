@@ -189,20 +189,29 @@ export class AuthService {
       },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user) {
+      this.events.emit('auth.login_failed', { identifier: dto.identifier, reason: 'user_not_found', ip });
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
     const validPassword = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!validPassword) throw new UnauthorizedException('Invalid credentials');
+    if (!validPassword) {
+      this.events.emit('auth.login_failed', { identifier: dto.identifier, reason: 'wrong_password', ip });
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
     if (!user.emailVerified) {
+      this.events.emit('auth.login_failed', { identifier: dto.identifier, reason: 'email_not_verified', ip });
       throw new ForbiddenException('Please verify your email before logging in');
     }
 
     if (user.status === 'BANNED') {
+      this.events.emit('auth.login_failed', { identifier: dto.identifier, reason: 'account_suspended', ip });
       throw new ForbiddenException('This account has been banned');
     }
 
     if (user.status === 'SUSPENDED' || user.suspended) {
+      this.events.emit('auth.login_failed', { identifier: dto.identifier, reason: 'account_suspended', ip });
       throw new ForbiddenException('This account is suspended');
     }
 

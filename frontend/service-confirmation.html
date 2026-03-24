@@ -414,6 +414,13 @@
         </div>
 
         <div class="confirmation-body">
+            <!-- Page loader — shown while API fetches real request data -->
+            <div id="pageLoader" class="text-center py-4" style="display:none;">
+                <div style="width:2.5rem;height:2.5rem;border:3px solid var(--light);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto;"></div>
+                <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;">جارٍ تحميل تفاصيل الطلب...</p>
+            </div>
+            <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
             <!-- Service Info -->
             <div class="service-card">
                 <div class="service-header">
@@ -620,6 +627,12 @@
                 && !_pageRequestId.startsWith('REQ-demo');
             if (!isRealId) return;
 
+            // Show loader and hide main content while fetching
+            const _pageLoader = document.getElementById('pageLoader');
+            const _mainSections = document.querySelectorAll('.service-card, .escrow-status, [style*="display:grid;gap:1rem;margin-bottom:1.5rem"], .questions-section, .action-buttons, .notice');
+            if (_pageLoader) _pageLoader.style.display = 'block';
+            _mainSections.forEach(el => { el.style.visibility = 'hidden'; });
+
             try {
                 const req = await API.requests.get(_pageRequestId);
 
@@ -671,6 +684,10 @@
                 }
             } catch(e) {
                 // Stay on demo data silently
+            } finally {
+                // Always hide loader and reveal content after API resolves
+                if (_pageLoader) _pageLoader.style.display = 'none';
+                _mainSections.forEach(el => { el.style.visibility = ''; });
             }
         });
 
@@ -753,10 +770,12 @@
         });
 
         document.querySelector('.btn-report').addEventListener('click', async function() {
-            // Collect any issue text entered in the visible textareas
+            // Collect any issue text entered in the visible textareas, prefixed with the question
             const issues = [];
-            document.querySelectorAll('.issue-report.show textarea').forEach((ta) => {
-                if (ta.value.trim()) issues.push(ta.value.trim());
+            document.querySelectorAll('.issue-report.show').forEach((issueEl) => {
+                const question = issueEl.closest('.question-item')?.querySelector('.question-text')?.textContent?.trim();
+                const answer = issueEl.querySelector('textarea')?.value?.trim();
+                if (answer) issues.push((question ? question + ': ' : '') + answer);
             });
             if (issues.length === 0) {
                 alert('الرجاء تحديد المشكلة أولاً بالضغط على "لا" في أحد الأسئلة وشرح التفاصيل');

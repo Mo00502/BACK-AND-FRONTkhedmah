@@ -197,6 +197,7 @@
             reqNumber: '',
             providerId: '',
             errors: {},
+            photos: [],
             stepLabels: ['نوع الخدمة','وصف المشكلة','الموقع والوقت','مراجعة وإرسال'],
             DISTRICTS: {
                 'الرياض': [
@@ -283,6 +284,7 @@
                         scheduledAt:     this.timing === 'custom' && this.customDate ? new Date(this.customDate).toISOString() : undefined,
                         hasMaterials:    this.hasMaterials,
                         materialsEst:    this.hasMaterials ? (this.materialsEst || 0) : 0,
+                        photos:          this.photos.filter(Boolean),
                     };
                     if (this.providerId) payload.providerId = this.providerId;
                     const req = await API.requests.create(payload);
@@ -415,11 +417,11 @@
                 <!-- Photo upload (optional) -->
                 <div class="field-group">
                     <label class="field-label">صور توضيحية <span style="font-weight:400;color:var(--gray)">(اختياري)</span></label>
-                    <div class="photos-row">
-                        <label class="photo-slot"><input type="file" accept="image/*" capture="environment" style="display:none"><span>📷</span><span>إضافة</span></label>
-                        <label class="photo-slot"><input type="file" accept="image/*" style="display:none"><span>📷</span><span>إضافة</span></label>
-                        <label class="photo-slot"><input type="file" accept="image/*" style="display:none"><span>📷</span><span>إضافة</span></label>
-                        <label class="photo-slot"><input type="file" accept="image/*" style="display:none"><span>📷</span><span>إضافة</span></label>
+                    <div class="photos-row" id="photoSlotsRow">
+                        <label class="photo-slot" id="photo-slot-0"><input type="file" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event,0)"><span>📷</span><span>إضافة</span></label>
+                        <label class="photo-slot" id="photo-slot-1"><input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(event,1)"><span>📷</span><span>إضافة</span></label>
+                        <label class="photo-slot" id="photo-slot-2"><input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(event,2)"><span>📷</span><span>إضافة</span></label>
+                        <label class="photo-slot" id="photo-slot-3"><input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(event,3)"><span>📷</span><span>إضافة</span></label>
                     </div>
                 </div>
             </div>
@@ -560,6 +562,38 @@
                 if (btn) btn.textContent = '☀️';
             }
         })();
+
+        function handlePhotoUpload(event, slotIndex) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showQuoteToast('❌ يرجى اختيار صورة فقط');
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const slot = document.getElementById('photo-slot-' + slotIndex);
+                if (slot) {
+                    slot.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:12px;';
+                    slot.appendChild(img);
+                    slot.style.border = '2px solid var(--primary)';
+                    slot.style.padding = '0';
+                }
+                // Store in Alpine data via the wizard component
+                const wizardEl = document.querySelector('[x-data]');
+                if (wizardEl && wizardEl._x_dataStack) {
+                    const alpineData = wizardEl._x_dataStack[0];
+                    if (alpineData && Array.isArray(alpineData.photos)) {
+                        alpineData.photos[slotIndex] = e.target.result;
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
 
         function showQuoteToast(msg) {
             let t = document.getElementById('quoteToast');
