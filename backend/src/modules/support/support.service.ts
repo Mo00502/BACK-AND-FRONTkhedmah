@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -53,19 +54,29 @@ export class SupportService {
 
   // ── List user's own tickets ────────────────────────────────────────────────
   async listMine(userId: string, status?: string, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const where: any = { userId, ...(status ? { status: status as any } : {}) };
+    const safeLimit = Math.min(Math.max(1, limit), 50);
+    const safePage  = Math.max(1, page);
+    const skip = (safePage - 1) * safeLimit;
+
+    const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
+    const where: any = { userId };
+    if (status) {
+      if (!(VALID_STATUSES as readonly string[]).includes(status)) {
+        throw new UnprocessableEntityException(`Invalid status: ${status}`);
+      }
+      where.status = status;
+    }
     const [tickets, total] = await Promise.all([
       this.prisma.supportTicket.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         include: { messages: { orderBy: { createdAt: 'asc' }, take: 1 } },
         skip,
-        take: limit,
+        take: safeLimit,
       }),
       this.prisma.supportTicket.count({ where }),
     ]);
-    return { tickets, total, page, pages: Math.ceil(total / limit) };
+    return { tickets, total, page: safePage, pages: Math.ceil(total / safeLimit) };
   }
 
   // ── Get single ticket ──────────────────────────────────────────────────────
@@ -126,19 +137,20 @@ export class SupportService {
       limit?: number;
     } = {},
   ) {
-    const { page = 1, limit = 20 } = filters;
-    const skip = (page - 1) * limit;
+    const rawPage  = Math.max(1, filters.page  ?? 1);
+    const rawLimit = Math.min(Math.max(1, filters.limit ?? 20), 100);
+    const skip = (rawPage - 1) * rawLimit;
     const where: any = {};
-    if (filters.status) where.status = filters.status;
-    if (filters.priority) where.priority = filters.priority;
-    if (filters.category) where.category = filters.category;
+    if (filters.status)     where.status     = filters.status;
+    if (filters.priority)   where.priority   = filters.priority;
+    if (filters.category)   where.category   = filters.category;
     if (filters.assigneeId) where.assigneeId = filters.assigneeId;
 
     const [tickets, total] = await Promise.all([
       this.prisma.supportTicket.findMany({
         where,
         skip,
-        take: limit,
+        take: rawLimit,
         orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
         include: {
           user: { include: { profile: true } },
@@ -149,7 +161,7 @@ export class SupportService {
       this.prisma.supportTicket.count({ where }),
     ]);
 
-    return { tickets, total, page, pages: Math.ceil(total / limit) };
+    return { tickets, total, page: rawPage, pages: Math.ceil(total / rawLimit) };
   }
 
   // ── Admin: assign ticket to staff ─────────────────────────────────────────
@@ -162,6 +174,12 @@ export class SupportService {
 
   // ── Admin: update ticket status ────────────────────────────────────────────
   async updateStatus(ticketId: string, status: string) {
+    const ALLOWED = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
+    if (!(ALLOWED as readonly string[]).includes(status)) {
+      throw new BadRequestException(`Invalid status: ${status}`);
+    }
+    const ticket = await this.prisma.supportTicket.findUnique({ where: { id: ticketId } });
+    if (!ticket) throw new NotFoundException('Ticket not found');
     const data: any = { status };
     if (status === 'RESOLVED') data.resolvedAt = new Date();
     if (status === 'CLOSED') data.closedAt = new Date();

@@ -67,10 +67,15 @@ export class SupportController {
   listMine(
     @CurrentUser('id') userId: string,
     @Query('status') status?: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.support.listMine(userId, status, +page, +limit);
+    return this.support.listMine(
+      userId,
+      status,
+      page ? Math.max(1, parseInt(page, 10) || 1) : 1,
+      limit ? Math.min(50, Math.max(1, parseInt(limit, 10) || 20)) : 20,
+    );
   }
 
   @ThrottleStrict()
@@ -123,16 +128,16 @@ export class SupportController {
     @Query('priority') priority?: string,
     @Query('category') category?: string,
     @Query('assigneeId') assigneeId?: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.support.adminList({
       status,
       priority,
       category,
       assigneeId,
-      page: +page,
-      limit: +limit,
+      page:  page  ? Math.max(1, parseInt(page, 10)  || 1)  : 1,
+      limit: limit ? Math.min(100, Math.max(1, parseInt(limit, 10) || 20)) : 20,
     });
   }
 

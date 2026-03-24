@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsOptional, IsArray, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -40,8 +40,16 @@ export class PortfolioController {
   @ThrottleRelaxed()
   @Get('portfolio')
   @ApiOperation({ summary: 'Get provider portfolio items (public)' })
-  getPortfolio(@Param('providerId') providerId: string) {
-    return this.portfolio.getPortfolio(providerId);
+  getPortfolio(
+    @Param('providerId') providerId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.portfolio.getPortfolio(
+      providerId,
+      page ? Math.max(1, parseInt(page, 10)) : 1,
+      limit ? Math.min(50, Math.max(1, parseInt(limit, 10))) : 20,
+    );
   }
 
   @ApiBearerAuth()
@@ -69,8 +77,16 @@ export class PortfolioController {
   @ThrottleRelaxed()
   @Get('certifications')
   @ApiOperation({ summary: 'Get provider certifications (public)' })
-  getCerts(@Param('providerId') providerId: string) {
-    return this.portfolio.getCertifications(providerId);
+  getCerts(
+    @Param('providerId') providerId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.portfolio.getCertifications(
+      providerId,
+      page ? Math.max(1, parseInt(page, 10)) : 1,
+      limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 50,
+    );
   }
 
   @ApiBearerAuth()

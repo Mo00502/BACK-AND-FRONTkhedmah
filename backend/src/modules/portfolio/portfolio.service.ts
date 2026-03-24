@@ -6,11 +6,20 @@ export class PortfolioService {
   constructor(private prisma: PrismaService) {}
 
   // ── Portfolio items ────────────────────────────────────────────────────────
-  async getPortfolio(providerId: string) {
-    return this.prisma.portfolioItem.findMany({
-      where: { providerId },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getPortfolio(providerId: string, page = 1, limit = 20) {
+    const safeLimit = Math.min(Math.max(1, limit), 50);
+    const safePage  = Math.max(1, page);
+    const skip = (safePage - 1) * safeLimit;
+    const [items, total] = await Promise.all([
+      this.prisma.portfolioItem.findMany({
+        where: { providerId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: safeLimit,
+      }),
+      this.prisma.portfolioItem.count({ where: { providerId } }),
+    ]);
+    return { items, total, page: safePage, pages: Math.ceil(total / safeLimit) };
   }
 
   async addItem(
@@ -35,11 +44,20 @@ export class PortfolioService {
   }
 
   // ── Certifications ─────────────────────────────────────────────────────────
-  async getCertifications(providerId: string) {
-    return this.prisma.certification.findMany({
-      where: { providerId },
-      orderBy: { issuedAt: 'desc' },
-    });
+  async getCertifications(providerId: string, page = 1, limit = 50) {
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const safePage  = Math.max(1, page);
+    const skip = (safePage - 1) * safeLimit;
+    const [items, total] = await Promise.all([
+      this.prisma.certification.findMany({
+        where: { providerId },
+        orderBy: { issuedAt: 'desc' },
+        skip,
+        take: safeLimit,
+      }),
+      this.prisma.certification.count({ where: { providerId } }),
+    ]);
+    return { items, total, page: safePage, pages: Math.ceil(total / safeLimit) };
   }
 
   async addCertification(
