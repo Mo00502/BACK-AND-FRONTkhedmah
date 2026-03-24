@@ -429,8 +429,6 @@
 <script src="js/api.js"></script>
 <script>
     (function() {
-        const demo = localStorage.getItem('khedmah_demo');
-        if (!demo) { window.location.href = 'admin-login.html'; return; }
         try {
             const admin = JSON.parse(localStorage.getItem('khedmah_admin') || '{}');
             if (!admin.loggedIn) { window.location.href = 'admin-login.html'; return; }
@@ -483,6 +481,11 @@
     </div>
   </div>
 </header>
+
+<!-- Demo notice -->
+<div style="background:#fffbeb;border-bottom:1px solid #fde68a;padding:.6rem 2rem;text-align:center;font-size:.85rem;color:#92400e;">
+  ⚠️ <strong>بيانات توضيحية — Demo data only.</strong> All metrics and phase data on this page are illustrative and do not reflect live system state.
+</div>
 
 <main class="main">
 

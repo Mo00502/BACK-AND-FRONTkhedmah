@@ -293,24 +293,31 @@
             if (this.submitting) return;
             this.submitting = true;
             try {
-                const res = await API.tenders.create({
+                const payload = {
                     title: this.title,
                     description: this.description,
                     category: this.category,
-                    budget: this.budgetType === 'fixed' ? this.budgetFixed : (this.budgetMin + '-' + this.budgetMax),
                     deadline: this.deadline,
                     locationDetail: this.locationDetail,
                     city: this.city,
-                });
+                };
+                if (this.budgetType === 'fixed') {
+                    payload.budgetMin = Number(this.budgetFixed);
+                    payload.budgetMax = Number(this.budgetFixed);
+                } else if (this.budgetType === 'range') {
+                    payload.budgetMin = Number(this.budgetMin);
+                    payload.budgetMax = Number(this.budgetMax);
+                }
+                const res = await API.tenders.create(payload);
                 this.tenderId = res?.id ? ('#TND-' + res.id.slice(-6)) : ('#TND-' + Date.now().toString().slice(-6));
+                tenderFormDirty = false;
+                this.submitted = true;
+                window.scrollTo(0, 0);
             } catch(e) {
-                this.tenderId = '#TND-' + Date.now().toString().slice(-6);
+                showToast('❌ فشل نشر المناقصة. يرجى المحاولة مجدداً.');
             } finally {
                 this.submitting = false;
             }
-            tenderFormDirty = false;
-            this.submitted = true;
-            window.scrollTo(0, 0);
         },
         saveDraft() {
             const draft = {

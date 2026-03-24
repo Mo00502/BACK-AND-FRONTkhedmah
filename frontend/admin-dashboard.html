@@ -491,37 +491,37 @@
                                 <td><strong>محمد أحمد</strong></td><td style="color:var(--gray);font-size:.82rem">customer@demo.sa</td>
                                 <td><span class="badge badge-review">عميل</span></td><td><span class="badge badge-active">نشط</span></td>
                                 <td style="color:var(--gray);font-size:.78rem">1 يناير 2025</td>
-                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'محمد أحمد')">إيقاف</button></td>
+                                <td><button class="btn-xs btn-warning" data-user-id="usr-001" data-user-name="محمد أحمد" onclick="suspendUser(this)">إيقاف</button></td>
                             </tr>
                             <tr data-search="خالد العمري khalid@demo.sa مزود">
                                 <td><strong>خالد العمري</strong></td><td style="color:var(--gray);font-size:.82rem">khalid@demo.sa</td>
                                 <td><span class="badge badge-approved">مزود</span></td><td><span class="badge badge-active">نشط</span></td>
                                 <td style="color:var(--gray);font-size:.78rem">15 ديسمبر 2024</td>
-                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'خالد العمري')">إيقاف</button></td>
+                                <td><button class="btn-xs btn-warning" data-user-id="usr-002" data-user-name="خالد العمري" onclick="suspendUser(this)">إيقاف</button></td>
                             </tr>
                             <tr data-search="فاطمة محمد fatima@demo.sa عميل">
                                 <td><strong>فاطمة محمد</strong></td><td style="color:var(--gray);font-size:.82rem">fatima@demo.sa</td>
                                 <td><span class="badge badge-review">عميل</span></td><td><span class="badge badge-active">نشط</span></td>
                                 <td style="color:var(--gray);font-size:.78rem">20 يناير 2025</td>
-                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'فاطمة محمد')">إيقاف</button></td>
+                                <td><button class="btn-xs btn-warning" data-user-id="usr-003" data-user-name="فاطمة محمد" onclick="suspendUser(this)">إيقاف</button></td>
                             </tr>
                             <tr data-search="سالم القحطاني salem@demo.sa مزود">
                                 <td><strong>سالم القحطاني</strong></td><td style="color:var(--gray);font-size:.82rem">salem@demo.sa</td>
                                 <td><span class="badge badge-approved">مزود</span></td><td><span class="badge badge-suspended">موقوف</span></td>
                                 <td style="color:var(--gray);font-size:.78rem">5 نوفمبر 2024</td>
-                                <td><button class="btn-xs btn-approve" onclick="reinstateUser(this,'سالم القحطاني')">إعادة تفعيل</button></td>
+                                <td><button class="btn-xs btn-approve" data-user-id="usr-004" data-user-name="سالم القحطاني" onclick="reinstateUser(this)">إعادة تفعيل</button></td>
                             </tr>
                             <tr data-search="نورة السبيعي noura@demo.sa عميل">
                                 <td><strong>نورة السبيعي</strong></td><td style="color:var(--gray);font-size:.82rem">noura@demo.sa</td>
                                 <td><span class="badge badge-review">عميل</span></td><td><span class="badge badge-active">نشط</span></td>
                                 <td style="color:var(--gray);font-size:.78rem">10 فبراير 2025</td>
-                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'نورة السبيعي')">إيقاف</button></td>
+                                <td><button class="btn-xs btn-warning" data-user-id="usr-005" data-user-name="نورة السبيعي" onclick="suspendUser(this)">إيقاف</button></td>
                             </tr>
                             <tr data-search="فهد الدوسري fahad@demo.sa مزود">
                                 <td><strong>فهد الدوسري</strong></td><td style="color:var(--gray);font-size:.82rem">fahad@demo.sa</td>
                                 <td><span class="badge badge-approved">مزود</span></td><td><span class="badge badge-active">نشط</span></td>
                                 <td style="color:var(--gray);font-size:.78rem">8 أكتوبر 2024</td>
-                                <td><button class="btn-xs btn-warning" onclick="suspendUser(this,'فهد الدوسري')">إيقاف</button></td>
+                                <td><button class="btn-xs btn-warning" data-user-id="usr-006" data-user-name="فهد الدوسري" onclick="suspendUser(this)">إيقاف</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -809,8 +809,8 @@
             btn.textContent = '⏳ جارٍ...'; btn.disabled = true;
             setTimeout(() => {
                 if (item) {
-                    item.querySelector('.verify-meta').innerHTML = item.querySelector('.verify-meta').innerHTML
-                        .replace('قيد الانتظار', 'تحت المراجعة');
+                    const metaEl = item.querySelector('.verify-meta');
+                    metaEl.textContent = metaEl.textContent.replace('قيد الانتظار', 'تحت المراجعة');
                     btn.remove();
                     const badge = item.querySelector('.badge');
                     if (badge) { badge.className = 'badge badge-review'; badge.textContent = 'تحت المراجعة'; }
@@ -867,13 +867,21 @@
             const reason = document.getElementById('rejectReason').value.trim();
             if (!reason || reason.length < 10) { document.getElementById('rejectReason').style.borderColor = 'var(--error)'; alert('يرجى إدخال سبب الرفض (10 أحرف على الأقل)'); return; }
             const target = rejectTarget;
-            closeModal();
-            const item = document.querySelector(`[data-id="${target?.id}"]`);
-            if (item) { item.style.opacity = '0.3'; setTimeout(() => item.remove(), 500); }
-            toast(`❌ تم رفض طلب التحقق: ${target?.name}`);
-            const badge = document.getElementById('badge-verify');
-            if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
-            API.admin.rejectProvider(target?.id, { reason }).catch(() => {});
+            const confirmBtn = document.querySelector('.modal-confirm');
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ جارٍ...'; }
+            try {
+                await API.admin.rejectProvider(target?.id, { reason });
+                closeModal();
+                const item = document.querySelector(`[data-id="${target?.id}"]`);
+                if (item) { item.style.opacity = '0.3'; setTimeout(() => item.remove(), 500); }
+                toast(`❌ تم رفض طلب التحقق: ${target?.name}`, 'warning');
+                const badge = document.getElementById('badge-verify');
+                if (badge) { const n = Math.max(0, parseInt(badge.textContent)-1); badge.textContent = n; if (!n) badge.style.display = 'none'; }
+            } catch (e) {
+                toast(`فشل رفض الطلب: ${API.errorMsg(e)}`, 'danger');
+            } finally {
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الرفض'; }
+            }
         }
 
         // ── Dispute resolution ──
@@ -891,22 +899,42 @@
         }
 
         // ── User management ──
-        function suspendUser(btn, name) {
+        async function suspendUser(btn) {
+            const userId = btn.dataset.userId;
+            const name   = btn.dataset.userName;
             if (!confirm(`إيقاف حساب ${name}؟`)) return;
-            const row = btn.closest('tr');
-            row.querySelector('.badge-active').className = 'badge badge-suspended';
-            row.querySelector('.badge-suspended').textContent = 'موقوف';
-            btn.textContent = 'إعادة تفعيل'; btn.className = 'btn-xs btn-approve';
-            btn.onclick = function() { reinstateUser(this, name); };
-            toast(`🚫 تم إيقاف حساب ${name}`);
+            btn.disabled = true;
+            try {
+                await API.admin.suspendUser(userId, { reason: 'إيقاف من لوحة التحكم' });
+                const row = btn.closest('tr');
+                const statusBadge = row.querySelector('td:nth-child(4) .badge');
+                if (statusBadge) { statusBadge.className = 'badge badge-suspended'; statusBadge.textContent = 'موقوف'; }
+                btn.textContent = 'إعادة تفعيل'; btn.className = 'btn-xs btn-approve';
+                btn.dataset.userName = name;
+                btn.onclick = function() { reinstateUser(this); };
+                toast(`🚫 تم إيقاف حساب ${name}`, 'warning');
+            } catch (e) {
+                btn.disabled = false;
+                toast(`فشل إيقاف الحساب: ${API.errorMsg(e)}`, 'danger');
+            }
         }
-        function reinstateUser(btn, name) {
-            const row = btn.closest('tr');
-            const badge = row.querySelector('.badge');
-            badge.className = 'badge badge-active'; badge.textContent = 'نشط';
-            btn.textContent = 'إيقاف'; btn.className = 'btn-xs btn-warning';
-            btn.onclick = function() { suspendUser(this, name); };
-            toast(`✅ تم إعادة تفعيل حساب ${name}`);
+        async function reinstateUser(btn) {
+            const userId = btn.dataset.userId;
+            const name   = btn.dataset.userName;
+            btn.disabled = true;
+            try {
+                await API.admin.unsuspendUser(userId);
+                const row = btn.closest('tr');
+                const statusBadge = row.querySelector('td:nth-child(4) .badge');
+                if (statusBadge) { statusBadge.className = 'badge badge-active'; statusBadge.textContent = 'نشط'; }
+                btn.textContent = 'إيقاف'; btn.className = 'btn-xs btn-warning';
+                btn.dataset.userName = name;
+                btn.onclick = function() { suspendUser(this); };
+                toast(`✅ تم إعادة تفعيل حساب ${name}`, 'success');
+            } catch (e) {
+                btn.disabled = false;
+                toast(`فشل إعادة التفعيل: ${API.errorMsg(e)}`, 'danger');
+            }
         }
         function filterUsers(q) {
             const rows = document.querySelectorAll('#usersTable tbody tr');

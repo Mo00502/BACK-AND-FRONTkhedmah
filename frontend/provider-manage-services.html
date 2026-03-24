@@ -668,7 +668,7 @@
         <h4>حذف الخدمة</h4>
         <p>هل أنت متأكد من حذف هذه الخدمة؟ لا يمكن التراجع عن هذا الإجراء.</p>
         <div class="delete-actions">
-            <button class="btn-confirm-delete" onclick="confirmDelete()">نعم، احذف</button>
+            <button class="btn-confirm-delete" id="confirmDeleteBtn" onclick="confirmDelete()">نعم، احذف</button>
             <button class="btn-cancel-delete" onclick="closeDeleteConfirm()">إلغاء</button>
         </div>
     </div>
@@ -749,52 +749,102 @@
         document.getElementById('modalOverlay').classList.add('open');
     }
 
-    function openEditModal(id) {
+    async function openEditModal(id) {
         editingId = id;
         document.getElementById('modalTitle').textContent = 'تعديل الخدمة';
+        document.getElementById('modalOverlay').classList.add('open');
+        const editForm = document.querySelector('#modalOverlay .modal');
+        if (editForm) editForm.style.opacity = '0.4';
 
-        const card = document.querySelector(`[data-id="${id}"]`);
-        if (card) {
-            const name = card.querySelector('.service-name')?.textContent?.trim() || '';
-            const category = card.querySelector('.service-category')?.textContent?.trim() || '';
-            const priceAmountEl = card.querySelector('.price-amount');
-            const priceUnitEl = card.querySelector('.price-unit');
-            const desc = card.querySelector('.service-desc-text')?.textContent?.trim() || '';
-            const durationText = card.querySelector('.service-duration')?.textContent?.replace('⏱️ مدة الخدمة المتوقعة:', '').trim() || '';
+        let skillData = null;
+        try {
+            // Fetch all skills and find the one with matching id
+            const data = await API.providers.services();
+            const list = Array.isArray(data) ? data : (data?.items || data?.skills || data?.services || []);
+            skillData = list.find(s => String(s.id || s._id) === String(id)) || null;
+        } catch(e) {
+            // Fall back to DOM data below
+        }
+
+        if (skillData) {
+            // Populate from fresh API data
+            const name     = skillData.name || skillData.skillName || '';
+            const cat      = skillData.category || skillData.categoryName || skillData.skillCategory || '';
+            const desc     = skillData.description || skillData.desc || '';
+            const duration = skillData.duration || skillData.estimatedDuration || '';
+            const price    = skillData.price != null ? skillData.price : null;
+            const priceType = skillData.priceType || skillData.type || 'hour';
 
             document.getElementById('serviceNameInput').value = name;
-            document.getElementById('categorySelect').value = category;
+            document.getElementById('categorySelect').value = cat;
             document.getElementById('serviceDesc').value = desc;
 
             // Set duration dropdown
             const durationSel = document.getElementById('durationSelect');
             for (let i = 0; i < durationSel.options.length; i++) {
-                if (durationText.includes(durationSel.options[i].value) ||
-                    durationSel.options[i].value.includes(durationText) ||
-                    durationText === durationSel.options[i].text) {
+                if (duration && (duration.includes(durationSel.options[i].value) ||
+                    durationSel.options[i].value.includes(duration) ||
+                    duration === durationSel.options[i].text)) {
                     durationSel.selectedIndex = i;
                     break;
                 }
             }
 
-            // Determine price type from unit text
-            const priceUnit = priceUnitEl?.textContent?.trim() || '';
-            const priceAmount = priceAmountEl?.textContent?.trim() || '';
-            if (priceAmount === 'حسب الاتفاق') {
+            if (price == null || priceType === 'agree') {
                 const agreeBtn = document.querySelector('.price-type-btn:nth-child(3)');
                 selectPriceType('agree', agreeBtn);
-            } else if (priceUnit.includes('ساعة')) {
-                const hourBtn = document.querySelector('.price-type-btn:nth-child(1)');
-                selectPriceType('hour', hourBtn);
-                document.getElementById('priceInput').value = priceAmount;
-            } else {
+            } else if (priceType === 'visit') {
                 const visitBtn = document.querySelector('.price-type-btn:nth-child(2)');
                 selectPriceType('visit', visitBtn);
-                document.getElementById('priceInput').value = priceAmount;
+                document.getElementById('priceInput').value = price;
+            } else {
+                const hourBtn = document.querySelector('.price-type-btn:nth-child(1)');
+                selectPriceType('hour', hourBtn);
+                document.getElementById('priceInput').value = price;
+            }
+        } else {
+            // Fall back to reading DOM card data
+            const card = document.querySelector(`[data-id="${id}"]`);
+            if (card) {
+                const name = card.querySelector('.service-name')?.textContent?.trim() || '';
+                const category = card.querySelector('.service-category')?.textContent?.trim() || '';
+                const priceAmountEl = card.querySelector('.price-amount');
+                const priceUnitEl = card.querySelector('.price-unit');
+                const desc = card.querySelector('.service-desc-text')?.textContent?.trim() || '';
+                const durationText = card.querySelector('.service-duration')?.textContent?.replace('⏱️ مدة الخدمة المتوقعة:', '').trim() || '';
+
+                document.getElementById('serviceNameInput').value = name;
+                document.getElementById('categorySelect').value = category;
+                document.getElementById('serviceDesc').value = desc;
+
+                const durationSel = document.getElementById('durationSelect');
+                for (let i = 0; i < durationSel.options.length; i++) {
+                    if (durationText.includes(durationSel.options[i].value) ||
+                        durationSel.options[i].value.includes(durationText) ||
+                        durationText === durationSel.options[i].text) {
+                        durationSel.selectedIndex = i;
+                        break;
+                    }
+                }
+
+                const priceUnit = priceUnitEl?.textContent?.trim() || '';
+                const priceAmount = priceAmountEl?.textContent?.trim() || '';
+                if (priceAmount === 'حسب الاتفاق') {
+                    const agreeBtn = document.querySelector('.price-type-btn:nth-child(3)');
+                    selectPriceType('agree', agreeBtn);
+                } else if (priceUnit.includes('ساعة')) {
+                    const hourBtn = document.querySelector('.price-type-btn:nth-child(1)');
+                    selectPriceType('hour', hourBtn);
+                    document.getElementById('priceInput').value = priceAmount;
+                } else {
+                    const visitBtn = document.querySelector('.price-type-btn:nth-child(2)');
+                    selectPriceType('visit', visitBtn);
+                    document.getElementById('priceInput').value = priceAmount;
+                }
             }
         }
 
-        document.getElementById('modalOverlay').classList.add('open');
+        if (editForm) editForm.style.opacity = '1';
     }
 
     function closeModal() {
@@ -820,70 +870,92 @@
             return;
         }
 
-        // Determine price display
+        // Price validation: require a positive number unless pricing is by agreement
+        const rawPrice = selectedPriceType !== 'agree' ? parseFloat(document.getElementById('priceInput')?.value || '') : null;
+        if (selectedPriceType !== 'agree' && (isNaN(rawPrice) || rawPrice <= 0)) {
+            showToast('⚠️ يرجى إدخال سعر صحيح أكبر من صفر');
+            return;
+        }
+
+        // Determine price display text
         let priceAmountText, priceUnitText;
         if (selectedPriceType === 'agree') {
             priceAmountText = 'حسب الاتفاق';
             priceUnitText = '';
         } else {
-            const rawPrice = document.getElementById('priceInput').value.trim();
-            priceAmountText = rawPrice || '0';
+            priceAmountText = rawPrice;
             priceUnitText = selectedPriceType === 'hour' ? 'ريال / ساعة' : 'ريال / زيارة';
         }
 
-        if (editingId === null) {
-            // Create new card
-            const newId = Date.now();
-            const newCard = document.createElement('div');
-            newCard.className = 'service-card';
-            newCard.setAttribute('data-id', newId);
-            newCard.innerHTML = `
-                <div class="inactive-badge">موقوفة</div>
-                <div class="card-top">
-                    <div class="service-icon-box">🔧</div>
-                    <div class="toggle-wrapper">
-                        <span class="toggle-label" id="lbl-${newId}">نشط</span>
-                        <label class="toggle">
-                            <input type="checkbox" checked data-skill-id="${escAttr(newId)}">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-                <div class="service-name">${escHtml(name)}</div>
-                <div class="service-category">${escHtml(category)}</div>
-                <div class="service-price">
-                    <span class="price-amount">${escHtml(priceAmountText)}</span>
-                    <span class="price-unit">${escHtml(priceUnitText)}</span>
-                </div>
-                <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${escHtml(durationText)}</div>
-                <div class="service-desc-text">${escHtml(desc)}</div>
-                <div class="card-actions">
-                    <button class="btn-edit" data-skill-id="${escAttr(newId)}">✏️ تعديل</button>
-                    <button class="btn-delete" data-skill-id="${escAttr(newId)}">🗑️ حذف</button>
-                </div>`;
-            document.getElementById('servicesGrid').appendChild(newCard);
-            updateStats();
-        } else {
-            // Update existing card
-            const card = document.querySelector(`[data-id="${editingId}"]`);
-            if (card) {
-                card.querySelector('.service-name').textContent = name;
-                card.querySelector('.service-category').textContent = category;
-                card.querySelector('.price-amount').textContent = priceAmountText;
-                card.querySelector('.price-unit').textContent = priceUnitText;
-                card.querySelector('.service-desc-text').textContent = desc;
-                card.querySelector('.service-duration').textContent = `⏱️ مدة الخدمة المتوقعة: ${durationText}`;
-            }
-        }
+        const btn = document.querySelector('#modalOverlay .btn-save');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الحفظ...'; }
 
-        closeModal();
-        showToast(editingId ? '✓ تم تحديث الخدمة بنجاح' : '✓ تمت إضافة الخدمة بنجاح');
-        // Fire API call in background (demo IDs won't match real UUIDs but real adds create new services)
-        if (!editingId) {
-            const rawPrice = selectedPriceType !== 'agree' ? parseFloat(document.getElementById('priceInput')?.value || '0') : null;
-            API.providers.addService({ name, category, description: desc, priceType: selectedPriceType, price: rawPrice }).catch(() => {});
+        try {
+            if (editingId === null) {
+                // API call FIRST — only render card on success
+                const result = await API.providers.addService({
+                    name, category, description: desc,
+                    priceType: selectedPriceType, price: rawPrice,
+                    duration: durationText
+                });
+                // Use the real id returned by API if available, otherwise fallback
+                const newId = result?.id || result?._id || Date.now();
+                const newCard = document.createElement('div');
+                newCard.className = 'service-card';
+                newCard.setAttribute('data-id', newId);
+                newCard.innerHTML = `
+                    <div class="inactive-badge">موقوفة</div>
+                    <div class="card-top">
+                        <div class="service-icon-box">🔧</div>
+                        <div class="toggle-wrapper">
+                            <span class="toggle-label" id="lbl-${newId}">نشط</span>
+                            <label class="toggle">
+                                <input type="checkbox" checked data-skill-id="${escAttr(newId)}">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="service-name">${escHtml(name)}</div>
+                    <div class="service-category">${escHtml(category)}</div>
+                    <div class="service-price">
+                        <span class="price-amount">${escHtml(String(priceAmountText))}</span>
+                        <span class="price-unit">${escHtml(priceUnitText)}</span>
+                    </div>
+                    <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${escHtml(durationText)}</div>
+                    <div class="service-desc-text">${escHtml(desc)}</div>
+                    <div class="card-actions">
+                        <button class="btn-edit" data-skill-id="${escAttr(newId)}">✏️ تعديل</button>
+                        <button class="btn-delete" data-skill-id="${escAttr(newId)}">🗑️ حذف</button>
+                    </div>`;
+                document.getElementById('servicesGrid').appendChild(newCard);
+                updateStats();
+                closeModal();
+                showToast('✅ تمت إضافة الخدمة بنجاح');
+            } else {
+                // Edit: call update API, then update DOM on success
+                await API.providers.updateSkill(editingId, {
+                    name, category, description: desc,
+                    priceType: selectedPriceType, price: rawPrice,
+                    duration: durationText
+                });
+                const card = document.querySelector(`[data-id="${editingId}"]`);
+                if (card) {
+                    card.querySelector('.service-name').textContent = name;
+                    card.querySelector('.service-category').textContent = category;
+                    card.querySelector('.price-amount').textContent = priceAmountText;
+                    card.querySelector('.price-unit').textContent = priceUnitText;
+                    card.querySelector('.service-desc-text').textContent = desc;
+                    card.querySelector('.service-duration').textContent = `⏱️ مدة الخدمة المتوقعة: ${durationText}`;
+                }
+                closeModal();
+                showToast('✓ تم تحديث الخدمة بنجاح');
+            }
+            editingId = null;
+        } catch(err) {
+            showToast('❌ ' + API.errorMsg(err));
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'حفظ'; }
         }
-        editingId = null;
     }
 
     function openDeleteConfirm(id) {
@@ -896,17 +968,27 @@
         document.getElementById('deleteOverlay').classList.remove('open');
     }
 
-    function confirmDelete() {
-        if (deleteTargetId) {
+    async function confirmDelete() {
+        if (!deleteTargetId) return;
+        const btn = document.getElementById('confirmDeleteBtn');
+        btn.disabled = true;
+        btn.textContent = 'جارٍ الحذف...';
+        try {
+            await API.providers.removeService(deleteTargetId);
             const card = document.querySelector(`[data-id="${deleteTargetId}"]`);
             if (card) {
                 card.style.animation = 'fadeOut 0.3s ease forwards';
                 setTimeout(() => { card.remove(); updateStats(); }, 300);
             }
-            API.providers.removeService(deleteTargetId).catch(() => {});
+            closeDeleteConfirm();
+            showToast('✅ تم حذف الخدمة بنجاح');
+            // Reload the list from API to stay in sync
+            setTimeout(loadServices, 400);
+        } catch(err) {
+            showToast('❌ ' + API.errorMsg(err));
+            btn.disabled = false;
+            btn.textContent = 'نعم، احذف';
         }
-        closeDeleteConfirm();
-        showToast('🗑️ تم حذف الخدمة');
     }
 
     // ── On-load: fetch real services from API and render ──────────────────────

@@ -568,6 +568,10 @@
     async requestWithdrawal() {
       const amount = Number(this.withdrawAmount);
       if (!amount || amount <= 0) return;
+      if (amount < 100) {
+        showToast('❌ الحد الأدنى للسحب 100 ريال');
+        return;
+      }
       if (this.withdrawSubmitting) return;
       this.withdrawSubmitting = true;
       try {
@@ -677,15 +681,15 @@
           class="withdraw-input"
           placeholder="أدخل المبلغ (SAR)"
           x-model="withdrawAmount"
-          min="1"
-          max="3240"
+          min="100"
+          id="withdrawInput"
         >
 
         <!-- Withdraw button -->
         <button
           class="withdraw-btn"
           @click="requestWithdrawal()"
-          :disabled="withdrawSubmitting || !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > 3240"
+          :disabled="withdrawSubmitting || !withdrawAmount || Number(withdrawAmount) < 100"
         >
           <i class="fas fa-paper-plane me-1"></i>
           طلب السحب
@@ -853,15 +857,32 @@
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <script>
+  function setCardAmount(card, value) {
+    if (!card) return;
+    // Update only the leading text node; leave the inner <span>ريال</span> untouched
+    const span = card.querySelector('span');
+    const text = Number(value ?? 0).toLocaleString('ar-SA') + ' ';
+    if (span) {
+      // Replace or create a text node immediately before the span
+      if (card.firstChild && card.firstChild.nodeType === Node.TEXT_NODE) {
+        card.firstChild.textContent = text;
+      } else {
+        card.insertBefore(document.createTextNode(text), span);
+      }
+    } else {
+      card.textContent = Number(value ?? 0).toLocaleString('ar-SA');
+    }
+  }
+
   function updateBalanceCards(w) {
     const cards = document.querySelectorAll('.card-amount');
-    if (cards[0]) cards[0].innerHTML = Number(w.balance ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
-    if (cards[1]) cards[1].innerHTML = Number(w.heldBalance ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
-    if (cards[2]) cards[2].innerHTML = Number((w.balance ?? 0) - (w.heldBalance ?? 0)).toLocaleString('ar-SA') + ' <span>ريال</span>';
-    if (cards[3]) cards[3].innerHTML = Number(w.totalEarned ?? 0).toLocaleString('ar-SA') + ' <span>ريال</span>';
+    setCardAmount(cards[0], w.balance ?? 0);
+    setCardAmount(cards[1], w.heldBalance ?? 0);
+    setCardAmount(cards[2], (w.balance ?? 0) - (w.heldBalance ?? 0));
+    setCardAmount(cards[3], w.totalEarned ?? 0);
     const avAmt = document.querySelector('.av-amount');
     if (avAmt) avAmt.textContent = 'SAR ' + Number(w.balance ?? 0).toLocaleString('ar-SA');
-    const maxInput = document.querySelector('.withdraw-input');
+    const maxInput = document.getElementById('withdrawInput');
     if (maxInput) maxInput.max = w.balance ?? 9999999;
   }
 
