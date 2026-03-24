@@ -308,10 +308,11 @@
     (function() {
         const demo = localStorage.getItem('khedmah_demo');
         if (!demo) { window.location.href = 'login.html'; return; }
-        try {
-            const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-            if (u.role && u.role !== 'provider') window.location.href = 'customer-dashboard.html';
-        } catch(e) {}
+        // Only providers can rate customers
+        const _rateUser = JSON.parse(localStorage.getItem('khedmah_user') || 'null');
+        if (!_rateUser || _rateUser.role?.toLowerCase() !== 'provider') {
+            window.location.href = 'home.html';
+        }
     })();
     const _rateRequestId = new URLSearchParams(window.location.search).get('requestId');
     if (!_rateRequestId) {

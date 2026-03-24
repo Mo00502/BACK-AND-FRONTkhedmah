@@ -33,7 +33,7 @@ export class LeaderboardService {
   async getLeaderboard(category: 'OVERALL' | 'WEEKLY' | 'MONTHLY' = 'OVERALL', limit = 20) {
     const since = this._sinceDate(category);
     const where: any = {
-      verified: true,
+      verificationStatus: 'APPROVED' as any,
       user: { deletedAt: null, suspended: false, status: 'ACTIVE' },
     };
 

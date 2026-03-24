@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { EventListenerService } from './event-listener.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -30,16 +31,19 @@ const mockPayments = {
   initiateRefund: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockConfig = {
+  get: jest.fn(),
+};
+
 // ── Test suite ────────────────────────────────────────────────────────────────
 
 describe('EventListenerService', () => {
   let service: EventListenerService;
 
-  const OLD_ENV = process.env;
-
   beforeEach(async () => {
     jest.clearAllMocks();
-    process.env = { ...OLD_ENV };
+    // Default: no ADMIN_EMAIL configured
+    mockConfig.get.mockReturnValue('');
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,14 +52,11 @@ describe('EventListenerService', () => {
         { provide: NotificationsService, useValue: mockNotif },
         { provide: WalletService, useValue: mockWallet },
         { provide: PaymentsService, useValue: mockPayments },
+        { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
 
     service = module.get<EventListenerService>(EventListenerService);
-  });
-
-  afterAll(() => {
-    process.env = OLD_ENV;
   });
 
   // ── onEscrowReleased ───────────────────────────────────────────────────────
@@ -150,7 +151,7 @@ describe('EventListenerService', () => {
 
   describe('onCommissionsOverdue', () => {
     it('sends email to ADMIN_EMAIL with overdue count', async () => {
-      process.env.ADMIN_EMAIL = 'admin@khedmah.sa';
+      mockConfig.get.mockReturnValue('admin@khedmah.sa');
 
       await service.onCommissionsOverdue({ count: 5 });
 
@@ -162,7 +163,7 @@ describe('EventListenerService', () => {
     });
 
     it('skips email when ADMIN_EMAIL not configured', async () => {
-      delete process.env.ADMIN_EMAIL;
+      mockConfig.get.mockReturnValue('');
 
       await service.onCommissionsOverdue({ count: 3 });
 
@@ -174,7 +175,7 @@ describe('EventListenerService', () => {
 
   describe('onTicketOpened', () => {
     it('sends urgent email for URGENT priority tickets', async () => {
-      process.env.ADMIN_EMAIL = 'admin@khedmah.sa';
+      mockConfig.get.mockReturnValue('admin@khedmah.sa');
 
       await service.onTicketOpened({
         ticketId: 'ticket-abc-123',
@@ -192,7 +193,7 @@ describe('EventListenerService', () => {
     });
 
     it('skips email for normal priority tickets', async () => {
-      process.env.ADMIN_EMAIL = 'admin@khedmah.sa';
+      mockConfig.get.mockReturnValue('admin@khedmah.sa');
 
       await service.onTicketOpened({
         ticketId: 'ticket-1',

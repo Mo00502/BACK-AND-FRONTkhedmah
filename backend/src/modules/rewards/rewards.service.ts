@@ -36,6 +36,17 @@ export class RewardsService {
     if (!referral) throw new NotFoundException('Invalid or already-used referral code');
     if (referral.referrerId === refereeId) throw new BadRequestException('Cannot refer yourself');
 
+    // Prevent A→B→A cycles (B cannot refer A if A already referred B)
+    const reverseReferral = await this.prisma.referral.findFirst({
+      where: {
+        referrerId: refereeId,    // the person being referred was previously a referrer
+        refereeId: referral.referrerId, // of the person who is now trying to refer them
+      },
+    });
+    if (reverseReferral) {
+      throw new BadRequestException('لا يمكن استخدام كود الإحالة الخاص بهذا المستخدم');
+    }
+
     // Atomic: use updateMany with refereeId: null guard to prevent concurrent double-credit
     const { count } = await this.prisma.referral.updateMany({
       where: { id: referral.id, refereeId: null },

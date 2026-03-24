@@ -95,7 +95,7 @@ export class SupportController {
     return this.support.getTicket(userId, ticketId, false);
   }
 
-  @ThrottleDefault()
+  @ThrottleStrict()
   @Post('tickets/:ticketId/messages')
   @ApiOperation({ summary: 'Add a reply to a ticket' })
   addMessage(

@@ -652,7 +652,21 @@
                         <div class="history-reward">+${reward} ريال</div>`;
                     listEl.appendChild(item);
                 });
-            } catch(e) { /* keep demo history on failure */ }
+            } catch(e) {
+                // Show error state
+                const historyList = document.querySelector('.history-list');
+                if (historyList) {
+                    historyList.innerHTML = `
+                        <div class="text-center py-4 text-muted" style="text-align:center;padding:2rem;color:var(--gray)">
+                            <i class="bi bi-exclamation-circle" style="font-size:2rem">⚠️</i>
+                            <p style="margin-top:0.75rem">تعذّر تحميل سجل الإحالات</p>
+                            <button style="margin-top:0.5rem;padding:0.4rem 1rem;border:1.5px solid var(--primary);background:transparent;color:var(--primary);border-radius:8px;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.95rem" onclick="loadReferralHistory()">
+                                حاول مرة أخرى
+                            </button>
+                        </div>
+                    `;
+                }
+            }
         }
 
         function copyCode() {

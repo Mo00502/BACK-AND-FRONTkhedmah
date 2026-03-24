@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WalletService } from '../wallet/wallet.service';
@@ -22,6 +23,7 @@ export class EventListenerService {
     private notif: NotificationsService,
     private wallet: WalletService,
     private payments: PaymentsService,
+    private readonly config: ConfigService,
   ) {}
 
   // ── Escrow events ────────────────────────────────────────────────────────
@@ -94,7 +96,7 @@ export class EventListenerService {
   @OnEvent('commissions.overdue_batch')
   async onCommissionsOverdue(payload: { count: number }) {
     this.logger.warn(`${payload.count} commissions marked overdue`);
-    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminEmail = this.config.get<string>('ADMIN_EMAIL', '');
     if (adminEmail) {
       await this.notif.sendEmail(
         adminEmail,
@@ -115,7 +117,7 @@ export class EventListenerService {
   }) {
     // Notify admin for URGENT tickets
     if (payload.priority === 'URGENT') {
-      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminEmail = this.config.get<string>('ADMIN_EMAIL', '');
       if (adminEmail) {
         await this.notif.sendEmail(
           adminEmail,
@@ -492,7 +494,7 @@ export class EventListenerService {
 
   @OnEvent('support.ticket_reopened')
   async onTicketReopened(payload: { ticketId: string; userId: string }) {
-    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminEmail = this.config.get<string>('ADMIN_EMAIL', '');
     if (adminEmail) {
       await this.notif.sendEmail(
         adminEmail,
@@ -536,7 +538,7 @@ export class EventListenerService {
   @OnEvent('materials.adjustment.batch_expired')
   async onAdjustmentBatchExpired(payload: { count: number }) {
     this.logger.warn(`${payload.count} materials adjustment requests expired (batch)`);
-    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminEmail = this.config.get<string>('ADMIN_EMAIL', '');
     if (adminEmail) {
       await this.notif.sendEmail(
         adminEmail,

@@ -427,7 +427,7 @@
     <!-- Action Buttons -->
     <div class="action-buttons">
         <a href="chat.html" id="chatLink" class="btn-chat">💬 تواصل مع المزود</a>
-        <button class="btn-cancel" id="cancelBtn" onclick="cancelOrder()">إلغاء الطلب</button>
+        <button class="btn-cancel" id="cancelBtn" onclick="cancelOrder()" style="display:none">إلغاء الطلب</button>
     </div>
 
     <!-- Demo helper: simulate service completion instantly -->
@@ -540,6 +540,12 @@
         if (data.status === 'CANCELLED') {
             showToast('تم إلغاء الطلب.');
         }
+        // Show cancel button only for cancellable states
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            const cancellableStates = ['PENDING', 'QUOTED', 'ACCEPTED'];
+            cancelBtn.style.display = cancellableStates.includes(data.status) ? '' : 'none';
+        }
     }
 
     function startPolling(requestId) {
@@ -563,6 +569,18 @@
             } catch(e) { /* silent — demo mode */ }
         }, 10000);
     }
+
+    // Show cancel button for the initial page-load state (currentStep=2 = ACCEPTED)
+    (function() {
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            const cancellableStates = ['PENDING', 'QUOTED', 'ACCEPTED'];
+            // Map initial currentStep to a status string for the visibility check
+            const initialStepStatusMap = { 1: 'PENDING', 2: 'ACCEPTED', 3: 'IN_PROGRESS', 4: 'COMPLETED' };
+            const initialStatus = initialStepStatusMap[currentStep] || '';
+            cancelBtn.style.display = cancellableStates.includes(initialStatus) ? '' : 'none';
+        }
+    })();
 
     // Start polling if we have a real requestId (not the demo placeholder)
     if (_currentRequestId && _currentRequestId !== 'REQ-demo-001') {
