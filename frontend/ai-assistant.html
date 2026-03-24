@@ -872,27 +872,33 @@ const INTENT_SUMMARY_TITLE = {
 
 // ── Action execution: what to do after confirm ──────────────────────────
 
-function executeAction(intent, entities) {
+async function executeAction(intent, entities) {
     const reqId = 'REQ-' + Date.now().toString().slice(-6);
     const record = { intent, entities, reqId, createdAt: new Date().toISOString() };
     localStorage.setItem('khedmah_ai_last_action', JSON.stringify(record));
 
-    // Fire real API call based on intent (fire-and-forget; UI proceeds regardless)
+    // Await real API call and use returned ID when available
+    let apiId = null;
     if (intent === 'HOME_SERVICE') {
-        API.requests.create({ serviceTitle: entities.serviceType, city: entities.city, description: entities.description || '' }).catch(() => {});
+        const res = await API.requests.create({ serviceTitle: entities.serviceType, city: entities.city, description: entities.description || '' });
+        apiId = res?.data?.id || res?.id || null;
     } else if (intent === 'TENDER') {
-        API.tenders.create({ title: entities.projectType, city: entities.city, budget: entities.budget, deadline: entities.deadline }).catch(() => {});
+        const res = await API.tenders.create({ title: entities.projectType, city: entities.city, budget: entities.budget, deadline: entities.deadline });
+        apiId = res?.data?.id || res?.id || null;
     } else if (intent === 'CONSULTING') {
-        API.consultations.book({ consultationType: entities.consultationType, city: entities.city, scheduledDate: entities.date }).catch(() => {});
+        const res = await API.consultations.book({ consultationType: entities.consultationType, city: entities.city, scheduledDate: entities.date });
+        apiId = res?.data?.id || res?.id || null;
     }
 
+    const displayId = apiId ? String(apiId) : reqId;
+
     const msgs = {
-        HOME_SERVICE: `✅ تم إرسال طلبك بنجاح!\n\n🔢 رقم الطلب: #${reqId}\n🔧 الخدمة: ${entities.serviceType}\n📍 المدينة: ${entities.city}\n⚡ الأولوية: ${entities.urgency}\n\nسيتواصل معك أقرب مزود متاح في منطقتك خلال دقائق. يمكنك متابعة حالة الطلب من لوحة التحكم.`,
-        MANPOWER:     `✅ تم إرسال طلب العمالة!\n\n🔢 رقم الطلب: #${reqId}\n👷 التخصص: ${entities.workerType}\n🔢 العدد: ${entities.quantity} عامل\n📅 المدة: ${entities.duration}\n📍 المدينة: ${entities.city}\n\nستصلك عروض من المورّدين المعتمدين خلال ساعات.`,
-        EQUIPMENT:    `✅ تم إرسال طلب المعدات!\n\n🔢 رقم الطلب: #${reqId}\n🏗️ المعدة: ${entities.equipmentType}\n📅 تاريخ البدء: ${entities.date}\n⏱️ المدة: ${entities.duration}\n📍 المدينة: ${entities.city}\n\nستصلك عروض الإيجار من المورّدين القريبين.`,
-        TENDER:       `✅ تم إنشاء مناقصتك!\n\n🔢 رقم المناقصة: #TND-${reqId.slice(-4)}\n🏗️ المشروع: ${entities.projectType}\n💰 الميزانية: ${entities.budget}\n📍 الموقع: ${entities.city}\n⏳ الموعد: ${entities.deadline}\n\nتم نشر مناقصتك — ستبدأ العروض بالوصول من المقاولين المعتمدين.`,
-        CONSULTING:   `✅ تم حجز طلب الاستشارة!\n\n🔢 رقم الطلب: #${reqId}\n👨‍💼 نوع الاستشارة: ${entities.consultationType}\n📅 الموعد المفضل: ${entities.date}\n📍 المدينة: ${entities.city}\n\nسيتواصل معك المستشار المختص لتأكيد الموعد.`,
-        COMPLAINT:    `✅ تم رفع شكواك بنجاح!\n\n🔢 رقم الشكوى: #CMP-${reqId.slice(-4)}\n⚠️ المشكلة: ${entities.complaintType}\n📝 رقم الطلب: ${entities.orderId}\n\nسيراجع فريق الدعم شكواك خلال 24 ساعة. يمكنك متابعة حالتها من لوحة التحكم.`,
+        HOME_SERVICE: `✅ تم إرسال طلبك بنجاح!\n\n🔢 رقم الطلب: #${displayId}\n🔧 الخدمة: ${entities.serviceType}\n📍 المدينة: ${entities.city}\n⚡ الأولوية: ${entities.urgency}\n\nسيتواصل معك أقرب مزود متاح في منطقتك خلال دقائق. يمكنك متابعة حالة الطلب من لوحة التحكم.`,
+        MANPOWER:     `✅ تم إرسال طلب العمالة!\n\n🔢 رقم الطلب: #${displayId}\n👷 التخصص: ${entities.workerType}\n🔢 العدد: ${entities.quantity} عامل\n📅 المدة: ${entities.duration}\n📍 المدينة: ${entities.city}\n\nستصلك عروض من المورّدين المعتمدين خلال ساعات.`,
+        EQUIPMENT:    `✅ تم إرسال طلب المعدات!\n\n🔢 رقم الطلب: #${displayId}\n🏗️ المعدة: ${entities.equipmentType}\n📅 تاريخ البدء: ${entities.date}\n⏱️ المدة: ${entities.duration}\n📍 المدينة: ${entities.city}\n\nستصلك عروض الإيجار من المورّدين القريبين.`,
+        TENDER:       `✅ تم إنشاء مناقصتك!\n\n🔢 رقم المناقصة: #${displayId}\n🏗️ المشروع: ${entities.projectType}\n💰 الميزانية: ${entities.budget}\n📍 الموقع: ${entities.city}\n⏳ الموعد: ${entities.deadline}\n\nتم نشر مناقصتك — ستبدأ العروض بالوصول من المقاولين المعتمدين.`,
+        CONSULTING:   `✅ تم حجز طلب الاستشارة!\n\n🔢 رقم الطلب: #${displayId}\n👨‍💼 نوع الاستشارة: ${entities.consultationType}\n📅 الموعد المفضل: ${entities.date}\n📍 المدينة: ${entities.city}\n\nسيتواصل معك المستشار المختص لتأكيد الموعد.`,
+        COMPLAINT:    `✅ تم رفع شكواك بنجاح!\n\n🔢 رقم الشكوى: #${displayId}\n⚠️ المشكلة: ${entities.complaintType}\n📝 رقم الطلب: ${entities.orderId}\n\nسيراجع فريق الدعم شكواك خلال 24 ساعة. يمكنك متابعة حالتها من لوحة التحكم.`,
     };
 
     const cards = {
@@ -1004,7 +1010,10 @@ function chatApp() {
             setTimeout(() => {
                 this.isTyping = false;
                 const response = this._process(msg);
-                this._pushAI(response);
+                // _handleConfirmation pushes its own bubbles asynchronously when response is null
+                if (response !== null) {
+                    this._pushAI(response);
+                }
                 this.$nextTick(() => this.scrollBottom());
             }, delay);
         },
@@ -1168,12 +1177,29 @@ function chatApp() {
         _handleConfirmation(t, msg) {
             if (/نعم|أكد|تأكيد|صح|موافق|ok|yes|✅|ايوا|أيوا/.test(t) || msg.includes('✅')) {
                 this.conv.stage = 'done';
-                const result = executeAction(this.conv.intent, this.conv.entities);
+                const savedIntent   = this.conv.intent;
+                const savedEntities = { ...this.conv.entities };
+                // Push a waiting bubble immediately
+                this._pushAI({ text: '⏳ جارٍ إنشاء طلبك...', variant: 'normal' });
+                this.$nextTick(() => this.scrollBottom());
+                // Await the API call, then replace waiting bubble with result or error
+                executeAction(savedIntent, savedEntities).then(result => {
+                    // Remove the waiting bubble
+                    this.messages = this.messages.filter(m => m.text !== '⏳ جارٍ إنشاء طلبك...');
+                    this._pushAI(result);
+                    this.$nextTick(() => this.scrollBottom());
+                }).catch(() => {
+                    this.messages = this.messages.filter(m => m.text !== '⏳ جارٍ إنشاء طلبك...');
+                    this._pushAI({ text: '❌ حدث خطأ أثناء إنشاء الطلب. يرجى المحاولة مرة أخرى.', variant: 'normal' });
+                    this.$nextTick(() => this.scrollBottom());
+                    this.conv.stage = 'idle';
+                });
                 // Reset conv after delay for new requests
                 setTimeout(() => {
                     this.conv = { intent: null, entities: {}, awaiting: null, stage: 'idle' };
                 }, 8000);
-                return result;
+                // Return null — caller must not push anything (waiting bubble already pushed)
+                return null;
             }
             if (/لا|تغيير|تعديل|خطأ|❌|✏️/.test(t) || msg.includes('❌') || msg.includes('✏️')) {
                 this.conv.stage  = 'gathering';

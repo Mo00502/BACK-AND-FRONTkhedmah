@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserStatus } from '@prisma/client';
+import { UserStatus, ProviderVerificationStatus, DisputeStatus } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -210,9 +210,9 @@ export class AdminService {
         data: { suspended: false, suspendedReason: null, status: UserStatus.ACTIVE },
       }),
       this.prisma.providerProfile.updateMany({
-        where: { userId, verificationStatus: 'SUSPENDED' as any },
+        where: { userId, verificationStatus: ProviderVerificationStatus.SUSPENDED },
         data: {
-          verificationStatus: 'APPROVED' as any,
+          verificationStatus: ProviderVerificationStatus.APPROVED,
           verified: true,
           suspendedAt: null,
           suspensionReason: null,
@@ -246,7 +246,7 @@ export class AdminService {
 
   async getDisputes(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
-    const where = { status: { in: ['OPEN', 'UNDER_REVIEW'] as any[] } };
+    const where = { status: { in: [DisputeStatus.OPEN, DisputeStatus.UNDER_REVIEW] } };
     const [disputes, total] = await Promise.all([
       this.prisma.dispute.findMany({
         where,

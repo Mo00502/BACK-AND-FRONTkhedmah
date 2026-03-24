@@ -449,43 +449,61 @@
 
     async function markRead(id) {
         if (!unreadIds.has(id)) return;
-        unreadIds.delete(id);
 
         const card = document.querySelector(`[data-id="${id}"]`);
-        if (card) {
-            card.classList.remove('unread');
-            card.dataset.status = 'read';
-            const dot = document.getElementById(`dot-${id}`);
-            if (dot) dot.style.display = 'none';
-            const btn = card.querySelector('.read-btn');
-            if (btn) { btn.textContent = 'مقروء'; btn.style.opacity = '0.4'; btn.style.cursor = 'default'; btn.onclick = null; }
-        }
+        const btn = card ? card.querySelector('.read-btn') : null;
 
-        updateBadge();
-        showToast('✓ تم تحديده كمقروء');
-        refreshUnreadTab();
-        API.notifications.markRead(id).catch(() => {});
+        // Disable button immediately to prevent double-clicks
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
+
+        try {
+            await API.notifications.markRead(id);
+
+            unreadIds.delete(id);
+            if (card) {
+                card.classList.remove('unread');
+                card.dataset.status = 'read';
+                const dot = document.getElementById(`dot-${id}`);
+                if (dot) dot.style.display = 'none';
+                if (btn) { btn.textContent = 'مقروء'; btn.style.opacity = '0.4'; btn.style.cursor = 'default'; btn.onclick = null; }
+            }
+            updateBadge();
+            showToast('✓ تم تحديده كمقروء');
+            refreshUnreadTab();
+        } catch (err) {
+            // Re-enable button so user can retry
+            if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
+            showToast('❌ تعذّر تحديث الإشعار. يرجى المحاولة مرة أخرى.');
+        }
     }
 
     async function markAllRead() {
-        unreadIds.clear();
-        document.querySelectorAll('.notif-card.unread').forEach(card => {
-            card.classList.remove('unread');
-            card.dataset.status = 'read';
-        });
-        document.querySelectorAll('.unread-dot').forEach(d => d.style.display = 'none');
-        document.querySelectorAll('.read-btn').forEach(btn => {
-            btn.textContent = 'مقروء';
-            btn.style.opacity = '0.4';
-            btn.style.cursor = 'default';
-            btn.onclick = null;
-        });
-        updateBadge();
-        showToast('✓ تم تحديد الكل كمقروء');
-        refreshUnreadTab();
-        API.notifications.markAllRead()
-            .then(() => { API.toast('تم تحديد جميع الإشعارات كمقروءة', 'success'); })
-            .catch(() => {});
+        const markAllBtn = document.querySelector('.mark-all-btn');
+        if (markAllBtn) { markAllBtn.disabled = true; markAllBtn.textContent = 'جارٍ التحديث...'; }
+
+        try {
+            await API.notifications.markAllRead();
+
+            unreadIds.clear();
+            document.querySelectorAll('.notif-card.unread').forEach(card => {
+                card.classList.remove('unread');
+                card.dataset.status = 'read';
+            });
+            document.querySelectorAll('.unread-dot').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('.read-btn').forEach(btn => {
+                btn.textContent = 'مقروء';
+                btn.style.opacity = '0.4';
+                btn.style.cursor = 'default';
+                btn.onclick = null;
+            });
+            updateBadge();
+            showToast('✓ تم تحديد الكل كمقروء');
+            refreshUnreadTab();
+        } catch (err) {
+            showToast('❌ تعذّر تحديث الإشعارات. يرجى المحاولة مرة أخرى.');
+        } finally {
+            if (markAllBtn) { markAllBtn.disabled = false; markAllBtn.textContent = 'تحديد الكل كمقروء'; }
+        }
     }
 
     function refreshUnreadTab() {
@@ -512,7 +530,7 @@
                 unreadIds = new Set(unread.map(n => n.id));
                 updateBadge();
             }
-        } catch (_) { /* silent — no toast on background refresh */ }
+        } catch (err) { console.warn('notifications poll error:', err); }
     }
 
     // Auto-refresh every 15 seconds, only while page is visible

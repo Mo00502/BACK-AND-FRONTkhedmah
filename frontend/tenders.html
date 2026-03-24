@@ -467,11 +467,11 @@
             </div>
             <div class="form-group">
                 <label class="form-label">عنوان المناقصة *</label>
-                <input type="text" class="form-control" placeholder="وصف موجز للمشروع">
+                <input type="text" id="postTitle" class="form-control" placeholder="وصف موجز للمشروع">
             </div>
             <div class="form-group">
                 <label class="form-label">القطاع *</label>
-                <select class="form-control">
+                <select id="postCategory" class="form-control">
                     <option value="">اختر القطاع</option>
                     <option>بناء وإنشاء</option>
                     <option>تقنية المعلومات</option>
@@ -483,26 +483,26 @@
             </div>
             <div class="form-group">
                 <label class="form-label">الميزانية التقديرية (ر.س) *</label>
-                <input type="number" class="form-control" placeholder="0">
+                <input type="number" id="postBudget" class="form-control" placeholder="0">
             </div>
             <div class="form-group">
                 <label class="form-label">تاريخ انتهاء الاستقبال *</label>
-                <input type="date" class="form-control">
+                <input type="date" id="postDeadline" class="form-control">
             </div>
             <div class="form-group">
                 <label class="form-label">المدينة *</label>
-                <select class="form-control">
+                <select id="postRegion" class="form-control">
                     <option>الرياض</option><option>جدة</option><option>الدمام</option>
                     <option>مكة المكرمة</option><option>المدينة المنورة</option>
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label">وصف المناقصة والمتطلبات *</label>
-                <textarea class="form-control" placeholder="اشرح المشروع بالتفصيل..."></textarea>
+                <textarea id="postDescription" class="form-control" placeholder="اشرح المشروع بالتفصيل..."></textarea>
             </div>
             <div class="modal-footer">
                 <button class="btn-full btn-cancel" onclick="closeModal('postModal')">إلغاء</button>
-                <button class="btn-full btn-submit" onclick="submitPost()">نشر المناقصة</button>
+                <button id="postSubmitBtn" class="btn-full btn-submit" onclick="submitPost()">نشر المناقصة</button>
             </div>
         </div>
     </div>
@@ -573,9 +573,47 @@
             document.getElementById(id).classList.remove('show');
         }
 
-        function submitPost() {
-            closeModal('postModal');
-            showToast('تم نشر المناقصة بنجاح ✅');
+        async function submitPost() {
+            const btn = document.getElementById('postSubmitBtn');
+            if (!btn || btn.disabled) return;
+
+            const title       = document.getElementById('postTitle').value.trim();
+            const category    = document.getElementById('postCategory').value;
+            const budget      = parseFloat(document.getElementById('postBudget').value) || 0;
+            const deadline    = document.getElementById('postDeadline').value;
+            const region      = document.getElementById('postRegion').value;
+            const description = document.getElementById('postDescription').value.trim();
+
+            if (!title || !category || !deadline || !description) {
+                showToast('يرجى تعبئة جميع الحقول المطلوبة *');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'جارٍ النشر...';
+
+            try {
+                await API.tenders.create({ title, description, budget, deadline, category, region });
+                closeModal('postModal');
+                showToast('تم نشر المناقصة بنجاح ✅');
+                // Reload tender list from API
+                API.tenders.list({ limit: 20 }).then(res => {
+                    const items = res.data || res.items || (Array.isArray(res) ? res : []);
+                    if (!items.length) return;
+                    const list = document.getElementById('tendersList');
+                    // Remove previously API-loaded cards (those without data-static)
+                    list.querySelectorAll('[data-api-loaded]').forEach(el => el.remove());
+                    items.forEach(t => {
+                        const card = buildApiTenderCard(t);
+                        if (card) { card.setAttribute('data-api-loaded', '1'); list.appendChild(card); }
+                    });
+                    applyFilters();
+                }).catch(() => {});
+            } catch (err) {
+                showToast('❌ حدث خطأ أثناء نشر المناقصة. يرجى المحاولة مرة أخرى.');
+                btn.disabled = false;
+                btn.textContent = 'نشر المناقصة';
+            }
         }
 
         function isClosingSoon(deadline) {
@@ -620,6 +658,51 @@
             return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
 
+        // Build a tender card element from an API tender object
+        function buildApiTenderCard(t) {
+            const id = t.id;
+            const list = document.getElementById('tendersList');
+            if (list && list.querySelector(`[data-api-id="${id}"]`)) return null;
+            const statusMap = { OPEN: 'open', CLOSED: 'closed', AWARDED: 'closed', CANCELLED: 'closed' };
+            const card = document.createElement('div');
+            card.className = 'tender-card';
+            card.dataset.apiId = id;
+            card.dataset.sector = t.category || '';
+            card.dataset.status = statusMap[t.status] || 'open';
+            card.dataset.budget = t.budget || 0;
+            card.dataset.city = t.city || t.region || '';
+            card.dataset.date = t.createdAt || '';
+            card.dataset.deadline = t.deadline || '';
+            const safeTitle    = escHtml(t.title || 'مناقصة');
+            const safeCompany  = escHtml(t.company?.nameAr || t.company?.name || 'شركة');
+            const safeCity     = escHtml(t.city || t.region || '');
+            const safeCategory = escHtml(t.category || '');
+            const safeDesc     = escHtml((t.description || '').slice(0, 120));
+            const safeSuffix   = (t.description?.length || 0) > 120 ? '...' : '';
+            const safeDeadline = escHtml(t.deadline ? t.deadline.split('T')[0] : '');
+            const safeId       = escHtml(id);
+            card.innerHTML = `
+                <div style="padding:1.25rem">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap">
+                        <div>
+                            <div style="font-weight:700;font-size:1rem;margin-bottom:0.25rem">${safeTitle}</div>
+                            <div style="font-size:0.82rem;color:var(--gray)">🏢 ${safeCompany} &nbsp;•&nbsp; 📍 ${safeCity} &nbsp;•&nbsp; 🏷️ ${safeCategory}</div>
+                        </div>
+                        <span style="background:#dcfce7;color:#166534;padding:0.25rem 0.75rem;border-radius:999px;font-size:0.75rem;font-weight:600;white-space:nowrap">${t.status === 'OPEN' ? '🟢 مفتوح' : '🔴 مغلق'}</span>
+                    </div>
+                    <p style="font-size:0.88rem;color:var(--gray);margin:0.75rem 0 0">${safeDesc}${safeSuffix}</p>
+                    <div style="display:flex;gap:1rem;margin-top:0.875rem;flex-wrap:wrap">
+                        <span style="font-size:0.8rem;color:var(--primary);font-weight:600">💰 ${Number(t.budget || 0).toLocaleString('ar-SA')}<span style="font-weight:400;color:var(--gray);margin-right:2px"> ر.س</span></span>
+                        ${safeDeadline ? `<span style="font-size:0.8rem;color:var(--gray)">⏰ الإغلاق: ${safeDeadline}</span>` : ''}
+                    </div>
+                    ${(t.deadline && isClosingSoon(t.deadline)) ? `<span style="background:rgba(245,158,11,0.15);color:#92400e;font-size:0.72rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:8px;display:inline-block;margin-top:0.4rem;">ينتهي في ${getCountdown(t.deadline)}</span>` : ''}
+                    <div style="margin-top:1rem;text-align:left">
+                        <a href="tender-detail.html?id=${safeId}" style="background:var(--primary);color:white;padding:0.45rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض التفاصيل</a>
+                    </div>
+                </div>`;
+            return card;
+        }
+
         // Inject countdown badges for static demo cards
         function renderStaticCountdowns() {
             const map = {
@@ -650,47 +733,9 @@
                 const items = res.data || res.items || (Array.isArray(res) ? res : []);
                 if (!items.length) return;
                 const list = document.getElementById('tendersList');
-                const statusMap = { OPEN: 'open', CLOSED: 'closed', AWARDED: 'closed', CANCELLED: 'closed' };
                 items.forEach(t => {
-                    const id = t.id;
-                    if (list.querySelector(`[data-api-id="${id}"]`)) return;
-                    const card = document.createElement('div');
-                    card.className = 'tender-card';
-                    card.dataset.apiId = id;
-                    card.dataset.sector = t.category || '';
-                    card.dataset.status = statusMap[t.status] || 'open';
-                    card.dataset.budget = t.budget || 0;
-                    card.dataset.city = t.city || '';
-                    card.dataset.date = t.createdAt || '';
-                    card.dataset.deadline = t.deadline || '';
-                    const safeTitle    = escHtml(t.title || 'مناقصة');
-                    const safeCompany  = escHtml(t.company?.nameAr || t.company?.name || 'شركة');
-                    const safeCity     = escHtml(t.city || '');
-                    const safeCategory = escHtml(t.category || '');
-                    const safeDesc     = escHtml((t.description || '').slice(0, 120));
-                    const safeSuffix   = t.description?.length > 120 ? '...' : '';
-                    const safeDeadline = escHtml(t.deadline ? t.deadline.split('T')[0] : '');
-                    const safeId       = escHtml(id);
-                    card.innerHTML = `
-                        <div style="padding:1.25rem">
-                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap">
-                                <div>
-                                    <div style="font-weight:700;font-size:1rem;margin-bottom:0.25rem">${safeTitle}</div>
-                                    <div style="font-size:0.82rem;color:var(--gray)">🏢 ${safeCompany} &nbsp;•&nbsp; 📍 ${safeCity} &nbsp;•&nbsp; 🏷️ ${safeCategory}</div>
-                                </div>
-                                <span style="background:#dcfce7;color:#166534;padding:0.25rem 0.75rem;border-radius:999px;font-size:0.75rem;font-weight:600;white-space:nowrap">${t.status === 'OPEN' ? '🟢 مفتوح' : '🔴 مغلق'}</span>
-                            </div>
-                            <p style="font-size:0.88rem;color:var(--gray);margin:0.75rem 0 0">${safeDesc}${safeSuffix}</p>
-                            <div style="display:flex;gap:1rem;margin-top:0.875rem;flex-wrap:wrap">
-                                <span style="font-size:0.8rem;color:var(--primary);font-weight:600">💰 ${Number(t.budget || 0).toLocaleString('ar-SA')}<span style="font-weight:400;color:var(--gray);margin-right:2px"> ر.س</span></span>
-                                ${safeDeadline ? `<span style="font-size:0.8rem;color:var(--gray)">⏰ الإغلاق: ${safeDeadline}</span>` : ''}
-                            </div>
-                            ${(t.deadline && isClosingSoon(t.deadline)) ? `<span style="background:rgba(245,158,11,0.15);color:#92400e;font-size:0.72rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:8px;display:inline-block;margin-top:0.4rem;">ينتهي في ${getCountdown(t.deadline)}</span>` : ''}
-                            <div style="margin-top:1rem;text-align:left">
-                                <a href="tender-detail.html?id=${safeId}" style="background:var(--primary);color:white;padding:0.45rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem">عرض التفاصيل</a>
-                            </div>
-                        </div>`;
-                    list.appendChild(card);
+                    const card = buildApiTenderCard(t);
+                    if (card) { card.setAttribute('data-api-loaded', '1'); list.appendChild(card); }
                 });
                 applyFilters();
             }).catch(() => {});

@@ -697,6 +697,50 @@ export class EventListenerService {
     }
   }
 
+  // ── Wallet withdrawal events ──────────────────────────────────────────────
+
+  @OnEvent('wallet.withdrawal_requested')
+  async onWithdrawalRequested(payload: { userId: string; amount: number; withdrawalId: string }) {
+    try {
+      await this.notif.notifyUser(
+        payload.userId,
+        'طلب سحب مستلم',
+        `تم استلام طلب سحبك بمبلغ ${payload.amount} ريال وهو قيد المراجعة`,
+        { withdrawalId: payload.withdrawalId },
+      );
+    } catch (err) {
+      this.logger.error(`onWithdrawalRequested notification failed: ${err}`);
+    }
+  }
+
+  @OnEvent('wallet.withdrawal_completed')
+  async onWithdrawalCompleted(payload: { userId: string; amount: number; withdrawalId?: string }) {
+    try {
+      await this.notif.notifyUser(
+        payload.userId,
+        'تم تحويل المبلغ',
+        `تمت الموافقة على طلب السحب وتحويل ${payload.amount} ريال إلى حسابك البنكي`,
+        payload.withdrawalId ? { withdrawalId: payload.withdrawalId } : {},
+      );
+    } catch (err) {
+      this.logger.error(`onWithdrawalCompleted notification failed: ${err}`);
+    }
+  }
+
+  @OnEvent('wallet.withdrawal_rejected')
+  async onWithdrawalRejected(payload: { userId: string; amount: number; withdrawalId?: string; reason?: string }) {
+    try {
+      await this.notif.notifyUser(
+        payload.userId,
+        'طلب السحب مرفوض',
+        `تم رفض طلب سحب مبلغ ${payload.amount} ريال${payload.reason ? ': ' + payload.reason : ''}`,
+        payload.withdrawalId ? { withdrawalId: payload.withdrawalId } : {},
+      );
+    } catch (err) {
+      this.logger.error(`onWithdrawalRejected notification failed: ${err}`);
+    }
+  }
+
   // ── Tender bid submitted ──────────────────────────────────────────────────
 
   @OnEvent('tender.bid_submitted')

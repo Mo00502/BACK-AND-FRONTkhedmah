@@ -256,7 +256,7 @@ export class WalletService {
   async rejectWithdrawal(withdrawalId: string, adminId: string, adminNote: string) {
     const wr = await this.prisma.withdrawalRequest.findUnique({ where: { id: withdrawalId } });
     if (!wr) throw new NotFoundException('Withdrawal request not found');
-    if (wr.status !== 'PENDING')
+    if (wr.status !== WithdrawalStatus.PENDING)
       throw new BadRequestException('Only PENDING withdrawals can be rejected');
 
     const wallet = await this.getOrCreate(wr.userId);
@@ -280,7 +280,7 @@ export class WalletService {
       this.prisma.withdrawalRequest.update({
         where: { id: withdrawalId },
         data: {
-          status: 'REJECTED',
+          status: WithdrawalStatus.REJECTED,
           processedBy: adminId,
           processedAt: new Date(),
           adminNote,

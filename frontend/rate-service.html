@@ -529,9 +529,10 @@
         })();
 
         async function submitReview() {
+            const btn = document.getElementById('submitBtn');
+            if (!btn || btn.disabled) return;
             if (!mainRating) return;
             const reqId = new URLSearchParams(location.search).get('requestId') || '';
-            const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = 'جاري الإرسال...';
             try {

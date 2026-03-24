@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { CommissionStatus, ConsultationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const VAT_RATE = 0.15; // Saudi Arabia 15% VAT
@@ -172,7 +173,7 @@ export class InvoicesService {
       }),
       this.prisma.tenderCommission.findMany({
         where: {
-          status: { in: ['PAID'] as any },
+          status: { in: [CommissionStatus.PAID] },
           OR: [
             { tender: { company: { ownerId: userId } } }, // awarding company owner
             { company: { ownerId: userId } }, // winning company owner
@@ -202,7 +203,7 @@ export class InvoicesService {
       this.prisma.consultation.findMany({
         where: {
           OR: [{ customerId: userId }, { providerId: userId }],
-          status: 'COMPLETED' as any,
+          status: ConsultationStatus.COMPLETED,
           totalAmount: { not: null },
         },
         select: {
