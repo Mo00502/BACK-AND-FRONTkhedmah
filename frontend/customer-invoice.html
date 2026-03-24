@@ -502,8 +502,8 @@
         hint.style.display = hint.style.display === 'none' ? 'block' : 'none';
     }
 
-    // Dynamic invoice calculation
-    (function calcInvoice() {
+    // Dynamic invoice calculation (used for demo data)
+    function calcInvoiceFromRows() {
         const VAT_RATE = 0.15;
         const REFERRAL_DISCOUNT = 27; // fixed referral credit (ريال)
 
@@ -526,7 +526,130 @@
         document.getElementById('inv-vat').textContent      = vat.toFixed(0) + ' ريال';
         document.getElementById('inv-discount').textContent = '-' + REFERRAL_DISCOUNT + ' ريال';
         document.getElementById('inv-grand').textContent    = grand.toFixed(0) + ' ريال';
-    })();
+    }
+
+    function escHtml(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        try {
+            return new Date(dateStr).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch(e) { return dateStr; }
+    }
+
+    function applyInvoiceData(inv) {
+        // Invoice number and date (header)
+        const invNumEl = document.querySelector('.invoice-num');
+        if (invNumEl && inv.invoiceNumber) invNumEl.textContent = '# ' + inv.invoiceNumber;
+
+        const invDateEl = document.querySelector('.invoice-date');
+        if (invDateEl && inv.createdAt) invDateEl.textContent = '📅 ' + formatDate(inv.createdAt);
+
+        // Customer info block (first .info-block)
+        const customerBlock = document.querySelectorAll('.info-block')[0];
+        if (customerBlock) {
+            const customer = inv.customer || inv.request?.customer || {};
+            const name = customer.name || customer.fullName || '';
+            const email = customer.email || '';
+            const phone = customer.phone || '';
+            const city  = customer.city  || '';
+            if (name)  customerBlock.querySelector('.name').textContent = name;
+            const paras = customerBlock.querySelectorAll('p:not(.name)');
+            if (paras[0] && city)  paras[0].textContent = city;
+            if (paras[1] && phone) paras[1].textContent = phone;
+            if (paras[2] && email) paras[2].textContent = email;
+        }
+
+        // Provider info block (second .info-block)
+        const providerBlock = document.querySelectorAll('.info-block')[1];
+        if (providerBlock) {
+            const provider = inv.provider || inv.request?.provider || {};
+            const name     = provider.name || provider.user?.name || '';
+            const category = provider.category || '';
+            const phone    = provider.phone || provider.user?.phone || '';
+            const license  = provider.licenseNumber || '';
+            if (name)     providerBlock.querySelector('.name').textContent = name;
+            const paras = providerBlock.querySelectorAll('p:not(.name)');
+            if (paras[0] && category) paras[0].textContent = category;
+            if (paras[1] && phone)    paras[1].textContent = phone;
+            if (paras[2] && license)  paras[2].textContent = 'رقم الترخيص: ' + license;
+        }
+
+        // Service rows table
+        const tbodyEl = document.getElementById('inv-rows');
+        const serviceName = inv.serviceName || inv.request?.service?.name || inv.description || '';
+        const serviceAmt  = Number(inv.serviceAmount || inv.escrowAmount || 0);
+        const materialsAmt = Number(inv.materialsAmount || 0);
+        const vatAmt      = Number(inv.vatAmount || 0);
+        const discountAmt = Number(inv.discountAmount || 0);
+        const totalAmt    = Number(inv.totalAmount || inv.grandTotal || 0);
+
+        if (tbodyEl && serviceName) {
+            let rows = '';
+            if (serviceAmt > 0) {
+                rows += `<tr>
+                    <td><div class="service-name">${escHtml(serviceName)}</div></td>
+                    <td>1</td>
+                    <td>${serviceAmt.toFixed(0)} ريال</td>
+                    <td>${serviceAmt.toFixed(0)} ريال</td>
+                </tr>`;
+            }
+            if (materialsAmt > 0) {
+                rows += `<tr>
+                    <td><div class="service-name">مواد ومستلزمات</div></td>
+                    <td>1</td>
+                    <td>${materialsAmt.toFixed(0)} ريال</td>
+                    <td>${materialsAmt.toFixed(0)} ريال</td>
+                </tr>`;
+            }
+            if (rows) tbodyEl.innerHTML = rows;
+        }
+
+        // Totals
+        const subtotal = serviceAmt + materialsAmt;
+        const computedVat   = vatAmt   > 0 ? vatAmt   : +(subtotal * 0.15).toFixed(2);
+        const computedGrand = totalAmt > 0 ? totalAmt : +(subtotal + computedVat - discountAmt).toFixed(2);
+
+        document.getElementById('inv-subtotal').textContent = subtotal.toFixed(0) + ' ريال';
+        document.getElementById('inv-vat').textContent      = computedVat.toFixed(0) + ' ريال';
+        if (discountAmt > 0) {
+            document.getElementById('inv-discount').textContent = '-' + discountAmt.toFixed(0) + ' ريال';
+        } else {
+            const discRow = document.getElementById('inv-discount')?.closest('.total-row');
+            if (discRow) discRow.style.display = 'none';
+        }
+        document.getElementById('inv-grand').textContent = computedGrand.toFixed(0) + ' ريال';
+
+        // Escrow reference
+        const escrowRefEl = document.querySelector('.escrow-ref span');
+        if (escrowRefEl && (inv.escrowId || inv.paymentReference)) {
+            escrowRefEl.textContent = inv.escrowId || inv.paymentReference;
+        }
+        const escrowDateEls = document.querySelectorAll('.escrow-ref span');
+        if (escrowDateEls[1] && (inv.releasedAt || inv.paidAt || inv.updatedAt)) {
+            escrowDateEls[1].textContent = formatDate(inv.releasedAt || inv.paidAt || inv.updatedAt);
+        }
+    }
+
+    // Load real invoice if ?id= is present in URL
+    document.addEventListener('DOMContentLoaded', async () => {
+        const params    = new URLSearchParams(window.location.search);
+        const invoiceId = params.get('id');
+        if (!invoiceId) {
+            // No ID — stay on demo data and run demo calc
+            calcInvoiceFromRows();
+            return;
+        }
+        try {
+            const inv = await API.invoices.get(invoiceId);
+            applyInvoiceData(inv);
+        } catch(e) {
+            // Fetch failed — fall back to demo data
+            calcInvoiceFromRows();
+        }
+    });
 </script>
 </body>
 </html>

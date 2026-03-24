@@ -1,4 +1,4 @@
-import { Process, Processor } from '@nestjs/bull';
+import { Process, Processor, OnQueueFailed } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { NotificationsService } from './notifications.service';
@@ -30,5 +30,12 @@ export class NotificationsProcessor {
     const { userId, title, body, data } = job.data;
     this.logger.log(`Sending FCM push to user ${userId}: ${title}`);
     await this.notifService.sendPush(userId, title, body, data);
+  }
+
+  @OnQueueFailed()
+  onFailed(job: Job, err: Error) {
+    this.logger.error(
+      `Notification job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempt(s): ${err.message}`,
+    );
   }
 }

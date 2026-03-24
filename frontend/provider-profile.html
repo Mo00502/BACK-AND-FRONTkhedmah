@@ -716,6 +716,29 @@
 
 </div>
 
+<!-- ERROR STATE (hidden by default) -->
+<div id="profileError" style="display:none; max-width:800px; margin:3rem auto; padding:0 5%; text-align:center;">
+    <div style="font-size:3rem; margin-bottom:1rem;">⚠️</div>
+    <h3 style="color:var(--dark); margin-bottom:0.5rem;">تعذّر تحميل الملف الشخصي</h3>
+    <p style="color:var(--gray); margin-bottom:1.5rem;">المزود غير موجود أو غير متاح حالياً.</p>
+    <a href="search-services.html" style="display:inline-block; padding:0.75rem 2rem; background:var(--primary); color:white; border-radius:12px; text-decoration:none; font-weight:700; font-family:'Tajawal',sans-serif;">← العودة إلى البحث</a>
+</div>
+
+<!-- LOADING SKELETON (visible during fetch) -->
+<div id="profileSkeleton" style="display:none; max-width:800px; margin:2rem auto; padding:0 5%;">
+    <div style="background:white; border-radius:16px; padding:1.5rem; margin-bottom:0.875rem; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+            <div style="width:80px; height:80px; border-radius:50%; background:#e2e8f0; flex-shrink:0;"></div>
+            <div style="flex:1;">
+                <div style="height:20px; background:#e2e8f0; border-radius:6px; margin-bottom:0.5rem; width:60%;"></div>
+                <div style="height:14px; background:#f1f5f9; border-radius:6px; width:40%;"></div>
+            </div>
+        </div>
+        <div style="height:14px; background:#f1f5f9; border-radius:6px; margin-bottom:0.5rem;"></div>
+        <div style="height:14px; background:#f1f5f9; border-radius:6px; width:80%;"></div>
+    </div>
+</div>
+
 <!-- STICKY CTA BAR -->
 <div class="cta-bar">
     <div id="ctaPrice">
@@ -723,8 +746,8 @@
         <div class="cta-price-unit" id="ctaPriceUnit"></div>
     </div>
     <div class="cta-btns">
-        <a href="chat.html?type=service&id=1" class="btn-chat-cta" id="ctaChatBtn">💬 محادثة</a>
-        <a href="quote-request.html" class="btn-book-cta" id="ctaBookBtn">طلب خدمة</a>
+        <button class="btn-chat-cta" id="ctaChatBtn" onclick="contactProvider()">💬 محادثة</button>
+        <button class="btn-book-cta" id="ctaBookBtn" onclick="bookProvider()">طلب خدمة</button>
     </div>
 </div>
 
@@ -1098,20 +1121,64 @@
         // CTA bar
         document.getElementById('ctaPriceNum').textContent = `من ${data.startingPrice} ر.س`;
         document.getElementById('ctaPriceUnit').textContent = `/ ${data.priceUnit}`;
-        document.getElementById('ctaBookBtn').href = `quote-request.html?category=${encodeURIComponent(data.category)}`;
-        document.getElementById('ctaChatBtn').href = `chat.html?type=service&providerId=${encodeURIComponent(id)}`;
     }
 
     function escHtml(s) {
         return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // CTA button handlers — use providerId from URL
+    function bookProvider() {
+        const providerId = new URLSearchParams(location.search).get('id');
+        if (!providerId) { window.location.href = 'quote-request.html'; return; }
+        window.location.href = `quote-request.html?providerId=${encodeURIComponent(providerId)}`;
+    }
+
+    async function contactProvider() {
+        const providerId = new URLSearchParams(location.search).get('id');
+        if (!providerId) { window.location.href = 'chat.html'; return; }
+        const btn = document.getElementById('ctaChatBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '...';
+        btn.disabled = true;
+        try {
+            // Try to open/create a direct conversation with this provider
+            const conv = await API.chat.createDirect(providerId);
+            const convId = conv.id || conv.conversationId || '';
+            window.location.href = convId
+                ? `chat.html?conversationId=${encodeURIComponent(convId)}`
+                : `chat.html?userId=${encodeURIComponent(providerId)}`;
+        } catch(e) {
+            // Fallback: navigate with userId param so chat page can try
+            btn.textContent = originalText;
+            btn.disabled = false;
+            window.location.href = `chat.html?userId=${encodeURIComponent(providerId)}`;
+        }
+    }
+
+    function showProfileSkeleton(show) {
+        const sk = document.getElementById('profileSkeleton');
+        if (sk) sk.style.display = show ? 'block' : 'none';
+    }
+
+    function showProfileError() {
+        document.getElementById('profileError').style.display = 'block';
+        document.querySelector('.profile-hero').style.display = 'none';
+        document.querySelector('.stats-bar').style.display = 'none';
+        document.querySelector('.tags-strip').style.display = 'none';
+        document.querySelector('.profile-body').style.display = 'none';
+        document.querySelector('.cta-bar').style.display = 'none';
+    }
+
     function loadProfile() {
         const id = new URLSearchParams(location.search).get('id') || 'khalid';
         const isUUID = id.includes('-') && id.length > 10;
         if (isUUID) {
+            showProfileSkeleton(true);
             API.providers.getProfile(id).then(p => {
-                // Map API response to the same shape loadProfile uses
+                showProfileSkeleton(false);
+                // Map API response to the same shape applyProfileData uses
+                const firstServicePrice = p.skills?.[0]?.price ?? p.services?.[0]?.price ?? 0;
                 const data = {
                     name: p.user?.name || p.name || 'مزود خدمة',
                     title: p.bio || p.category || '',
@@ -1121,31 +1188,65 @@
                     reviewCount: p.ratingCount || 0,
                     available: p.available ?? true,
                     emergency: false, sameDay: false,
-                    jobsCompleted: p.jobsCompleted || 0,
-                    yearsExp: p.yearsOfExperience || 0,
+                    jobsCompleted: p.jobsCompleted || p.completedJobs || 0,
+                    yearsExp: p.yearsOfExperience || p.experience || 0,
                     responseTime: 'خلال ساعة',
                     repeatRate: 0,
                     bio: p.bio || '',
-                    languages: ['العربية'],
-                    serviceMode: 'both',
+                    languages: p.languages || ['العربية'],
+                    serviceMode: p.serviceMode || 'both',
                     verified: p.verificationStatus === 'APPROVED',
-                    districts: [], tags: p.services?.map(s => s.name) || [],
-                    services: (p.services || []).map(s => ({
+                    districts: p.districts || [],
+                    tags: (p.skills || p.services || []).map(s => s.name),
+                    services: (p.skills || p.services || []).map(s => ({
                         name: s.name, desc: s.description || '',
-                        price: Number(s.price) || 0, unit: 'للزيارة', featured: false
+                        price: Number(s.price) || 0, unit: s.priceUnit || 'للزيارة', featured: s.featured || false
                     })),
-                    certifications: [], portfolio: [], reviews: [],
-                    completionRate: 95,
-                    startingPrice: p.services?.[0] ? Number(p.services[0].price) : 0,
+                    certifications: p.certifications || [],
+                    portfolio: [],
+                    reviews: [],
+                    completionRate: p.completionRate || 95,
+                    startingPrice: Number(firstServicePrice) || 0,
                     priceUnit: 'للزيارة',
-                    schedule: { sun:'09:00-18:00', mon:'09:00-18:00', tue:'09:00-18:00', wed:'09:00-18:00', thu:'09:00-18:00', fri:'closed', sat:'closed' },
-                    bestAt: [], type: 'home',
+                    schedule: p.availability || { sun:'09:00-18:00', mon:'09:00-18:00', tue:'09:00-18:00', wed:'09:00-18:00', thu:'09:00-18:00', fri:'closed', sat:'closed' },
+                    bestAt: p.specializations || p.bestAt || [],
+                    type: 'home',
                 };
                 applyProfileData(data);
-                document.getElementById('ctaBookBtn').href = `quote-request.html?category=${encodeURIComponent(data.category)}&providerId=${id}`;
-            }).catch(() => {
-                // Fall back to demo data
-                applyProfileData(PROVIDERS[id] || PROVIDERS['khalid']);
+                // Also load real reviews async
+                API.reviews.list(id, { limit: 10 }).then(res => {
+                    const rvList = Array.isArray(res) ? res : (res.data || res.reviews || []);
+                    if (rvList.length > 0) {
+                        document.getElementById('reviewsList').innerHTML = rvList.map(r => {
+                            const raterName = r.rater?.name || r.reviewerName || 'عميل';
+                            const stars = Math.round(Number(r.score || r.rating || 0));
+                            const date  = r.createdAt ? new Date(r.createdAt).toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' }) : '';
+                            return `<div class="review-card">
+                                <div class="review-header">
+                                    <span class="reviewer-name">${escHtml(raterName)}</span>
+                                    <span class="review-date">${escHtml(date)}</span>
+                                </div>
+                                <div class="review-stars">${'⭐'.repeat(Math.min(stars, 5))}</div>
+                                <div class="review-text">${escHtml(r.comment || r.text || '')}</div>
+                            </div>`;
+                        }).join('');
+                        document.getElementById('ratingSummary').innerHTML = `
+                            <div class="rating-big">${escHtml(String(data.rating))}</div>
+                            <div style="font-size:1.5rem">⭐</div>
+                            <div style="font-size:0.82rem;color:var(--gray)">
+                                ${escHtml(String(data.reviewCount))} تقييم<br>
+                                <span style="font-size:0.75rem">معدل الإنجاز: ${escHtml(String(data.completionRate))}%</span>
+                            </div>`;
+                    }
+                }).catch(() => {/* Keep placeholder reviews section */});
+            }).catch((err) => {
+                showProfileSkeleton(false);
+                // If 404, show error state. Otherwise fall back to demo data.
+                if (err && err.status === 404) {
+                    showProfileError();
+                } else {
+                    applyProfileData(PROVIDERS[id] || PROVIDERS['khalid']);
+                }
             });
         } else {
             applyProfileData(PROVIDERS[id] || PROVIDERS['khalid']);

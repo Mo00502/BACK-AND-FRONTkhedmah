@@ -185,7 +185,12 @@ export class NotificationsService {
     await this.notifQueue.add(
       'push',
       { userId, title: titleAr, body: bodyAr, data: extra ?? {} },
-      { attempts: 3, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: true },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 }, // 2s, 4s, 8s
+        removeOnComplete: 100, // keep last 100 completed jobs for observability
+        removeOnFail: 50,      // keep last 50 failed jobs for debugging
+      },
     );
   }
 

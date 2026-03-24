@@ -343,7 +343,7 @@
             <div class="stat-card">
                 <div class="stat-icon teal">🔄</div>
                 <div class="stat-info">
-                    <div class="stat-value">1</div>
+                    <div class="stat-value" id="statActiveCount">—</div>
                     <div class="stat-label">طلب جارٍ</div>
                 </div>
             </div>
@@ -643,7 +643,8 @@
             const completed = reqs.filter(r => r.status === 'COMPLETED').length;
 
             const statVals = document.querySelectorAll('.stat-value');
-            if (statVals[0]) statVals[0].textContent = active;
+            const activeEl = document.getElementById('statActiveCount') || statVals[0];
+            if (activeEl) activeEl.textContent = active;
             if (statVals[1]) statVals[1].textContent = pending;
             if (statVals[2]) statVals[2].textContent = completed;
 

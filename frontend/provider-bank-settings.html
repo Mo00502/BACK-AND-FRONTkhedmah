@@ -510,6 +510,53 @@
             }
         })();
 
+        // On load: prefill from API
+        async function loadBankSettings() {
+            try {
+                const data = await API.providers.myProfile();
+                if (data?.ibanNumber) {
+                    document.getElementById('iban').value = data.ibanNumber;
+                }
+                if (data?.bankName) {
+                    // Try to match to a bank-option card first
+                    const matched = Array.from(document.querySelectorAll('.bank-option')).find(el => {
+                        const key = el.dataset.bank;
+                        return bankNames[key] === data.bankName || key === data.bankName || el.querySelector('.bank-name')?.textContent === data.bankName;
+                    });
+                    if (matched) {
+                        document.querySelectorAll('.bank-option').forEach(o => o.classList.remove('selected'));
+                        matched.classList.add('selected');
+                        selectedBank = matched.dataset.bank;
+                    }
+                }
+                if (data?.accountName) {
+                    document.getElementById('accountName').value = data.accountName;
+                }
+            } catch(e) { /* silent on load failure */ }
+        }
+
+        // On load: fetch earnings and update the summary boxes
+        async function loadEarnings() {
+            try {
+                const data = await API.providers.myEarnings();
+                const boxes = document.querySelectorAll('.earning-box .earning-value');
+                // Expected structure: { availableBalance, pendingBalance, totalEarnings } (or similar)
+                if (data) {
+                    const avail   = data.availableBalance ?? data.available ?? data.walletBalance ?? null;
+                    const pending = data.pendingBalance   ?? data.pending   ?? data.heldBalance   ?? null;
+                    const total   = data.totalEarnings    ?? data.total     ?? data.totalReleased ?? null;
+                    if (boxes[0] && avail   != null) boxes[0].textContent = Number(avail).toLocaleString('ar-SA')   + ' ريال';
+                    if (boxes[1] && pending != null) boxes[1].textContent = Number(pending).toLocaleString('ar-SA') + ' ريال';
+                    if (boxes[2] && total   != null) boxes[2].textContent = Number(total).toLocaleString('ar-SA')   + ' ريال';
+                }
+            } catch(e) { /* silent — keep static placeholder values */ }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBankSettings();
+            loadEarnings();
+        });
+
         // Form submission
         document.getElementById('bankForm').addEventListener('submit', async function(e) {
             e.preventDefault();

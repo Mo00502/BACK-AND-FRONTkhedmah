@@ -599,8 +599,8 @@
         // ── Read URL params globally (used by all handlers below) ──
         const _confParams = new URLSearchParams(location.search);
         const _pageRequestId  = _confParams.get('requestId')     || 'REQ-demo-001';
-        const _pageService    = _confParams.get('service')        ? decodeURIComponent(_confParams.get('service')) : 'إصلاح تسريب مياه';
-        const _serviceAmount  = _confParams.get('serviceAmount')  || (() => {
+        let _pageService    = _confParams.get('service')        ? decodeURIComponent(_confParams.get('service')) : 'إصلاح تسريب مياه';
+        let _serviceAmount  = _confParams.get('serviceAmount')  || (() => {
             try { return JSON.parse(localStorage.getItem('khedmah_current_request') || '{}').serviceAmount || '180'; } catch(e) { return '180'; }
         })();
         const _materialsAmt   = _confParams.get('materialsEst')   || (() => {
@@ -612,6 +612,67 @@
             const titleEl = document.querySelector('.service-title h3');
             if (titleEl) titleEl.textContent = _pageService;
         })();
+
+        // ── Load real request data from API if a real requestId is present ──
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Only attempt API fetch if requestId looks like a real UUID (not demo fallback)
+            const isRealId = _pageRequestId && _pageRequestId !== 'REQ-demo-001'
+                && !_pageRequestId.startsWith('REQ-demo');
+            if (!isRealId) return;
+
+            try {
+                const req = await API.requests.get(_pageRequestId);
+
+                // Update service name
+                const svcName = req.service?.name || req.serviceName || req.description || _pageService;
+                _pageService  = svcName;
+                const titleEl = document.querySelector('.service-title h3');
+                if (titleEl) titleEl.textContent = escHtml(svcName);
+
+                // Update provider name
+                const providerName = req.provider?.user?.name || req.provider?.name || req.providerName || '';
+                const providerEl   = document.querySelector('.service-provider');
+                if (providerEl && providerName) providerEl.textContent = providerName;
+
+                // Update date
+                const dateVal  = req.scheduledAt || req.createdAt || '';
+                const dateRows = document.querySelectorAll('.detail-row');
+                if (dateVal && dateRows[0]) {
+                    const dateValEl = dateRows[0].querySelector('.detail-value');
+                    if (dateValEl) {
+                        try {
+                            dateValEl.textContent = new Date(dateVal).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+                        } catch(e) { dateValEl.textContent = dateVal; }
+                    }
+                }
+
+                // Update location
+                const location_ = req.address || req.location || req.city || '';
+                if (location_ && dateRows[2]) {
+                    const locEl = dateRows[2].querySelector('.detail-value');
+                    if (locEl) locEl.textContent = location_;
+                }
+
+                // Update service amount and re-set global var
+                const escrow = req.escrow;
+                if (escrow) {
+                    const svcAmtNum = Number(escrow.amount || escrow.serviceAmount || 0);
+                    if (svcAmtNum > 0) {
+                        _serviceAmount = String(svcAmtNum);
+                        const amtEl = document.querySelector('.amount');
+                        if (amtEl) {
+                            const total = svcAmtNum + Number(req.materialsPayment?.amount || 0);
+                            amtEl.textContent = (total > 0 ? total : svcAmtNum).toFixed(0) + ' ريال';
+                        }
+                        // Update the escrow panel label
+                        const escrowLabel = document.querySelector('.escrow-status h4 span:last-child');
+                        if (escrowLabel) escrowLabel.textContent = `رسوم الخدمة — ${svcAmtNum.toFixed(0)} ريال — محجوزة بالضمان`;
+                    }
+                }
+            } catch(e) {
+                // Stay on demo data silently
+            }
+        });
 
         let answers = {
             q1: null,
@@ -684,19 +745,41 @@
             }
         });
 
-        document.querySelector('.btn-report').addEventListener('click', function() {
+        document.querySelector('.btn-report').addEventListener('click', async function() {
             // Collect any issue text entered in the visible textareas
             const issues = [];
-            document.querySelectorAll('.issue-report.show textarea').forEach((ta, i) => {
+            document.querySelectorAll('.issue-report.show textarea').forEach((ta) => {
                 if (ta.value.trim()) issues.push(ta.value.trim());
             });
             if (issues.length === 0) {
                 alert('الرجاء تحديد المشكلة أولاً بالضغط على "لا" في أحد الأسئلة وشرح التفاصيل');
                 return;
             }
-            // Persist issue summary for the support/dispute page
-            localStorage.setItem('khedmah_pending_issue', JSON.stringify({ requestId: _pageRequestId, issues }));
-            window.location.href = 'chat.html?type=support&requestId=' + encodeURIComponent(_pageRequestId);
+            const reason = issues.join('\n');
+            if (reason.length < 20) {
+                API.toast('يرجى وصف المشكلة بتفصيل أكثر (20 حرف على الأقل)', 'danger');
+                return;
+            }
+            this.disabled = true;
+            this.textContent = 'جاري إرسال الشكوى...';
+            try {
+                await API.disputes.open({ requestId: _pageRequestId, reason });
+                API.toast('تم إرسال شكواك. سيتواصل فريقنا معك قريباً', 'success');
+                // Also persist locally and redirect to chat for follow-up
+                localStorage.setItem('khedmah_pending_issue', JSON.stringify({ requestId: _pageRequestId, issues }));
+                setTimeout(() => {
+                    window.location.href = 'chat.html?type=support&requestId=' + encodeURIComponent(_pageRequestId);
+                }, 1500);
+            } catch(err) {
+                // Fallback: persist locally and redirect even if API call fails
+                localStorage.setItem('khedmah_pending_issue', JSON.stringify({ requestId: _pageRequestId, issues }));
+                API.toast('فشل إرسال الشكوى عبر النظام — سيتم تحويلك للدعم', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'chat.html?type=support&requestId=' + encodeURIComponent(_pageRequestId);
+                }, 1500);
+                this.disabled = false;
+                this.textContent = '⚠️ الإبلاغ عن مشكلة';
+            }
         });
     </script>
 </body>

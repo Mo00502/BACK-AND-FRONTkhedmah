@@ -952,7 +952,7 @@ function initFromURL() {
                 <div class="c-info">
                     <div class="c-name">مزود الخدمة <span class="c-type-badge badge-service">جديد</span></div>
                     <div class="c-preview">جارٍ تعيين مزود...</div>
-                    <div class="c-ctx">${service} · ${reqId}</div>
+                    <div class="c-ctx">${service} · ${escHtml(reqId)}</div>
                 </div>
                 <div class="c-meta"><div class="c-time">${timeStr}</div></div>`;
             contactList.querySelectorAll('.contact-item').forEach(c => c.classList.remove('active'));
@@ -1084,7 +1084,7 @@ function renderMessage(m, data) {
 
     let inner = '';
     if (m.from === 'in') {
-        inner += `<div class="m-avatar" style="background:${data.avatarGrad}">${data.initial}</div>`;
+        inner += `<div class="m-avatar" style="background:${data.avatarGrad}">${escHtml(data.initial)}</div>`;
     }
     inner += '<div class="m-body">';
 
@@ -1092,18 +1092,18 @@ function renderMessage(m, data) {
         inner += `<div class="m-bubble">${escHtml(m.text)}</div>`;
     }
     if (m.img) {
-        inner += `<div class="m-img">${m.img}</div>`;
-        inner += `<div class="m-bubble" style="font-size:.75rem;opacity:.8">${m.imgLabel || 'صورة'}</div>`;
+        inner += `<div class="m-img">${escHtml(m.img)}</div>`;
+        inner += `<div class="m-bubble" style="font-size:.75rem;opacity:.8">${escHtml(m.imgLabel || 'صورة')}</div>`;
     }
     if (m.file) {
-        inner += `<div class="m-bubble"><div class="m-file" onclick="showToast('جارٍ فتح ${escHtml(m.fileName)}...')">📄 <span>${escHtml(m.fileName)}</span> <span style="opacity:.7;font-size:.72rem">${m.fileSize}</span> <span style="opacity:.7;font-size:.75rem">⬇</span></div></div>`;
+        inner += `<div class="m-bubble"><div class="m-file" data-filename="${escHtml(m.fileName)}">📄 <span>${escHtml(m.fileName)}</span> <span style="opacity:.7;font-size:.72rem">${escHtml(m.fileSize || '')}</span> <span style="opacity:.7;font-size:.75rem">⬇</span></div></div>`;
     }
     if (m.voice) {
         const bars = Array.from({length:18}, (_, i) => {
             const h = 6 + Math.sin(i * 0.7) * 8 + Math.random() * 6;
             return `<div class="voice-bar" style="height:${h}px"></div>`;
         }).join('');
-        inner += `<div class="m-bubble"><div class="m-voice"><div class="voice-play">▶</div><div class="voice-waveform">${bars}</div><span class="voice-dur">${m.dur || '0:15'}</span></div></div>`;
+        inner += `<div class="m-bubble"><div class="m-voice"><div class="voice-play">▶</div><div class="voice-waveform">${bars}</div><span class="voice-dur">${escHtml(m.dur || '0:15')}</span></div></div>`;
     }
     if (m.location) {
         inner += `<div class="m-bubble"><div class="m-location" onclick="showToast('فتح الخريطة...')">📍 ${escHtml(m.loc || 'الموقع الحالي')}</div></div>`;
@@ -1201,14 +1201,18 @@ function sendVoiceNote() {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
 function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 
 function toggleAttachMenu(e) {
     e.stopPropagation();
     document.getElementById('attachMenu').classList.toggle('open');
 }
 function closeAttachMenu() { document.getElementById('attachMenu').classList.remove('open'); }
-document.addEventListener('click', closeAttachMenu);
+document.addEventListener('click', (e) => {
+    closeAttachMenu();
+    const fileEl = e.target.closest('.m-file[data-filename]');
+    if (fileEl) showToast('جارٍ فتح ' + fileEl.dataset.filename + '...');
+});
 
 function filterByModule(mod, btn) {
     document.querySelectorAll('.module-tab').forEach(t => t.classList.remove('active'));

@@ -692,19 +692,40 @@
         setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    function toggleService(id, checkbox) {
+    async function toggleService(id, checkbox) {
         const card = document.querySelector(`[data-id="${id}"]`);
         const lbl = document.getElementById(`lbl-${id}`);
-        if (checkbox.checked) {
+        const isActive = checkbox.checked;
+
+        // Optimistic UI update
+        if (isActive) {
             card.classList.remove('inactive');
             lbl.textContent = 'نشط';
-            showToast('✓ تم تفعيل الخدمة');
         } else {
             card.classList.add('inactive');
             lbl.textContent = 'موقوف';
-            showToast('⏸ تم إيقاف الخدمة');
         }
         updateStats();
+
+        // API call — use PATCH /providers/me/skills/:id with active flag
+        // id may be a real UUID (loaded from API) or a local DOM number (hardcoded/new)
+        try {
+            await API.patch(`/providers/me/skills/${id}`, { active: isActive });
+            showToast(isActive ? '✓ تم تفعيل الخدمة' : '⏸ تم إيقاف الخدمة');
+        } catch(e) {
+            // Revert optimistic update on failure
+            if (isActive) {
+                card.classList.add('inactive');
+                lbl.textContent = 'موقوف';
+                checkbox.checked = false;
+            } else {
+                card.classList.remove('inactive');
+                lbl.textContent = 'نشط';
+                checkbox.checked = true;
+            }
+            updateStats();
+            API.toast(API.errorMsg(e) || 'فشل تحديث حالة الخدمة', 'danger');
+        }
     }
 
     function updateStats() {
@@ -886,6 +907,89 @@
         closeDeleteConfirm();
         showToast('🗑️ تم حذف الخدمة');
     }
+
+    // ── On-load: fetch real services from API and render ──────────────────────
+    const SERVICE_ICONS = {
+        'السباكة': '🔧', 'الكهرباء': '⚡', 'تكييف': '❄️', 'نجارة': '🪚',
+        'دهانات': '🎨', 'تنظيف': '🧹', 'حدائق': '🌿', 'أمن': '🔒',
+        'حشرات': '🐛', 'أثاث': '🛋️', 'مصاعد': '🛗', 'أبواب': '🚪',
+        'طبخ': '🍳', 'أطفال': '👶', 'مسنين': '👴', 'تعليم': '📚',
+        'تصوير': '📷', 'برمجة': '💻', 'تصميم': '🖌️'
+    };
+
+    function iconForCategory(cat) {
+        if (!cat) return '🔧';
+        for (const [k, v] of Object.entries(SERVICE_ICONS)) {
+            if (cat.includes(k)) return v;
+        }
+        return '🔧';
+    }
+
+    function buildServiceCard(svc) {
+        const id       = svc.id || svc._id || Date.now();
+        const name     = svc.name || svc.skillName || '';
+        const cat      = svc.category || svc.categoryName || svc.skillCategory || '';
+        const desc     = svc.description || svc.desc || '';
+        const isActive = svc.active !== false && svc.isActive !== false;
+        const price    = svc.price != null ? svc.price : null;
+        const priceType = svc.priceType || svc.type || 'hour';
+        const duration = svc.duration || svc.estimatedDuration || '';
+        const icon     = iconForCategory(cat);
+
+        let priceAmountText, priceUnitText;
+        if (price == null || priceType === 'agree') {
+            priceAmountText = 'حسب الاتفاق'; priceUnitText = '';
+        } else {
+            priceAmountText = price;
+            priceUnitText = priceType === 'hour' ? 'ريال / ساعة' : 'ريال / زيارة';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'service-card' + (isActive ? '' : ' inactive');
+        card.setAttribute('data-id', id);
+        card.innerHTML = `
+            <div class="inactive-badge">موقوفة</div>
+            <div class="card-top">
+                <div class="service-icon-box">${icon}</div>
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-${id}">${isActive ? 'نشط' : 'موقوف'}</span>
+                    <label class="toggle">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleService('${id}', this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="service-name">${escHtml(name)}</div>
+            <div class="service-category">${escHtml(cat)}</div>
+            <div class="service-price">
+                <span class="price-amount">${escHtml(String(priceAmountText))}</span>
+                <span class="price-unit">${escHtml(priceUnitText)}</span>
+            </div>
+            <div class="service-duration">⏱️ مدة الخدمة المتوقعة: ${escHtml(duration)}</div>
+            <div class="service-desc-text">${escHtml(desc)}</div>
+            <div class="card-actions">
+                <button class="btn-edit" onclick="openEditModal('${id}')">✏️ تعديل</button>
+                <button class="btn-delete" onclick="openDeleteConfirm('${id}')">🗑️ حذف</button>
+            </div>`;
+        return card;
+    }
+
+    async function loadServices() {
+        try {
+            const data = await API.providers.services();
+            const list = Array.isArray(data) ? data : (data?.items || data?.skills || data?.services || []);
+            if (!list.length) return; // keep demo cards if API returns empty
+            // Replace hardcoded demo cards with real data
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = '';
+            list.forEach(svc => grid.appendChild(buildServiceCard(svc)));
+            updateStats();
+        } catch(e) {
+            // On API failure keep the demo cards that already exist in HTML
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadServices);
 
     // Add fadeOut keyframe
     const style = document.createElement('style');

@@ -826,6 +826,9 @@ function loadTender() {
     // Wire bids link to pass tenderId
     const bidsLink = document.querySelector('.btn-my-bids-link');
     if (bidsLink) bidsLink.href = `tender-bids.html?tenderId=${tenderId}`;
+
+    // Start live countdown now that data is loaded
+    startCountdown();
 }
 
 loadTender();
@@ -854,7 +857,7 @@ function getCountdown(deadline) {
     return `يتبقى ${m} دقيقة`;
 }
 
-(function startCountdown() {
+function startCountdown() {
     const deadlineISO = DEADLINES[tenderId];
     if (!deadlineISO) return;
     const remEl = document.getElementById('sDeadlineRemaining');
@@ -868,19 +871,16 @@ function getCountdown(deadline) {
             remEl.style.color = '#EF4444';
             if (fillEl) fillEl.style.width = '100%';
         } else {
-            // Also update progress bar based on elapsed time
-            const totalMs = new Date(deadlineISO) - new Date(data.deadline.replace(/[٠-٩]/g, d => d.charCodeAt(0) - 1632));
-            const remaining = new Date(deadlineISO) - new Date();
-            if (totalMs > 0 && fillEl) {
-                const pct = Math.min(100, Math.max(0, ((totalMs - remaining) / totalMs) * 100));
-                fillEl.style.width = pct + '%';
+            // Update progress bar: use data.deadlinePercent as loaded by loadTender()
+            if (fillEl && data.deadlinePercent != null) {
+                fillEl.style.width = data.deadlinePercent + '%';
             }
         }
     }
 
     updateCountdown();
     setInterval(updateCountdown, 60000);
-})();
+}
 
 // ─── Bid Modal ───────────────────────────────────────────────────────────────
 function openBidModal() {

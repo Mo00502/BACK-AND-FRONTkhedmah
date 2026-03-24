@@ -498,6 +498,8 @@
     }
 
     async function saveSchedule() {
+        const saveBtn = document.querySelector('.btn-save');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'جارٍ الحفظ...'; }
         const slots = document.querySelectorAll('.slot-btn[data-slot]');
         const schedule = {};
         slots.forEach(slot => {
@@ -509,35 +511,69 @@
         localStorage.setItem('khedmah_availability', JSON.stringify({ schedule, vacation, vacFrom, vacTo }));
         try {
             await API.providers.saveSchedule({ schedule, vacation, vacFrom, vacTo });
-        } catch(e) { /* silent — local save already done */ }
-        showToast('✓ تم حفظ جدول التوفر بنجاح');
+            showToast('✓ تم حفظ جدول التوفر بنجاح');
+        } catch(e) {
+            // Local save succeeded; API failed — notify but don't block
+            API.toast('تعذّر حفظ الجدول على الخادم، سيُعاد المحاولة لاحقاً', 'warning');
+            showToast('✓ تم الحفظ محلياً');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 حفظ الجدول'; }
+        }
+    }
+
+    function applyScheduleData(data) {
+        if (!data) return;
+        if (data.schedule) {
+            document.querySelectorAll('.slot-btn[data-slot]').forEach(slot => {
+                const available = data.schedule[slot.dataset.slot];
+                if (available) {
+                    slot.classList.add('available');
+                    slot.textContent = 'متاح';
+                } else {
+                    slot.classList.remove('available');
+                    slot.textContent = 'غير متاح';
+                }
+            });
+        }
+        if (data.vacation) {
+            const toggle = document.getElementById('vacationToggle');
+            toggle.checked = true;
+            toggleVacation(toggle);
+            if (data.vacFrom) document.getElementById('vacFrom').value = data.vacFrom;
+            if (data.vacTo) document.getElementById('vacTo').value = data.vacTo;
+        }
     }
 
     function loadSchedule() {
+        // Apply localStorage immediately for instant paint
         const saved = localStorage.getItem('khedmah_availability');
-        if (!saved) return;
-        try {
-            const data = JSON.parse(saved);
-            if (data.schedule) {
-                document.querySelectorAll('.slot-btn[data-slot]').forEach(slot => {
-                    const available = data.schedule[slot.dataset.slot];
-                    if (available) {
-                        slot.classList.add('available');
-                        slot.textContent = 'متاح';
-                    } else {
-                        slot.classList.remove('available');
-                        slot.textContent = 'غير متاح';
-                    }
+        if (saved) {
+            try { applyScheduleData(JSON.parse(saved)); } catch(e) {}
+        }
+
+        // Fetch real schedule from API and overwrite
+        API.providers.schedule().then(function(data) {
+            if (!data) return;
+            // Normalise: backend may return ProviderAvailability[] with dayOfWeek, startTime, isAvailable
+            // or a plain { schedule: {...}, vacation, vacFrom, vacTo } object
+            let normalised = data;
+            if (Array.isArray(data)) {
+                const dayMap = { 0: 'sun', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat' };
+                const schedule = {};
+                data.forEach(function(row) {
+                    const dayKey = dayMap[row.dayOfWeek] != null ? dayMap[row.dayOfWeek] : String(row.dayOfWeek);
+                    const hour = parseInt((row.startTime || '00:00').split(':')[0], 10);
+                    let period = 'morning';
+                    if (hour >= 12 && hour < 17) period = 'afternoon';
+                    else if (hour >= 17) period = 'evening';
+                    schedule[dayKey + '-' + period] = row.isAvailable !== false;
                 });
+                normalised = { schedule };
             }
-            if (data.vacation) {
-                const toggle = document.getElementById('vacationToggle');
-                toggle.checked = true;
-                toggleVacation(toggle);
-                if (data.vacFrom) document.getElementById('vacFrom').value = data.vacFrom;
-                if (data.vacTo) document.getElementById('vacTo').value = data.vacTo;
-            }
-        } catch(e) {}
+            localStorage.setItem('khedmah_availability', JSON.stringify(normalised));
+            applyScheduleData(normalised);
+            updateCurrentStatus();
+        }).catch(function() { /* keep localStorage data on API failure */ });
     }
 
     function resetSchedule() {

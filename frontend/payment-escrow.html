@@ -453,12 +453,12 @@
                     <div class="split-total-row" style="flex-direction:column;gap:.5rem;">
                         <div style="display:flex;justify-content:space-between;width:100%;font-size:.88rem;font-weight:400;color:var(--gray);">
                             <span>ضريبة القيمة المضافة (15%)</span>
-                            <span x-text="(totalAmount * 0.15).toFixed(2)+' ريال'"></span>
+                            <span x-text="(subtotal * 0.15).toFixed(2)+' ريال'"></span>
                         </div>
                         <hr style="width:100%;margin:.3rem 0;border-color:#e2e8f0;">
                         <div style="display:flex;justify-content:space-between;width:100%;">
                             <span>الإجمالي شامل الضريبة</span>
-                            <span x-text="(totalAmount * 1.15).toFixed(2)+' ريال'"></span>
+                            <span x-text="(subtotal * 1.15).toFixed(2)+' ريال'"></span>
                         </div>
                     </div>
                 </div>

@@ -26,6 +26,13 @@ import {
 import { UserRole, CommissionStatus } from '@prisma/client';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { IsEnum } from 'class-validator';
+import {
+  CreateTenderDto,
+  SubmitBidDto,
+  UpdateBidDto,
+  CreateRequirementDto,
+  SubmitOfferDto,
+} from './dto/tenders.dto';
 
 class UpdateCommissionStatusDto {
   @IsEnum(CommissionStatus)
@@ -98,7 +105,7 @@ export class TendersController {
   @Post()
   @ThrottleStrict()
   @ApiOperation({ summary: 'Post a new tender' })
-  create(@CurrentUser() user: any, @Body() body: Record<string, any>) {
+  create(@CurrentUser() user: any, @Body() body: CreateTenderDto) {
     return this.tenders.create(user.id, body);
   }
 
@@ -107,7 +114,7 @@ export class TendersController {
   @Post(':id/bids')
   @ThrottleDefault()
   @ApiOperation({ summary: 'Submit a bid — validates deadline, status, and prevents self-bidding' })
-  submitBid(@Param('id') id: string, @CurrentUser() user: any, @Body() body: Record<string, any>) {
+  submitBid(@Param('id') id: string, @CurrentUser() user: any, @Body() body: SubmitBidDto) {
     return this.tenders.submitBid(id, user.id, body);
   }
 
@@ -118,7 +125,7 @@ export class TendersController {
     @Param('id') tenderId: string,
     @Param('bidId') bidId: string,
     @CurrentUser() user: any,
-    @Body() body: { amount?: number; durationMonths?: number; note?: string },
+    @Body() body: UpdateBidDto,
   ) {
     return this.tenders.updateBid(tenderId, bidId, user.id, body);
   }
@@ -156,7 +163,7 @@ export class TendersController {
   createRequirement(
     @Param('tenderId') tenderId: string,
     @CurrentUser() user: any,
-    @Body() body: Record<string, any>,
+    @Body() body: CreateRequirementDto,
   ) {
     return this.tenders.createRequirement(tenderId, user.id, body);
   }
@@ -176,7 +183,7 @@ export class TendersController {
   submitOffer(
     @Param('requirementId') reqId: string,
     @CurrentUser() user: any,
-    @Body() body: Record<string, any>,
+    @Body() body: SubmitOfferDto,
   ) {
     return this.tenders.submitOffer(reqId, user.id, body);
   }

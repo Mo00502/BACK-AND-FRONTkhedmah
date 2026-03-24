@@ -592,24 +592,84 @@
     </div>
 
     <script>
+        // ── Load real referral code from API ──────────────────────────────────
+        async function loadReferralCode() {
+            try {
+                const user = await API.auth.me();
+                const code = user?.referralCode || user?.profile?.referralCode || user?.customer?.referralCode;
+                if (code) {
+                    document.getElementById('referralCode').textContent = code;
+                }
+            } catch(e) { /* keep placeholder code */ }
+        }
+
+        // ── Load referral history ─────────────────────────────────────────────
+        async function loadReferralHistory() {
+            try {
+                let list = null;
+                // Try dedicated referrals endpoint first, fall back to rewards namespace
+                try {
+                    list = await API.get('/referrals/my');
+                } catch(e) {
+                    try { list = await API.get('/rewards/referrals'); } catch(e2) { /* ignore */ }
+                }
+                if (!list) return;
+                const referrals = Array.isArray(list) ? list : (list?.items || list?.referrals || list?.data || []);
+                if (!referrals.length) return; // keep demo items on empty
+
+                // Update stats
+                const total   = referrals.length;
+                const pending = referrals.filter(r => r.status === 'PENDING' || !r.rewarded).length;
+                const earned  = referrals.filter(r => r.rewarded || r.status === 'COMPLETED').length * 50;
+                const statVals = document.querySelectorAll('.stat-value');
+                if (statVals[0]) statVals[0].textContent = total;
+                if (statVals[1]) statVals[1].textContent = earned + ' ريال';
+                if (statVals[2]) statVals[2].textContent = pending;
+
+                // Render history list
+                const listEl = document.querySelector('.history-list');
+                if (!listEl) return;
+                listEl.innerHTML = '';
+                if (!referrals.length) {
+                    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>لا توجد إحالات حتى الآن</p></div>';
+                    return;
+                }
+                referrals.forEach(function(ref) {
+                    const name    = ref.refereeName || ref.referee?.name || ref.name || 'مستخدم جديد';
+                    const initial = name.charAt(0) || '؟';
+                    const date    = ref.createdAt ? new Date(ref.createdAt).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+                    const reward  = ref.rewardAmount != null ? ref.rewardAmount : 50;
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div class="history-info">
+                            <div class="history-avatar">${initial}</div>
+                            <div>
+                                <div class="history-name">${name}</div>
+                                <div class="history-date">انضم في ${date}</div>
+                            </div>
+                        </div>
+                        <div class="history-reward">+${reward} ريال</div>`;
+                    listEl.appendChild(item);
+                });
+            } catch(e) { /* keep demo history on failure */ }
+        }
+
         function copyCode() {
-            const code = document.getElementById('referralCode').textContent;
+            const code = document.getElementById('referralCode').textContent.trim();
             navigator.clipboard.writeText(code).then(() => {
-                alert('✅ تم نسخ الكود: ' + code);
+                API.toast('تم نسخ الكود', 'success');
             });
         }
 
         function shareCode() {
-            const code = document.getElementById('referralCode').textContent;
-            const text = `🎁 انضم لـ Khedmah واحصل على خصم 50 ريال!\n\nاستخدم كود الإحالة: ${code}\n\nأفضل منصة للخدمات المنزلية في السعودية 🇸🇦`;
-            
+            const code = document.getElementById('referralCode').textContent.trim();
+            const text = `انضم إلى خدمة الكترونية رائدة للخدمات المنزلية! استخدم كودي ${code} وابدأ الآن: https://khedmah.sa/register?ref=${code}`;
+
             if (navigator.share) {
-                navigator.share({
-                    title: 'كود إحالة Khedmah',
-                    text: text
-                });
+                navigator.share({ title: 'كود إحالة Khedmah', text });
             } else {
-                alert(text);
+                shareVia('whatsapp');
             }
         }
 
@@ -628,29 +688,34 @@
         })();
 
         function shareVia(platform) {
-            const code = document.getElementById('referralCode').textContent;
-            const text = `🎁 انضم لـ Khedmah واحصل على خصم 50 ريال! استخدم كود: ${code}`;
-            const url = 'https://khedmah.sa/signup?ref=' + code;
-            
+            const code = document.getElementById('referralCode').textContent.trim();
+            const url  = 'https://khedmah.sa/register?ref=' + code;
+            const text = `انضم إلى خدمة الكترونية رائدة للخدمات المنزلية! استخدم كودي ${code} وابدأ الآن: ${url}`;
+
             let shareUrl = '';
-            
             switch(platform) {
                 case 'whatsapp':
-                    shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+                    shareUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
                     break;
                 case 'twitter':
-                    shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+                    shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent('جرّب خدمة عن طريق كودي ' + code + ' على تطبيق خدمة')}`;
                     break;
                 case 'telegram':
-                    shareUrl = `https://t.me/share/url?url=${url}&text=${encodeURIComponent(text)}`;
+                    shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
                     break;
                 case 'email':
-                    shareUrl = `mailto:?subject=كود إحالة Khedmah&body=${encodeURIComponent(text + '\n\n' + url)}`;
+                    shareUrl = `mailto:?subject=${encodeURIComponent('كود إحالة Khedmah')}&body=${encodeURIComponent(text)}`;
                     break;
             }
-            
-            window.open(shareUrl, '_blank');
+
+            if (shareUrl) window.open(shareUrl, '_blank');
         }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReferralCode();
+            loadReferralHistory();
+        });
     </script>
 </body>
 </html>
