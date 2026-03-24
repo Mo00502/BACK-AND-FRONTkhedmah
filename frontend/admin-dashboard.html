@@ -712,7 +712,7 @@
 
     <script>
         // ── XSS attribute escaping helper ──
-        const escAttr = s => String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+        function escAttr(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
         // ── Clock ──
         function updateClock() {

@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -78,6 +79,13 @@ export class PaymentsService {
           `materialsEstimate ${materialsEstimate} deviates >20% from agreed estimate ${agreed}`,
         );
       }
+    }
+
+    const existing = await this.prisma.payment.findFirst({
+      where: { requestId, status: { in: ['PENDING', 'PAID'] } },
+    });
+    if (existing) {
+      throw new ConflictException('Payment already initiated for this request');
     }
 
     const serviceAmount = Number(quote.amount);
