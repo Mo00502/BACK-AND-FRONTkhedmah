@@ -197,6 +197,23 @@ export class AuditService {
     });
   }
 
+  // ── Refund failure ─────────────────────────────────────────────────────────
+  @OnEvent('payment.refund_failed')
+  handleRefundFailed(event: {
+    paymentId: string;
+    adminId: string;
+    reason: string;
+    detail: unknown;
+  }) {
+    this.log({
+      userId: event.adminId,
+      action: AuditAction.PAYMENT,
+      entityType: 'payment_refund_failed',
+      entityId: event.paymentId,
+      metadata: { reason: event.reason, detail: event.detail },
+    }).catch((err) => this.logger.error('Audit log for refund_failed failed', err));
+  }
+
   // ── Admin query: audit log viewer ─────────────────────────────────────────
   async getLogs(filters: {
     userId?: string;

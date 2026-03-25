@@ -105,6 +105,35 @@ export class EventListenerService {
     }
   }
 
+  // ── Payment refund failure alert ────────────────────────────────────────
+
+  @OnEvent('payment.refund_failed')
+  async onPaymentRefundFailed(payload: {
+    paymentId: string;
+    adminId: string;
+    reason: string;
+    detail: unknown;
+  }) {
+    this.logger.error(
+      `REFUND FAILED — payment ${payload.paymentId} | reason: ${payload.reason} | detail: ${JSON.stringify(payload.detail)}`,
+    );
+    const adminEmail = this.config.get<string>('ADMIN_EMAIL', '');
+    if (adminEmail) {
+      await this.notif.sendEmail(
+        adminEmail,
+        `🚨 فشل استرداد الدفع — ${payload.paymentId.slice(0, 8).toUpperCase()}`,
+        `<p>فشل طلب استرداد عبر Moyasar.</p>
+         <ul>
+           <li><strong>معرف الدفع:</strong> ${payload.paymentId}</li>
+           <li><strong>بواسطة:</strong> ${payload.adminId}</li>
+           <li><strong>السبب:</strong> ${payload.reason}</li>
+           <li><strong>تفاصيل الخطأ:</strong> <code>${JSON.stringify(payload.detail)}</code></li>
+         </ul>
+         <p>يرجى مراجعة Moyasar Dashboard ومعالجة الاسترداد يدوياً إذا لزم الأمر.</p>`,
+      );
+    }
+  }
+
   // ── Tender events ───────────────────────────────────────────────────────
 
   @OnEvent('commissions.overdue_batch')
