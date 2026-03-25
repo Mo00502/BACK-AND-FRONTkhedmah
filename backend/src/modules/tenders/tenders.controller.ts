@@ -151,8 +151,12 @@ export class TendersController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ThrottleDefault()
   @ApiOperation({ summary: 'Update commission lifecycle status (admin only)' })
-  updateCommissionStatus(@Param('id') id: string, @Body() dto: UpdateCommissionStatusDto) {
-    return this.tenders.updateCommissionStatus(id, dto.status);
+  updateCommissionStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateCommissionStatusDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.tenders.updateCommissionStatus(id, dto.status, user.id);
   }
 
   // ── Requirements ─────────────────────────────────────────────────────────

@@ -356,7 +356,7 @@ export class TendersService {
     return paginate(items, total, pagination);
   }
 
-  async updateCommissionStatus(id: string, status: string) {
+  async updateCommissionStatus(id: string, status: string, adminId: string) {
     const VALID_TRANSITIONS: Record<string, string[]> = {
       IN_PROGRESS: ['COMPLETED', 'OVERDUE'],
       COMPLETED: ['INVOICE_ISSUED'],
@@ -365,7 +365,10 @@ export class TendersService {
       PAID: [], // terminal — no further transitions allowed
     };
 
-    const current = await this.prisma.tenderCommission.findUnique({ where: { id } });
+    const current = await this.prisma.tenderCommission.findUnique({
+      where: { id },
+      include: { tender: { select: { title: true } } },
+    });
     if (!current) throw new NotFoundException('Commission not found');
 
     const allowed = VALID_TRANSITIONS[current.status as string] ?? [];
@@ -384,10 +387,22 @@ export class TendersService {
       OVERDUE: { overdueAt: new Date() },
     };
 
-    return this.prisma.tenderCommission.update({
+    const updated = await this.prisma.tenderCommission.update({
       where: { id },
       data: { status: status as CommissionStatus, ...timestamps[status] },
     });
+
+    this.events.emit('audit.log', {
+      action: 'commission.status_updated',
+      adminId,
+      commissionId: id,
+      tenderId: current.tenderId,
+      from: current.status,
+      to: status,
+      amount: Number(current.amount),
+    });
+
+    return updated;
   }
 
   // ── Requirements ─────────────────────────────────────────────────────────

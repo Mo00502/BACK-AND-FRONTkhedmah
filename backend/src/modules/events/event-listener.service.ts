@@ -438,7 +438,20 @@ export class EventListenerService {
     const platformFee = parseFloat((payload.amount * CONSULTATION_FEE_RATE).toFixed(2));
     const providerNet = parseFloat((payload.amount - platformFee).toFixed(2));
 
+    const debitKey = `consultation-debit-${payload.consultationId}`;
+    const creditKey = `consultation-credit-${payload.consultationId}`;
+
     try {
+      // Idempotency guard: if the debit transaction already exists this event has
+      // already been processed (e.g. duplicate event emission or handler retry).
+      const alreadyCharged = await this.prisma.walletTransaction.findFirst({
+        where: { idempotencyKey: debitKey },
+      });
+      if (alreadyCharged) {
+        this.logger.log(`Consultation charge already processed, skipping: ${payload.consultationId}`);
+        return;
+      }
+
       // Ensure both wallets exist before entering the transaction (idempotent).
       // getOrCreate is safe outside the tx — it uses upsert internally.
       await Promise.all([
@@ -485,6 +498,7 @@ export class EventListenerService {
             description: `رسوم استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
             refId: payload.consultationId,
             refType: 'consultation',
+            idempotencyKey: debitKey,
           },
         });
 
@@ -502,6 +516,7 @@ export class EventListenerService {
             description: `مستحقات استشارة — ${payload.consultationId.slice(0, 8).toUpperCase()}`,
             refId: payload.consultationId,
             refType: 'consultation',
+            idempotencyKey: creditKey,
           },
         });
       });
