@@ -334,8 +334,10 @@
         if (!demo) { window.location.href = 'login.html'; return; }
         try {
             const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-            if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
-        } catch(e) {}
+            // Customer-only page — any other role is redirected to login, not to their
+            // own dashboard, to prevent IDOR where a provider could read another user's invoice.
+            if (!u.role || u.role !== 'customer') { window.location.href = 'login.html'; return; }
+        } catch(e) { window.location.href = 'login.html'; }
     })();
 </script>
 

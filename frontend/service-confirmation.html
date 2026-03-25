@@ -400,8 +400,10 @@
         if (!demo) { window.location.href = 'login.html'; return; }
         try {
             const u = JSON.parse(localStorage.getItem('khedmah_user') || '{}');
-            if (u.role && u.role !== 'customer') window.location.href = 'provider-dashboard.html';
-        } catch(e) {}
+            // Customer-only page — redirect non-customers to login, not to their dashboard.
+            // Sending a provider to provider-dashboard would silently mask the wrong-role access.
+            if (!u.role || u.role !== 'customer') { window.location.href = 'login.html'; return; }
+        } catch(e) { window.location.href = 'login.html'; }
     })();
 </script>
     <button class="theme-toggle-float" id="themeToggle" onclick="toggleTheme()">🌙</button>

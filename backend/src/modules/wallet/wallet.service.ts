@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -133,6 +133,37 @@ export class WalletService {
     beneficiaryName: string,
     notes?: string,
   ) {
+    // KYC guard: only APPROVED providers may withdraw funds.
+    // Prevents PENDING_REVIEW, UNDER_REVIEW, REJECTED, and SUSPENDED providers from
+    // draining any balance they may have accumulated before verification completes.
+    const providerProfile = await this.prisma.providerProfile.findUnique({
+      where: { userId },
+      select: { verificationStatus: true, ibanNumber: true, bankName: true },
+    });
+    if (!providerProfile || providerProfile.verificationStatus !== 'APPROVED') {
+      throw new ForbiddenException(
+        'يمكن فقط للمزودين المعتمدين طلب السحب — حسابك لم يُعتمد بعد',
+      );
+    }
+
+    // IBAN integrity: must match what the provider registered during KYC.
+    // Prevents withdrawals to unverified bank accounts.
+    if (
+      providerProfile.ibanNumber &&
+      iban.replace(/\s/g, '').toUpperCase() !==
+        providerProfile.ibanNumber.replace(/\s/g, '').toUpperCase()
+    ) {
+      throw new ForbiddenException(
+        'رقم الآيبان لا يطابق الحساب البنكي المسجل — يرجى تحديث بياناتك البنكية أولاً',
+      );
+    }
+
+    // Saudi IBAN format: SA + 22 digits = 24 characters total
+    const ibanNorm = iban.replace(/\s/g, '').toUpperCase();
+    if (!/^SA\d{22}$/.test(ibanNorm)) {
+      throw new BadRequestException('صيغة الآيبان غير صحيحة — يجب أن يبدأ بـ SA ويتكون من 24 خانة');
+    }
+
     const MIN_WITHDRAWAL = 50;
     if (amount < MIN_WITHDRAWAL) {
       throw new BadRequestException(`Minimum withdrawal amount is SAR ${MIN_WITHDRAWAL}`);

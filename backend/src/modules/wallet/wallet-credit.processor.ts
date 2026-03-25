@@ -20,12 +20,20 @@ export class WalletCreditProcessor {
     const { userId, amount, referenceId, refType, description, idempotencyKey } = job.data;
 
     // Idempotency check: has this credit already been applied?
-    const alreadyCredited = await this.prisma.walletTransaction.findFirst({
-      where: { idempotencyKey },
-    });
-    if (alreadyCredited) {
-      this.logger.log(`Skipping duplicate credit: ${idempotencyKey}`);
-      return;
+    // GUARD: skip check when idempotencyKey is falsy — querying with undefined/null
+    // matches ALL rows with a null key, which would incorrectly suppress every keyless credit.
+    if (idempotencyKey) {
+      const alreadyCredited = await this.prisma.walletTransaction.findFirst({
+        where: { idempotencyKey },
+      });
+      if (alreadyCredited) {
+        this.logger.log(`Skipping duplicate credit: ${idempotencyKey}`);
+        return;
+      }
+    } else {
+      this.logger.warn(
+        `Wallet credit job ${job.id} for user ${userId} has no idempotencyKey — proceeding without deduplication`,
+      );
     }
 
     await this.wallet.credit(userId, amount, description, referenceId, refType, idempotencyKey);

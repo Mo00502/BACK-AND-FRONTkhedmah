@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
-import { QuoteStatus, PaymentMethod, RequestStatus } from '@prisma/client';
+import { QuoteStatus, PaymentMethod, RequestStatus, Prisma } from '@prisma/client';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
@@ -81,28 +81,41 @@ export class PaymentsService {
       }
     }
 
-    const existing = await this.prisma.payment.findFirst({
-      where: { requestId, status: { in: ['PENDING', 'PAID'] } },
-    });
-    if (existing) {
-      throw new ConflictException('Payment already initiated for this request');
-    }
-
     const serviceAmount = Number(quote.amount);
     const materialsAmount = hasMaterials ? materialsEstimate : 0;
     const totalAmount = serviceAmount + materialsAmount;
 
-    // Persist split amounts before Moyasar call so the webhook can reference them
-    const payment = await this.prisma.payment.create({
-      data: {
-        requestId,
-        amount: totalAmount,
-        serviceAmount,
-        materialsAmount,
-        method: method as PaymentMethod,
-        status: 'PENDING',
-      },
-    });
+    // Atomic check-then-create inside a serializable transaction to prevent two concurrent
+    // requests from both passing the "no existing payment" check and creating duplicate payments.
+    let payment: Awaited<ReturnType<typeof this.prisma.payment.create>>;
+    try {
+      payment = await this.prisma.$transaction(
+        async (tx) => {
+          const existing = await tx.payment.findFirst({
+            where: { requestId, status: { in: ['PENDING', 'PAID'] } },
+          });
+          if (existing) throw new ConflictException('Payment already initiated for this request');
+
+          return tx.payment.create({
+            data: {
+              requestId,
+              amount: totalAmount,
+              serviceAmount,
+              materialsAmount,
+              method: method as PaymentMethod,
+              status: 'PENDING',
+            },
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (err) {
+      if (err instanceof ConflictException) throw err;
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Payment already initiated for this request');
+      }
+      throw err;
+    }
 
     // Save order type & estimate back to the ServiceRequest
     if (hasMaterials) {
@@ -210,60 +223,71 @@ export class PaymentsService {
 
   /**
    * On Moyasar webhook success:
-   *   1. Atomically mark Payment as PAID (updateMany with status=PENDING guard)
-   *   2. Create Escrow for the SERVICE portion only
-   *   3. Create MaterialsPayment record for the MATERIALS portion (if any)
+   *   1. Atomically mark Payment as PAID AND create Escrow in one transaction
+   *   2. Create MaterialsPayment record for the MATERIALS portion (if any)
    *
-   * The atomic updateMany prevents duplicate processing when Moyasar retries
-   * the webhook — only the first delivery will match status=PENDING and proceed.
+   * CRITICAL: The updateMany + escrow.create MUST be in the same transaction.
+   * A crash between them would leave a PAID payment with no escrow, permanently
+   * locking the provider's funds. With one transaction, a crash causes a rollback
+   * so Moyasar's retry will re-run the full flow cleanly.
    */
   private async _confirmPayment(moyasarRef: string, _rawData?: any) {
-    // Atomic claim: only succeeds for the one delivery where status is still PENDING
-    const { count } = await this.prisma.payment.updateMany({
-      where: { moyasarRef, status: 'PENDING' },
-      data: { status: 'PAID', paidAt: new Date() },
-    });
-    if (count === 0) {
-      this.logger.warn(`_confirmPayment: payment ${moyasarRef} already processed — skipping`);
-      return;
-    }
+    // Capture results outside the transaction for post-tx actions
+    let confirmedPayment: Awaited<ReturnType<typeof this.prisma.payment.findUnique>> & { request: any } | null = null;
+    let serviceAmt = 0;
+    let materialsAmt = 0;
+    let isAdjustment = false;
+    let adjustmentMeta: Record<string, any> | null = null;
 
-    const payment = await this.prisma.payment.findUnique({
-      where: { moyasarRef },
-      include: { request: true },
-    });
-    if (!payment) return;
+    await this.prisma.$transaction(async (tx) => {
+      // Atomic claim: only the first webhook delivery matches status=PENDING.
+      // Second delivery or retry after successful escrow creation returns count=0 → skip.
+      const { count } = await tx.payment.updateMany({
+        where: { moyasarRef, status: 'PENDING' },
+        data: { status: 'PAID', paidAt: new Date() },
+      });
 
-    // Check for materials_adjustment FIRST — before creating any Escrow.
-    // Adjustment payments must never create an Escrow row (the Escrow for this
-    // requestId already exists from the original payment). Creating one here
-    // would leave an orphan row and crash on the second adjustment due to the
-    // @unique constraint on Escrow.requestId.
-    const meta = payment.metadata as Record<string, any> | null;
-    if (meta?.type === 'materials_adjustment') {
-      await this.materials.onAdjustmentPaymentConfirmed(
-        meta.adjustmentId,
-        meta.materialsPaymentId,
-        Number(payment.amount),
-      );
-      this.logger.log(`Adjustment payment confirmed: adjustmentId=${meta.adjustmentId}`);
-      return;
-    }
+      if (count === 0) {
+        this.logger.warn(`_confirmPayment: payment ${moyasarRef} already processed — skipping`);
+        return;
+      }
 
-    const feePctRaw = this.config.get<string>('PLATFORM_FEE_PERCENT');
-    if (!feePctRaw) {
-      this.logger.warn('PLATFORM_FEE_PERCENT not set, defaulting to 15%');
-    }
-    const feePct = feePctRaw ? Number(feePctRaw) : 15;
-    const serviceAmt = Number(payment.serviceAmount) || Number(payment.amount);
-    const materialsAmt = Number(payment.materialsAmount) || 0;
-    const platformFee = (serviceAmt * feePct) / 100;
+      const payment = await tx.payment.findUnique({
+        where: { moyasarRef },
+        include: { request: true },
+      });
+      if (!payment) return;
 
-    // Payment row is already marked PAID by the atomic updateMany above.
-    // Only create escrow here (inside a transaction for atomicity).
-    await this.prisma.$transaction([
-      // Create escrow for SERVICE portion only
-      this.prisma.escrow.create({
+      // Adjustment payments (materials top-up) must NOT create an Escrow.
+      // Guard: validate adjustmentId and materialsPaymentId are present in meta to
+      // prevent a crafted metadata object from bypassing escrow creation.
+      const meta = payment.metadata as Record<string, any> | null;
+      if (meta?.type === 'materials_adjustment') {
+        if (!meta.adjustmentId || !meta.materialsPaymentId) {
+          this.logger.warn(
+            `Payment ${payment.id} has metadata.type=materials_adjustment but missing ` +
+            `adjustmentId/materialsPaymentId — treating as normal payment`,
+          );
+          // Fall through to normal escrow creation
+        } else {
+          isAdjustment = true;
+          adjustmentMeta = meta;
+          confirmedPayment = payment as any;
+          return; // escrow creation intentionally skipped
+        }
+      }
+
+      const feePctRaw = this.config.get<string>('PLATFORM_FEE_PERCENT');
+      if (!feePctRaw) this.logger.warn('PLATFORM_FEE_PERCENT not set, defaulting to 15%');
+      const feePct = feePctRaw ? Number(feePctRaw) : 15;
+      serviceAmt = Number(payment.serviceAmount) || Number(payment.amount);
+      materialsAmt = Number(payment.materialsAmount) || 0;
+      const platformFee = (serviceAmt * feePct) / 100;
+
+      // Escrow creation is now INSIDE the same transaction as updateMany.
+      // If escrow.create fails, updateMany rolls back → payment stays PENDING →
+      // Moyasar retries → clean re-processing. No orphaned PAID payment possible.
+      await tx.escrow.create({
         data: {
           paymentId: payment.id,
           requestId: payment.requestId,
@@ -271,11 +295,27 @@ export class PaymentsService {
           platformFee,
           status: 'HELD',
         },
-      }),
-      // Request stays ACCEPTED — provider explicitly calls startWork() → IN_PROGRESS
-    ]);
+      });
 
-    // Create MaterialsPayment record outside transaction (depends on payment row)
+      confirmedPayment = payment as any;
+    });
+
+    // ── Post-transaction actions ─────────────────────────────────────────────
+    if (!confirmedPayment) return;
+
+    if (isAdjustment && adjustmentMeta) {
+      await this.materials.onAdjustmentPaymentConfirmed(
+        adjustmentMeta.adjustmentId,
+        adjustmentMeta.materialsPaymentId,
+        Number((confirmedPayment as any).amount),
+      );
+      this.logger.log(`Adjustment payment confirmed: adjustmentId=${adjustmentMeta.adjustmentId}`);
+      return;
+    }
+
+    const payment = confirmedPayment as any;
+
+    // Create MaterialsPayment record (depends on payment row existing, must be outside tx)
     if (materialsAmt > 0 && payment.request.hasMaterials) {
       await this.materials.create(
         payment.requestId,
@@ -359,10 +399,15 @@ export class PaymentsService {
     // Use interactive transaction so the status check and completedJobs increment
     // are atomic — prevents double-increment if completeWork() runs concurrently.
     await this.prisma.$transaction(async (tx) => {
-      await tx.escrow.update({
-        where: { requestId },
+      // Re-validate inside transaction: prevents REFUNDED → RELEASED state corruption
+      // if a concurrent refund races with this release.
+      const { count: escrowCount } = await tx.escrow.updateMany({
+        where: { requestId, status: 'HELD' },
         data: { status: 'RELEASED', releasedAt: new Date() },
       });
+      if (escrowCount === 0) {
+        throw new BadRequestException('Escrow is no longer in HELD state — cannot release');
+      }
 
       // updateMany returns count=1 only if we are the one transitioning to COMPLETED.
       // If completeWork() already committed, count=0 and we skip the increment.
