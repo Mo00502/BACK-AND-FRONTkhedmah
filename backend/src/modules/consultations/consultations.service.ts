@@ -213,7 +213,7 @@ export class ConsultationsService {
       if (!isFinite(hoursElapsed) || hoursElapsed < 0) {
         throw new BadRequestException('مدة الاستشارة غير صحيحة');
       }
-      totalAmount = parseFloat((Number(c.pricePerHour) * Math.max(hoursElapsed, 0.25)).toFixed(2)) as any; // min 15 min charge, rounded to 2dp
+      totalAmount = parseFloat((Number(c.pricePerHour) * Math.max(hoursElapsed, 0.25)).toFixed(2)); // min 15 min charge, rounded to 2dp
     }
 
     const { count } = await this.prisma.consultation.updateMany({

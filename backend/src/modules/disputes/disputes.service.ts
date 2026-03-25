@@ -93,6 +93,8 @@ export class DisputesService {
   }
 
   async addEvidence(userId: string, disputeId: string, fileUrls: string[]) {
+    if (!fileUrls.length) throw new BadRequestException('No file URLs provided');
+
     const dispute = await this.prisma.dispute.findUnique({ where: { id: disputeId } });
     if (!dispute) throw new NotFoundException('Dispute not found');
     if (dispute.reporterId !== userId && dispute.againstId !== userId)
@@ -100,9 +102,19 @@ export class DisputesService {
     if (dispute.status !== 'OPEN')
       throw new BadRequestException('Can only add evidence to open disputes');
 
+    // Reject files already present to prevent duplicate spam
+    const existingSet = new Set(dispute.evidence as string[]);
+    const newFiles = fileUrls.filter((url) => !existingSet.has(url));
+    if (!newFiles.length) throw new BadRequestException('All provided files are already attached to this dispute');
+
+    // Cap total evidence to prevent unbounded growth
+    const MAX_EVIDENCE = 20;
+    if ((dispute.evidence as string[]).length + newFiles.length > MAX_EVIDENCE)
+      throw new BadRequestException(`Maximum ${MAX_EVIDENCE} evidence files per dispute`);
+
     return this.prisma.dispute.update({
       where: { id: disputeId },
-      data: { evidence: { push: fileUrls } },
+      data: { evidence: { push: newFiles } },
     });
   }
 

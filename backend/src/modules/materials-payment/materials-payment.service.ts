@@ -431,7 +431,7 @@ export class MaterialsPaymentService {
       },
     });
 
-    this.events.emit('materials.refund.full', { requestId, amount: mp.paidAmount });
+    this.events.emit('materials.refund.full', { requestId, amount: Number(mp.paidAmount) });
     return updated;
   }
 
