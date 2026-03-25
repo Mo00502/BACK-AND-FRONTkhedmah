@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سجل المدفوعات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background: #f0f4f8; padding: 2rem 0; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .btn-primary { background: #1a6b4a; border-color: #1a6b4a; border-radius: 10px; font-weight: 500; }
+    .btn-primary:hover { background: #155a3e; border-color: #155a3e; }
+    .btn-primary:disabled { background: #6c9e85; border-color: #6c9e85; }
+    .badge-status { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+    .stat-card { border-radius: 14px; padding: 18px; background: #fff; border: 1px solid #e2e8f0; }
+    .stat-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 10px; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+    .stat-label { font-size: 0.82rem; color: #64748b; }
+    .form-control, .form-select { border-radius: 10px; padding: 10px 14px; border: 1.5px solid #e2e8f0; font-family: 'Tajawal', sans-serif; font-size: 0.9rem; }
+    .form-control:focus, .form-select:focus { border-color: #1a6b4a; box-shadow: 0 0 0 3px rgba(26,107,74,0.12); }
+    .table th { font-size: 0.82rem; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 10px 14px; }
+    .table td { font-size: 0.9rem; vertical-align: middle; padding: 12px 14px; border-bottom: 1px solid #f8fafc; }
+    .table tbody tr:hover { background: #f8fafc; }
+    .toast-container { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 320px; }
+    .breadcrumb-nav { font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem; }
+    .breadcrumb-nav a { color: #1a6b4a; text-decoration: none; }
+    .empty-illustration { font-size: 4rem; margin-bottom: 1rem; }
+    .filter-chip { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; transition: all 0.15s; white-space: nowrap; }
+    .filter-chip:hover { border-color: #1a6b4a; color: #1a6b4a; }
+    .filter-chip.active { background: #1a6b4a; border-color: #1a6b4a; color: #fff; }
+    .payout-request-panel { background: linear-gradient(135deg,#f0faf4,#e8f5ee); border: 2px solid #bbf7d0; border-radius: 16px; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="toast-container">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-500" id="toastMsg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payout request modal -->
+  <div class="modal fade" id="payoutModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4" x-data="payoutModalData()">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-700">طلب صرف الأرباح</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body py-3">
+          <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-3" style="background:#f0faf4;">
+            <div style="font-size:1.6rem;">💰</div>
+            <div>
+              <div class="text-muted" style="font-size:0.82rem;">الرصيد المتاح للصرف</div>
+              <div class="fw-700 fs-5" style="color:#1a6b4a;" x-text="fmt(available) + ' ريال'"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-500">المبلغ المراد صرفه (ريال)</label>
+            <input type="number" class="form-control" x-model.number="amount" :max="available" min="50" step="1" placeholder="أدخل المبلغ">
+            <template x-if="amount > available">
+              <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;">المبلغ يتجاوز رصيدك المتاح</p>
+            </template>
+            <template x-if="amount > 0 && amount < 50">
+              <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;">الحد الأدنى للصرف 50 ريال</p>
+            </template>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-500">الحساب البنكي</label>
+            <select class="form-select" x-model="selectedAccount">
+              <option value="">-- اختر الحساب --</option>
+              <template x-for="acc in bankAccounts" :key="acc.id">
+                <option :value="acc.id" x-text="acc.bankName + ' — ' + maskIban(acc.iban)"></option>
+              </template>
+            </select>
+            <div class="mt-2">
+              <a href="provider-iban.html" style="font-size:0.82rem;color:#1a6b4a;">+ إضافة حساب بنكي جديد</a>
+            </div>
+          </div>
+
+          <template x-if="modalError">
+            <div class="alert alert-danger rounded-3 py-2" style="font-size:0.85rem;" x-text="modalError"></div>
+          </template>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-outline-secondary rounded-3 px-4" data-bs-dismiss="modal">إلغاء</button>
+          <button class="btn btn-primary rounded-3 px-4"
+            :disabled="_requesting || amount < 50 || amount > available || !selectedAccount"
+            @click="submitPayout">
+            <span x-show="!_requesting">💸 تأكيد الصرف</span>
+            <span x-show="_requesting"><span class="spinner-border spinner-border-sm me-2"></span>جارٍ الإرسال...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-lg" x-data="payoutHistoryPage()">
+    <div class="breadcrumb-nav">
+      <a href="provider-dashboard.html">الرئيسية</a>
+      <span class="mx-2">/</span>
+      <span>سجل المدفوعات</span>
+    </div>
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div>
+        <h5 class="fw-700 mb-1">سجل المدفوعات</h5>
+        <p class="text-muted mb-0" style="font-size:0.88rem;">جميع طلبات الصرف والتحويلات البنكية</p>
+      </div>
+      <button class="btn btn-primary rounded-pill px-4" @click="openPayoutModal">
+        💸 طلب صرف جديد
+      </button>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#d1fae5;">💚</div>
+          <div class="stat-value" x-text="fmt(summary.total)"></div>
+          <div class="stat-label">إجمالي المحولات (ريال)</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef3c7;">⏳</div>
+          <div class="stat-value" x-text="fmt(summary.pending)"></div>
+          <div class="stat-label">قيد المعالجة (ريال)</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dbeafe;">📅</div>
+          <div class="stat-value" style="font-size:1rem;" x-text="summary.lastDate || '—'"></div>
+          <div class="stat-label">آخر تحويل</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="card p-3 mb-4">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label fw-500 mb-1" style="font-size:0.85rem;">من تاريخ</label>
+          <input type="date" class="form-control" x-model="filters.from">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-500 mb-1" style="font-size:0.85rem;">إلى تاريخ</label>
+          <input type="date" class="form-control" x-model="filters.to">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-500 mb-1" style="font-size:0.85rem;">الحالة</label>
+          <select class="form-select" x-model="filters.status">
+            <option value="">الكل</option>
+            <option value="COMPLETED">مكتمل</option>
+            <option value="PENDING">معلق</option>
+            <option value="PROCESSING">جارٍ</option>
+            <option value="FAILED">فشل</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button class="btn btn-primary flex-fill" @click="applyFilters">بحث</button>
+          <button class="btn btn-outline-secondary" @click="resetFilters">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <template x-if="loading">
+        <div class="text-center py-5">
+          <div class="spinner-border text-success mb-3"></div>
+          <p class="text-muted">جارٍ التحميل...</p>
+        </div>
+      </template>
+
+      <!-- Empty state -->
+      <template x-if="!loading && filteredPayouts.length === 0">
+        <div class="text-center py-5 px-3">
+          <div class="empty-illustration">📤</div>
+          <h6 class="fw-700 mb-2">لا توجد مدفوعات بعد</h6>
+          <p class="text-muted mb-3">لم يتم تسجيل أي طلبات صرف حتى الآن</p>
+          <button class="btn btn-primary rounded-pill px-4" @click="openPayoutModal">
+            طلب صرف أول دفعة
+          </button>
+        </div>
+      </template>
+
+      <!-- Table content -->
+      <div class="table-responsive" x-show="!loading && filteredPayouts.length > 0">
+        <table class="table table-borderless mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>البنك</th>
+              <th>آخر 4 أرقام</th>
+              <th>المبلغ</th>
+              <th>الحالة</th>
+              <th>الإجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="(p, i) in visiblePayouts" :key="p.id">
+              <tr>
+                <td class="text-muted" x-text="i + 1"></td>
+                <td x-text="escHtml(formatDate(p.createdAt || p.date))"></td>
+                <td class="fw-500" x-text="escHtml(p.bankName || '—')"></td>
+                <td>
+                  <span class="font-monospace" x-text="escHtml(p.last4 || p.iban?.slice(-4) || '••••')"></span>
+                </td>
+                <td class="fw-700" style="color:#1a6b4a;" x-text="fmt(p.amount) + ' ريال'"></td>
+                <td>
+                  <span class="badge badge-status" :class="statusBadge(p.status)" x-text="statusLabel(p.status)"></span>
+                </td>
+                <td>
+                  <template x-if="p.status === 'FAILED'">
+                    <button class="btn btn-sm btn-outline-danger rounded-3"
+                      @click="retry(p.id)" :disabled="p._retrying">
+                      <span x-show="!p._retrying">إعادة المحاولة</span>
+                      <span x-show="p._retrying"><span class="spinner-border spinner-border-sm"></span></span>
+                    </button>
+                  </template>
+                  <template x-if="p.status !== 'FAILED'">
+                    <span class="text-muted" style="font-size:0.82rem;">—</span>
+                  </template>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <template x-if="!loading && filteredPayouts.length > visiblePayouts.length">
+        <div class="text-center p-4">
+          <button class="btn btn-outline-secondary rounded-pill px-5" @click="page++">
+            تحميل المزيد
+            (<span x-text="filteredPayouts.length - visiblePayouts.length"></span> متبقي)
+          </button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      msgEl.textContent = msg;
+      el.className = `toast align-items-center text-white border-0 bg-${type === 'success' ? 'success' : 'danger'}`;
+      bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
+    }
+
+    // Payout request modal data
+    function payoutModalData() {
+      return {
+        amount: 0,
+        available: 0,
+        bankAccounts: [],
+        selectedAccount: '',
+        modalError: '',
+        _requesting: false,
+
+        maskIban(iban) {
+          if (!iban || iban.length < 6) return iban;
+          return iban.substring(0,2) + '••••' + iban.substring(iban.length - 4);
+        },
+        fmt(n) {
+          return Number(n || 0).toLocaleString('ar-SA', { minimumFractionDigits:2, maximumFractionDigits:2 });
+        },
+
+        async submitPayout() {
+          this.modalError = '';
+          if (this.amount < 50)           { this.modalError = 'الحد الأدنى 50 ريال'; return; }
+          if (this.amount > this.available){ this.modalError = 'المبلغ يتجاوز رصيدك'; return; }
+          if (!this.selectedAccount)       { this.modalError = 'يرجى اختيار حساب بنكي'; return; }
+          this._requesting = true;
+          try {
+            await API.payouts.request({ amount: this.amount, bankAccountId: this.selectedAccount });
+            bootstrap.Modal.getInstance(document.getElementById('payoutModal'))?.hide();
+            showToast('تم إرسال طلب الصرف بنجاح! سيتم المعالجة خلال 1-3 أيام عمل.');
+            document.dispatchEvent(new CustomEvent('payout-requested'));
+          } catch (e) {
+            this.modalError = e.message || 'حدث خطأ أثناء الإرسال';
+          } finally {
+            this._requesting = false;
+          }
+        },
+
+        async init() {
+          try {
+            const wallet = await API.wallet.balance();
+            this.available = wallet.available ?? wallet.balance ?? 0;
+          } catch (e) { /* ignore */ }
+          try {
+            const data = await API.payouts.bankAccounts();
+            this.bankAccounts = Array.isArray(data) ? data : (data.items || []);
+            const def = this.bankAccounts.find(a => a.isDefault);
+            if (def) this.selectedAccount = def.id;
+          } catch (e) { /* ignore */ }
+        },
+      };
+    }
+
+    function payoutHistoryPage() {
+      return {
+        payouts: [],
+        loading: true,
+        page: 1,
+        pageSize: 15,
+        summary: { total: 0, pending: 0, lastDate: '' },
+        filters: { from: '', to: '', status: '' },
+        _appliedFilters: { from: '', to: '', status: '' },
+
+        get filteredPayouts() {
+          return this.payouts.filter(p => {
+            const f = this._appliedFilters;
+            if (f.status && p.status !== f.status) return false;
+            const d = new Date(p.createdAt || p.date);
+            if (f.from && d < new Date(f.from)) return false;
+            if (f.to   && d > new Date(f.to + 'T23:59:59')) return false;
+            return true;
+          });
+        },
+
+        get visiblePayouts() {
+          return this.filteredPayouts.slice(0, this.page * this.pageSize);
+        },
+
+        applyFilters() {
+          this._appliedFilters = { ...this.filters };
+          this.page = 1;
+        },
+        resetFilters() {
+          this.filters = { from: '', to: '', status: '' };
+          this._appliedFilters = { from: '', to: '', status: '' };
+          this.page = 1;
+        },
+
+        statusLabel(s) {
+          return { COMPLETED:'مكتمل', PENDING:'معلق', PROCESSING:'جارٍ', FAILED:'فشل' }[s] || s;
+        },
+        statusBadge(s) {
+          return { COMPLETED:'bg-success text-white', PENDING:'bg-warning text-dark', PROCESSING:'bg-info text-white', FAILED:'bg-danger text-white' }[s] || 'bg-secondary text-white';
+        },
+
+        fmt(n) {
+          return Number(n || 0).toLocaleString('ar-SA', { minimumFractionDigits:2, maximumFractionDigits:2 });
+        },
+
+        formatDate(d) {
+          if (!d) return '—';
+          return new Date(d).toLocaleDateString('ar-SA', { year:'numeric', month:'short', day:'numeric' });
+        },
+
+        openPayoutModal() {
+          const modal = new bootstrap.Modal(document.getElementById('payoutModal'));
+          modal.show();
+        },
+
+        async retry(id) {
+          const p = this.payouts.find(x => x.id === id);
+          if (!p) return;
+          p._retrying = true;
+          try {
+            await API.payouts.retry(id);
+            showToast('تم إعادة إرسال طلب الصرف');
+            await this.loadPayouts();
+          } catch (e) {
+            showToast(e.message || 'فشلت إعادة المحاولة', 'error');
+            p._retrying = false;
+          }
+        },
+
+        computeSummary() {
+          const completed = this.payouts.filter(p => p.status === 'COMPLETED');
+          const pending   = this.payouts.filter(p => ['PENDING','PROCESSING'].includes(p.status));
+          this.summary.total   = completed.reduce((s, p) => s + Number(p.amount || 0), 0);
+          this.summary.pending = pending.reduce((s, p) => s + Number(p.amount || 0), 0);
+          const sorted = [...completed].sort((a,b) => new Date(b.createdAt||b.date) - new Date(a.createdAt||a.date));
+          this.summary.lastDate = sorted.length ? this.formatDate(sorted[0].createdAt || sorted[0].date) : '';
+        },
+
+        async loadPayouts() {
+          this.loading = true;
+          try {
+            const data = await API.payouts.history();
+            this.payouts = (Array.isArray(data) ? data : (data.items || [])).map(p => ({ ...p, _retrying: false }));
+            this.computeSummary();
+          } catch (e) {
+            showToast(e.message || 'تعذّر تحميل سجل المدفوعات', 'error');
+            this.payouts = [];
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        init() {
+          this.loadPayouts();
+          document.addEventListener('payout-requested', () => this.loadPayouts());
+        },
+      };
+    }
+  </script>
+</body>
+</html>

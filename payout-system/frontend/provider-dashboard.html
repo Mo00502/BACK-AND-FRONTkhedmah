@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم المزود</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background: #f0f4f8; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .btn-primary { background: #1a6b4a; border-color: #1a6b4a; border-radius: 10px; }
+    .btn-primary:hover { background: #155a3e; border-color: #155a3e; }
+    .btn-primary:disabled { background: #6c9e85; border-color: #6c9e85; }
+    .badge-status { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+    .stat-card { border-radius: 16px; padding: 20px; color: #fff; position: relative; overflow: hidden; }
+    .stat-card::after { content:''; position:absolute; top:-20px; left:-20px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.1); }
+    .stat-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; }
+    .stat-label { font-size: 0.85rem; opacity: 0.85; }
+    .topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+    .nav-link-pill { padding: 6px 16px; border-radius: 20px; font-size: 0.88rem; color: #64748b; text-decoration: none; transition: all 0.15s; }
+    .nav-link-pill:hover, .nav-link-pill.active { background: #1a6b4a; color: #fff; }
+    .job-card { border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; padding: 16px; transition: box-shadow 0.15s; }
+    .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .payout-table th { font-size: 0.82rem; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+    .payout-table td { font-size: 0.9rem; vertical-align: middle; }
+    .kyc-badge { padding: 6px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+    .toast-container { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 320px; }
+    .quick-link { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; text-decoration: none; color: #1e293b; transition: all 0.15s; }
+    .quick-link:hover { background: #f0faf4; border-color: #1a6b4a; color: #1a6b4a; }
+    .quick-link-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+  <div class="toast-container">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-500" id="toastMsg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4">
+        <div class="modal-body p-4 text-center">
+          <div style="font-size:2.2rem;margin-bottom:.75rem;" id="modalIcon">❓</div>
+          <h6 class="fw-700 mb-2" id="modalTitle"></h6>
+          <p class="text-muted mb-0" style="font-size:0.88rem;" id="modalBody"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+          <button class="btn btn-outline-secondary rounded-3 px-4" data-bs-dismiss="modal">إلغاء</button>
+          <button class="btn btn-primary rounded-3 px-4" id="modalConfirmBtn">تأكيد</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="container-lg">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:40px;height:40px;background:linear-gradient(135deg,#1a6b4a,#2d9e6e);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">م</div>
+          <span class="fw-700" style="font-size:1.05rem;">منصة المدفوعات</span>
+        </div>
+        <div class="d-flex align-items-center gap-2" x-data="{ user: JSON.parse(localStorage.getItem('user') || '{}') }">
+          <nav class="d-none d-md-flex gap-1">
+            <a href="provider-dashboard.html" class="nav-link-pill active">الرئيسية</a>
+            <a href="provider-jobs.html" class="nav-link-pill">الطلبات</a>
+            <a href="payout-history.html" class="nav-link-pill">المدفوعات</a>
+            <a href="provider-iban.html" class="nav-link-pill">البنك</a>
+          </nav>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle">
+              <span x-text="(user.firstName || 'المزود') + ' ' + (user.lastName || '')"></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-start">
+              <li><a class="dropdown-item" href="provider-iban.html">إعدادات البنك</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="#" @click.prevent="localStorage.clear(); location.href='login.html'">
+                  تسجيل الخروج
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-lg py-4" x-data="dashboardPage()">
+    <!-- Header -->
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+      <div>
+        <h5 class="fw-700 mb-1">لوحة تحكم المزود</h5>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted" style="font-size:0.9rem;" x-text="'مرحباً، ' + escHtml(providerName)"></span>
+          <span class="kyc-badge" :class="kycClass" x-text="kycLabel"></span>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="provider-jobs.html" class="btn btn-outline-secondary btn-sm rounded-pill px-3">الطلبات</a>
+        <button class="btn btn-primary btn-sm rounded-pill px-3" @click="openPayoutRequest">طلب صرف</button>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#1a6b4a,#2d9e6e);">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" x-text="fmt(wallet.available)"></div>
+          <div class="stat-label">الرصيد المتاح (ريال)</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value" x-text="fmt(wallet.processing)"></div>
+          <div class="stat-label">قيد المعالجة (ريال)</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">
+          <div class="stat-icon">🔒</div>
+          <div class="stat-value" x-text="fmt(wallet.escrow)"></div>
+          <div class="stat-label">في الضمان (ريال)</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#475569,#64748b);">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value" x-text="fmt(wallet.totalCommissions)"></div>
+          <div class="stat-label">إجمالي العمولات (ريال)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Active jobs -->
+      <div class="col-lg-8">
+        <div class="card p-4">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-700 mb-0">الطلبات النشطة</h6>
+            <a href="provider-jobs.html" class="btn btn-sm btn-outline-secondary rounded-pill px-3">عرض الكل</a>
+          </div>
+
+          <template x-if="loadingJobs">
+            <div class="text-center py-4">
+              <div class="spinner-border text-success"></div>
+            </div>
+          </template>
+
+          <template x-if="!loadingJobs && activeJobs.length === 0">
+            <div class="text-center py-4">
+              <div style="font-size:2rem;margin-bottom:.5rem;">📭</div>
+              <p class="text-muted mb-0">لا توجد طلبات نشطة</p>
+            </div>
+          </template>
+
+          <div class="d-flex flex-column gap-3">
+            <template x-for="job in activeJobs" :key="job.id">
+              <div class="job-card">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                  <div>
+                    <div class="fw-700" x-text="escHtml(job.title)"></div>
+                    <div class="text-muted" style="font-size:0.82rem;">
+                      👤 <span x-text="escHtml(job.customerName)"></span>
+                      &nbsp;•&nbsp; 📅 <span x-text="escHtml(job.scheduledDate)"></span>
+                    </div>
+                  </div>
+                  <span class="badge badge-status" :class="jobBadgeClass(job.status)" x-text="jobStatusLabel(job.status)"></span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-3">
+                  <div class="fw-700" style="color:#1a6b4a;" x-text="fmt(job.amount) + ' ريال'"></div>
+                  <div class="d-flex gap-2">
+                    <template x-if="job.status === 'ACCEPTED'">
+                      <button class="btn btn-sm btn-primary rounded-3 px-3"
+                        @click="confirmAction(job.id, 'start', 'ابدأ العمل', 'هل أنت متأكد من بدء تنفيذ هذا الطلب؟')"
+                        :disabled="job._acting">
+                        <span x-show="!job._acting">ابدأ العمل</span>
+                        <span x-show="job._acting"><span class="spinner-border spinner-border-sm"></span></span>
+                      </button>
+                    </template>
+                    <template x-if="job.status === 'IN_PROGRESS'">
+                      <button class="btn btn-sm btn-success rounded-3 px-3"
+                        @click="confirmAction(job.id, 'complete', 'إكمال العمل', 'هل أنت متأكد من أن العمل قد اكتمل؟')"
+                        :disabled="job._acting">
+                        <span x-show="!job._acting">إكمال العمل ✓</span>
+                        <span x-show="job._acting"><span class="spinner-border spinner-border-sm"></span></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Quick links -->
+        <div class="card p-4 mb-4">
+          <h6 class="fw-700 mb-3">روابط سريعة</h6>
+          <div class="d-flex flex-column gap-2">
+            <a href="provider-iban.html" class="quick-link">
+              <div class="quick-link-icon" style="background:#dbeafe;">🏦</div>
+              <span class="fw-500">إضافة / تعديل IBAN</span>
+            </a>
+            <a href="#" class="quick-link" @click.prevent="openPayoutRequest">
+              <div class="quick-link-icon" style="background:#d1fae5;">💸</div>
+              <span class="fw-500">طلب صرف الأرباح</span>
+            </a>
+            <a href="payout-history.html" class="quick-link">
+              <div class="quick-link-icon" style="background:#fef3c7;">📋</div>
+              <span class="fw-500">سجل المدفوعات</span>
+            </a>
+            <a href="provider-jobs.html" class="quick-link">
+              <div class="quick-link-icon" style="background:#ede9fe;">📦</div>
+              <span class="fw-500">إدارة الطلبات</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Recent payouts -->
+        <div class="card p-4">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-700 mb-0">آخر التحويلات</h6>
+            <a href="payout-history.html" class="btn btn-sm btn-outline-secondary rounded-pill px-3">الكل</a>
+          </div>
+          <template x-if="loadingPayouts">
+            <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-success"></div></div>
+          </template>
+          <template x-if="!loadingPayouts && recentPayouts.length === 0">
+            <p class="text-muted text-center mb-0" style="font-size:0.88rem;">لا توجد تحويلات بعد</p>
+          </template>
+          <div class="table-responsive">
+            <table class="table table-borderless payout-table mb-0" x-show="!loadingPayouts && recentPayouts.length > 0">
+              <thead>
+                <tr>
+                  <th>التاريخ</th>
+                  <th>المبلغ</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="p in recentPayouts" :key="p.id">
+                  <tr>
+                    <td x-text="escHtml(p.date)" style="font-size:0.82rem;"></td>
+                    <td class="fw-600" x-text="fmt(p.amount) + ' ر'" style="color:#1a6b4a;"></td>
+                    <td>
+                      <span class="badge badge-status" :class="payoutBadge(p.status)" x-text="payoutLabel(p.status)"></span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      msgEl.textContent = msg;
+      el.className = `toast align-items-center text-white border-0 bg-${type === 'success' ? 'success' : 'danger'}`;
+      bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
+    }
+
+    function dashboardPage() {
+      return {
+        providerName: '',
+        kycStatus: 'APPROVED',
+        wallet: { available: 0, processing: 0, escrow: 0, totalCommissions: 0 },
+        activeJobs: [],
+        recentPayouts: [],
+        loadingJobs: true,
+        loadingPayouts: true,
+
+        get kycLabel() {
+          const m = { APPROVED:'معتمد ✓', PENDING_REVIEW:'قيد المراجعة', UNDER_REVIEW:'تحت المراجعة', REJECTED:'مرفوض', SUSPENDED:'موقوف' };
+          return m[this.kycStatus] || this.kycStatus;
+        },
+        get kycClass() {
+          const m = { APPROVED:'bg-success-subtle text-success', PENDING_REVIEW:'bg-warning-subtle text-warning', UNDER_REVIEW:'bg-info-subtle text-info', REJECTED:'bg-danger-subtle text-danger', SUSPENDED:'bg-secondary-subtle text-secondary' };
+          return m[this.kycStatus] || 'bg-secondary-subtle';
+        },
+
+        fmt(n) {
+          return Number(n || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        jobStatusLabel(s) {
+          return { ACCEPTED:'مقبول', IN_PROGRESS:'جارٍ التنفيذ' }[s] || s;
+        },
+        jobBadgeClass(s) {
+          return { ACCEPTED:'bg-primary text-white', IN_PROGRESS:'bg-warning text-dark' }[s] || 'bg-secondary text-white';
+        },
+        payoutLabel(s) {
+          return { COMPLETED:'مكتمل', PENDING:'معلق', PROCESSING:'جارٍ', FAILED:'فشل' }[s] || s;
+        },
+        payoutBadge(s) {
+          return { COMPLETED:'bg-success text-white', PENDING:'bg-warning text-dark', PROCESSING:'bg-info text-white', FAILED:'bg-danger text-white' }[s] || 'bg-secondary text-white';
+        },
+
+        confirmAction(jobId, action, title, body) {
+          document.getElementById('modalTitle').textContent = title;
+          document.getElementById('modalBody').textContent = body;
+          document.getElementById('modalIcon').textContent = action === 'start' ? '▶️' : '✅';
+          const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+          modal.show();
+          document.getElementById('modalConfirmBtn').onclick = async () => {
+            modal.hide();
+            const job = this.activeJobs.find(j => j.id === jobId);
+            if (!job) return;
+            job._acting = true;
+            try {
+              if (action === 'start') await API.orders.start(jobId);
+              else await API.orders.complete(jobId);
+              showToast(action === 'start' ? 'تم بدء العمل بنجاح' : 'تم تسجيل اكتمال العمل');
+              await this.loadJobs();
+            } catch (e) {
+              showToast(e.message || 'حدث خطأ', 'error');
+              job._acting = false;
+            }
+          };
+        },
+
+        openPayoutRequest() {
+          location.href = 'payout-history.html';
+        },
+
+        async loadWallet() {
+          try {
+            const data = await API.wallet.balance();
+            this.wallet.available      = data.available      ?? data.balance ?? 0;
+            this.wallet.processing     = data.processing     ?? data.pendingPayouts ?? 0;
+            this.wallet.escrow         = data.escrow         ?? data.heldAmount ?? 0;
+            this.wallet.totalCommissions = data.totalCommissions ?? 0;
+          } catch (e) {
+            // silently show zeros
+          }
+        },
+
+        async loadJobs() {
+          this.loadingJobs = true;
+          try {
+            const data = await API.orders.list();
+            const all = Array.isArray(data) ? data : (data.items || []);
+            this.activeJobs = all
+              .filter(j => ['ACCEPTED','IN_PROGRESS'].includes(j.status))
+              .slice(0, 5)
+              .map(j => ({ ...j, _acting: false }));
+          } catch (e) {
+            this.activeJobs = [];
+          } finally {
+            this.loadingJobs = false;
+          }
+        },
+
+        async loadPayouts() {
+          this.loadingPayouts = true;
+          try {
+            const data = await API.payouts.history();
+            const all = Array.isArray(data) ? data : (data.items || []);
+            this.recentPayouts = all.slice(0, 5);
+          } catch (e) {
+            this.recentPayouts = [];
+          } finally {
+            this.loadingPayouts = false;
+          }
+        },
+
+        init() {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          this.providerName = (user.firstName || '') + ' ' + (user.lastName || '');
+          this.kycStatus = user.verificationStatus || 'APPROVED';
+          this.loadWallet();
+          this.loadJobs();
+          this.loadPayouts();
+        },
+      };
+    }
+  </script>
+</body>
+</html>

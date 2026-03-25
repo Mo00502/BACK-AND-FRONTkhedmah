@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة الطلبات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background: #f0f4f8; padding: 2rem 0; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .btn-primary { background: #1a6b4a; border-color: #1a6b4a; border-radius: 10px; font-weight: 500; }
+    .btn-primary:hover { background: #155a3e; border-color: #155a3e; }
+    .btn-primary:disabled { background: #6c9e85; border-color: #6c9e85; }
+    .badge-status { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+    .filter-tab { padding: 8px 18px; border-radius: 20px; font-size: 0.88rem; cursor: pointer; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; transition: all 0.15s; white-space: nowrap; }
+    .filter-tab:hover { border-color: #1a6b4a; color: #1a6b4a; }
+    .filter-tab.active { background: #1a6b4a; border-color: #1a6b4a; color: #fff; }
+    .job-card { border-radius: 14px; background: #fff; border: 1px solid #e2e8f0; padding: 20px; transition: box-shadow 0.15s; }
+    .job-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+    .job-amount { font-size: 1.15rem; font-weight: 700; color: #1a6b4a; }
+    .net-amount { font-size: 0.88rem; color: #64748b; }
+    .meta-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.82rem; color: #64748b; margin-top: 8px; }
+    .meta-item { display: flex; align-items: center; gap: 4px; }
+    .action-area { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
+    .toast-container { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 320px; }
+    .upload-label { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 10px; border: 1.5px dashed #94a3b8; cursor: pointer; font-size: 0.82rem; color: #64748b; transition: all 0.15s; }
+    .upload-label:hover { border-color: #1a6b4a; color: #1a6b4a; background: #f0faf4; }
+    .upload-label.has-file { border-color: #22c55e; color: #16a34a; background: #f0fdf4; }
+    .breadcrumb-nav { font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem; }
+    .breadcrumb-nav a { color: #1a6b4a; text-decoration: none; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .info-tag { display: inline-flex; align-items: center; gap: 4px; background: #fef3c7; color: #92400e; border-radius: 20px; padding: 5px 12px; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="toast-container">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-500" id="toastMsg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm action modal -->
+  <div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4">
+        <div class="modal-body p-4 text-center">
+          <div style="font-size:2.2rem;margin-bottom:.75rem;" id="modalIcon">❓</div>
+          <h6 class="fw-700 mb-2" id="modalTitle"></h6>
+          <p class="text-muted mb-0" style="font-size:0.88rem;" id="modalDesc"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+          <button class="btn btn-outline-secondary rounded-3 px-4" data-bs-dismiss="modal">إلغاء</button>
+          <button class="btn btn-primary rounded-3 px-4" id="modalOkBtn">تأكيد</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-lg" x-data="jobsPage()">
+    <div class="breadcrumb-nav mb-3">
+      <a href="provider-dashboard.html">الرئيسية</a>
+      <span class="mx-2">/</span>
+      <span>إدارة الطلبات</span>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div>
+        <h5 class="fw-700 mb-1">إدارة الطلبات</h5>
+        <p class="text-muted mb-0" style="font-size:0.88rem;">
+          <span x-text="filteredJobs.length"></span> طلب
+          <template x-if="activeFilter !== 'ALL'"><span x-text="' في فئة: ' + filterLabel(activeFilter)"></span></template>
+        </p>
+      </div>
+      <a href="provider-dashboard.html" class="btn btn-outline-secondary btn-sm rounded-pill px-3">الرئيسية</a>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="d-flex gap-2 mb-4 overflow-auto pb-1">
+      <template x-for="tab in filterTabs" :key="tab.value">
+        <button class="filter-tab" :class="activeFilter === tab.value ? 'active' : ''"
+          @click="setFilter(tab.value)">
+          <span x-text="tab.label"></span>
+          <span class="ms-1 opacity-75" style="font-size:0.78rem;" x-text="'(' + tabCount(tab.value) + ')'"></span>
+        </button>
+      </template>
+    </div>
+
+    <!-- Loading -->
+    <template x-if="loading">
+      <div class="text-center py-5">
+        <div class="spinner-border text-success mb-3"></div>
+        <p class="text-muted">جارٍ تحميل الطلبات...</p>
+      </div>
+    </template>
+
+    <!-- Empty state -->
+    <template x-if="!loading && filteredJobs.length === 0">
+      <div class="card">
+        <div class="empty-state">
+          <div style="font-size:3.5rem;margin-bottom:1rem;">📭</div>
+          <h6 class="fw-700">لا توجد طلبات</h6>
+          <p class="text-muted">لا توجد طلبات في هذه الفئة حالياً</p>
+        </div>
+      </div>
+    </template>
+
+    <!-- Jobs list -->
+    <div class="d-flex flex-column gap-3" x-show="!loading && filteredJobs.length > 0">
+      <template x-for="job in visibleJobs" :key="job.id">
+        <div class="job-card">
+          <!-- Header row -->
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <div class="flex-fill">
+              <div class="fw-700 mb-1" x-text="escHtml(job.title)"></div>
+              <div class="meta-row">
+                <span class="meta-item">👤 <span x-text="escHtml(job.customerName)"></span></span>
+                <span class="meta-item">📅 <span x-text="escHtml(job.scheduledDate)"></span></span>
+                <span class="meta-item">📍 <span x-text="escHtml(job.address)"></span></span>
+              </div>
+            </div>
+            <div class="text-start">
+              <span class="badge badge-status" :class="statusBadgeClass(job.status)" x-text="statusLabel(job.status)"></span>
+            </div>
+          </div>
+
+          <!-- Financial row -->
+          <div class="d-flex align-items-center gap-3 mt-3">
+            <div>
+              <div class="job-amount" x-text="fmt(job.amount) + ' ريال'"></div>
+              <div class="net-amount">صافي الدفع: <span x-text="fmt(job.amount * 0.85) + ' ريال'"></span></div>
+            </div>
+            <template x-if="job.status === 'AWAITING_RELEASE'">
+              <div class="info-tag">⏳ في انتظار تأكيد العميل</div>
+            </template>
+          </div>
+
+          <!-- Actions -->
+          <div class="action-area">
+            <!-- CREATED -->
+            <template x-if="job.status === 'CREATED'">
+              <div class="d-flex gap-2 w-100">
+                <button class="btn btn-primary btn-sm rounded-3 px-4"
+                  @click="doAction(job.id, 'accept', 'قبول الطلب', 'هل توافق على قبول هذا الطلب؟')"
+                  :disabled="job._acting">
+                  <span x-show="!job._acting">قبول الطلب ✓</span>
+                  <span x-show="job._acting"><span class="spinner-border spinner-border-sm"></span></span>
+                </button>
+                <button class="btn btn-outline-danger btn-sm rounded-3 px-4"
+                  @click="doAction(job.id, 'cancel', 'رفض الطلب', 'هل أنت متأكد من رفض هذا الطلب؟', true)"
+                  :disabled="job._acting">رفض</button>
+              </div>
+            </template>
+
+            <!-- ACCEPTED -->
+            <template x-if="job.status === 'ACCEPTED'">
+              <button class="btn btn-primary btn-sm rounded-3 px-4"
+                @click="doAction(job.id, 'start', 'بدء العمل', 'هل أنت جاهز لبدء تنفيذ هذا الطلب؟')"
+                :disabled="job._acting">
+                <span x-show="!job._acting">▶️ ابدأ العمل</span>
+                <span x-show="job._acting"><span class="spinner-border spinner-border-sm"></span></span>
+              </button>
+            </template>
+
+            <!-- IN_PROGRESS -->
+            <template x-if="job.status === 'IN_PROGRESS'">
+              <div class="d-flex align-items-center gap-3 flex-wrap w-100">
+                <button class="btn btn-success btn-sm rounded-3 px-4"
+                  @click="doAction(job.id, 'complete', 'إكمال العمل', 'هل اكتمل العمل بشكل كامل؟')"
+                  :disabled="job._acting">
+                  <span x-show="!job._acting">✅ إكمال العمل</span>
+                  <span x-show="job._acting"><span class="spinner-border spinner-border-sm"></span></span>
+                </button>
+                <label class="upload-label" :class="job._photoName ? 'has-file' : ''">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span x-text="job._photoName || 'رفع صورة إتمام'"></span>
+                  <input type="file" accept="image/*" class="d-none" @change="onPhotoChange($event, job)">
+                </label>
+              </div>
+            </template>
+
+            <!-- AWAITING_RELEASE -->
+            <template x-if="job.status === 'AWAITING_RELEASE'">
+              <button class="btn btn-outline-secondary btn-sm rounded-3 px-4" disabled>
+                ⏳ في انتظار تأكيد العميل
+              </button>
+            </template>
+
+            <!-- RELEASED -->
+            <template x-if="job.status === 'RELEASED'">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span class="text-success fw-600" style="font-size:0.88rem;">✅ تم الإفراج عن الدفعة</span>
+                <button class="btn btn-primary btn-sm rounded-3 px-4"
+                  @click="requestPayout(job)">💸 طلب صرف الأرباح</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Load more -->
+    <template x-if="!loading && visibleJobs.length < filteredJobs.length">
+      <div class="text-center mt-4">
+        <button class="btn btn-outline-secondary rounded-pill px-5" @click="loadMore">
+          تحميل المزيد (
+          <span x-text="filteredJobs.length - visibleJobs.length"></span>
+          متبقي)
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      msgEl.textContent = msg;
+      el.className = `toast align-items-center text-white border-0 bg-${type === 'success' ? 'success' : 'danger'}`;
+      bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
+    }
+
+    function jobsPage() {
+      return {
+        jobs: [],
+        loading: true,
+        activeFilter: 'ALL',
+        pageSize: 10,
+        page: 1,
+
+        filterTabs: [
+          { value: 'ALL',              label: 'الكل' },
+          { value: 'CREATED',          label: 'معلق' },
+          { value: 'ACCEPTED',         label: 'مقبول' },
+          { value: 'IN_PROGRESS',      label: 'جارٍ' },
+          { value: 'AWAITING_RELEASE', label: 'مكتمل' },
+          { value: 'RELEASED',         label: 'تم الإفراج' },
+        ],
+
+        get filteredJobs() {
+          if (this.activeFilter === 'ALL') return this.jobs;
+          const map = { AWAITING_RELEASE: ['COMPLETED','AWAITING_RELEASE'] };
+          const targets = map[this.activeFilter] || [this.activeFilter];
+          return this.jobs.filter(j => targets.includes(j.status));
+        },
+
+        get visibleJobs() {
+          return this.filteredJobs.slice(0, this.page * this.pageSize);
+        },
+
+        setFilter(f) { this.activeFilter = f; this.page = 1; },
+        loadMore() { this.page++; },
+
+        tabCount(f) {
+          if (f === 'ALL') return this.jobs.length;
+          const map = { AWAITING_RELEASE: ['COMPLETED','AWAITING_RELEASE'] };
+          const targets = map[f] || [f];
+          return this.jobs.filter(j => targets.includes(j.status)).length;
+        },
+
+        filterLabel(f) {
+          return this.filterTabs.find(t => t.value === f)?.label || f;
+        },
+
+        statusLabel(s) {
+          return {
+            CREATED:'معلق', ACCEPTED:'مقبول', IN_PROGRESS:'جارٍ التنفيذ',
+            COMPLETED:'مكتمل', AWAITING_RELEASE:'في انتظار الإفراج',
+            RELEASED:'تم الإفراج', CANCELLED:'ملغي',
+          }[s] || s;
+        },
+
+        statusBadgeClass(s) {
+          return {
+            CREATED:'bg-secondary text-white', ACCEPTED:'bg-primary text-white',
+            IN_PROGRESS:'bg-warning text-dark', COMPLETED:'bg-success text-white',
+            AWAITING_RELEASE:'bg-info text-white', RELEASED:'bg-dark text-white',
+            CANCELLED:'bg-danger text-white',
+          }[s] || 'bg-secondary text-white';
+        },
+
+        fmt(n) {
+          return Number(n || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        onPhotoChange(evt, job) {
+          const file = evt.target.files?.[0];
+          if (file) { job._photoName = file.name; }
+        },
+
+        doAction(jobId, action, title, desc, isDanger = false) {
+          const iconMap = { accept:'✅', cancel:'❌', start:'▶️', complete:'🏁' };
+          document.getElementById('modalIcon').textContent  = iconMap[action] || '❓';
+          document.getElementById('modalTitle').textContent = title;
+          document.getElementById('modalDesc').textContent  = desc;
+          const okBtn = document.getElementById('modalOkBtn');
+          okBtn.className = `btn ${isDanger ? 'btn-danger' : 'btn-primary'} rounded-3 px-4`;
+          const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+          modal.show();
+          okBtn.onclick = async () => {
+            modal.hide();
+            const job = this.jobs.find(j => j.id === jobId);
+            if (!job) return;
+            job._acting = true;
+            try {
+              const apiMap = {
+                accept: () => API.orders.accept(jobId),
+                start:  () => API.orders.start(jobId),
+                complete: () => API.orders.complete(jobId),
+                cancel: () => API.orders.cancel(jobId),
+              };
+              await apiMap[action]();
+              const labelMap = { accept:'تم قبول الطلب', start:'تم بدء العمل', complete:'تم تسجيل اكتمال العمل', cancel:'تم رفض الطلب' };
+              showToast(labelMap[action] || 'تم');
+              await this.loadJobs();
+            } catch (e) {
+              showToast(e.message || 'حدث خطأ', 'error');
+              job._acting = false;
+            }
+          };
+        },
+
+        requestPayout(job) {
+          location.href = 'payout-history.html';
+        },
+
+        async loadJobs() {
+          this.loading = true;
+          try {
+            const data = await API.orders.list();
+            const all = Array.isArray(data) ? data : (data.items || []);
+            this.jobs = all.map(j => ({ ...j, _acting: false, _photoName: '' }));
+          } catch (e) {
+            showToast(e.message || 'تعذّر تحميل الطلبات', 'error');
+            this.jobs = [];
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        init() {
+          this.loadJobs();
+        },
+      };
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مراجعة الطلب والدفع</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background: #f0f4f8; padding: 2rem 0; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .btn-primary { background: #1a6b4a; border-color: #1a6b4a; border-radius: 12px; padding: 14px; font-weight: 500; font-size: 1.05rem; }
+    .btn-primary:hover { background: #155a3e; border-color: #155a3e; }
+    .btn-primary:disabled { background: #6c9e85; border-color: #6c9e85; }
+    .form-control, .form-select { border-radius: 10px; padding: 12px 16px; border: 1.5px solid #e2e8f0; font-family: 'Tajawal', sans-serif; }
+    .form-control:focus, .form-select:focus { border-color: #1a6b4a; box-shadow: 0 0 0 3px rgba(26,107,74,0.12); }
+    .payment-method { border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; cursor: pointer; transition: all 0.2s; background: #fff; }
+    .payment-method:hover { border-color: #1a6b4a; background: #f0faf4; }
+    .payment-method.selected { border-color: #1a6b4a; background: #f0faf4; }
+    .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .breakdown-row.divider { border-top: 1px dashed #e2e8f0; margin-top: 4px; padding-top: 12px; }
+    .breakdown-row.total { border-top: 2px solid #1a6b4a; margin-top: 4px; padding-top: 12px; font-weight: 700; font-size: 1.1rem; }
+    .section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 12px; }
+    .badge-status { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; }
+    .toast-container { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 320px; }
+    .provider-badge { display: inline-flex; align-items: center; gap: 8px; background: #f8fafc; border-radius: 10px; padding: 10px 14px; }
+    .provider-avatar { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,#1a6b4a,#2d9e6e); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+    .info-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .info-row:last-child { border-bottom: none; }
+    .materials-toggle { background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 12px 16px; }
+  </style>
+</head>
+<body>
+  <div class="toast-container">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-500" id="toastMsg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="max-width:960px;" x-data="checkoutPage()">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <h5 class="fw-700 mb-1">مراجعة الطلب والدفع</h5>
+        <p class="text-muted mb-0" style="font-size:0.9rem;">تأكد من تفاصيل الطلب قبل الدفع</p>
+      </div>
+      <a href="login.html" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+        رجوع
+      </a>
+    </div>
+
+    <div class="row g-4">
+      <!-- Left: Service + form -->
+      <div class="col-lg-7">
+        <!-- Service card -->
+        <div class="card p-4 mb-4">
+          <div class="section-title">تفاصيل الخدمة</div>
+          <h6 class="fw-700 mb-1" x-text="service.title"></h6>
+          <p class="text-muted mb-3" style="font-size:0.9rem;" x-text="service.description"></p>
+          <div class="provider-badge mb-3">
+            <div class="provider-avatar" x-text="service.providerInitial"></div>
+            <div>
+              <div class="fw-600" style="font-size:0.9rem;" x-text="service.providerName"></div>
+              <div class="text-muted" style="font-size:0.78rem;">
+                ⭐ <span x-text="service.rating"></span>
+                &nbsp;•&nbsp; <span x-text="service.completedJobs"></span> طلب مكتمل
+              </div>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-500">تاريخ الموعد</label>
+              <input type="date" class="form-control" x-model="order.scheduledDate" :min="today" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">وقت الموعد</label>
+              <select class="form-select" x-model="order.scheduledTime">
+                <option value="">-- اختر الوقت --</option>
+                <template x-for="t in timeSlots" :key="t">
+                  <option :value="t" x-text="t"></option>
+                </template>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-500">العنوان</label>
+              <input type="text" class="form-control" x-model="order.address" placeholder="المدينة، الحي، رقم المبنى">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-500">ملاحظات إضافية <span class="text-muted">(اختياري)</span></label>
+              <textarea class="form-control" x-model="order.notes" rows="2" placeholder="أي متطلبات أو تعليمات خاصة..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment method -->
+        <div class="card p-4">
+          <div class="section-title">طريقة الدفع</div>
+          <div class="d-flex flex-column gap-2">
+            <template x-for="m in paymentMethods" :key="m.id">
+              <div class="payment-method d-flex align-items-center gap-3"
+                :class="order.paymentMethod === m.id ? 'selected' : ''"
+                @click="order.paymentMethod = m.id">
+                <span style="font-size:1.5rem;" x-text="m.icon"></span>
+                <div>
+                  <div class="fw-600" x-text="m.name"></div>
+                  <div class="text-muted" style="font-size:0.8rem;" x-text="m.desc"></div>
+                </div>
+                <div class="ms-auto">
+                  <div class="rounded-circle border-2"
+                    :style="order.paymentMethod === m.id ? 'width:20px;height:20px;background:#1a6b4a;border:2px solid #1a6b4a;display:flex;align-items:center;justify-content:center;' : 'width:20px;height:20px;border:2px solid #cbd5e1;'">
+                    <svg x-show="order.paymentMethod === m.id" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Price breakdown -->
+      <div class="col-lg-5">
+        <div class="card p-4 sticky-top" style="top:20px;">
+          <div class="section-title">ملخص الطلب</div>
+
+          <div class="breakdown-row">
+            <span class="text-muted">سعر الخدمة</span>
+            <span class="fw-500" x-text="fmt(service.price) + ' ريال'"></span>
+          </div>
+
+          <!-- Materials toggle -->
+          <div class="materials-toggle mb-2">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <div class="fw-500" style="font-size:0.9rem;">المواد والمستلزمات</div>
+                <div class="text-muted" style="font-size:0.78rem;">اختياري — يتم شراؤها من الميزانية</div>
+              </div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" x-model="withMaterials" style="width:40px;height:22px;cursor:pointer;">
+              </div>
+            </div>
+            <template x-if="withMaterials">
+              <div class="mt-2">
+                <label class="form-label fw-500 mb-1" style="font-size:0.85rem;">ميزانية المواد (ريال)</label>
+                <input type="number" class="form-control form-control-sm" x-model.number="materialsAmount" min="0" step="1" placeholder="50">
+              </div>
+            </template>
+          </div>
+
+          <template x-if="withMaterials && materialsAmount > 0">
+            <div class="breakdown-row">
+              <span class="text-muted">المواد</span>
+              <span class="fw-500" x-text="fmt(materialsAmount) + ' ريال'"></span>
+            </div>
+          </template>
+
+          <div class="breakdown-row divider">
+            <span class="text-muted">المجموع قبل الضريبة</span>
+            <span class="fw-500" x-text="fmt(subtotal) + ' ريال'"></span>
+          </div>
+
+          <div class="breakdown-row">
+            <span class="text-muted">ضريبة القيمة المضافة (15%)</span>
+            <span class="fw-500" x-text="fmt(vat) + ' ريال'"></span>
+          </div>
+
+          <div class="breakdown-row total">
+            <span>الإجمالي</span>
+            <span style="color:#1a6b4a;" x-text="fmt(total) + ' ريال'"></span>
+          </div>
+
+          <hr class="my-3">
+          <div class="breakdown-row" style="font-size:0.85rem;">
+            <span class="text-muted d-flex align-items-center gap-1">
+              عمولة المنصة (15%)
+              <span data-bs-toggle="tooltip" title="تخصم عمولة المنصة عند الإفراج عن المبلغ للمزود" style="cursor:help;">ℹ️</span>
+            </span>
+            <span class="text-muted" x-text="fmt(platformFee) + ' ريال'"></span>
+          </div>
+          <div class="breakdown-row" style="font-size:0.85rem;">
+            <span class="text-muted fw-500">صافي المزود</span>
+            <span class="fw-600" x-text="fmt(providerNet) + ' ريال'"></span>
+          </div>
+
+          <template x-if="checkoutError">
+            <div class="alert alert-danger rounded-3 py-2 mt-3 mb-0" style="font-size:0.85rem;" x-text="checkoutError"></div>
+          </template>
+
+          <button class="btn btn-primary w-100 mt-4" @click="confirmPayment" :disabled="_submitting || !order.paymentMethod">
+            <span x-show="!_submitting">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                <rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/>
+              </svg>
+              تأكيد وادفع — <span x-text="fmt(total)"></span> ريال
+            </span>
+            <span x-show="_submitting">
+              <span class="spinner-border spinner-border-sm me-2"></span>جارٍ معالجة الدفع...
+            </span>
+          </button>
+          <p class="text-center text-muted mt-2 mb-0" style="font-size:0.78rem;">
+            🔒 مدفوعات آمنة ومشفرة — مُحتجزة في الضمان حتى اكتمال الخدمة
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      msgEl.textContent = msg;
+      el.className = `toast align-items-center text-white border-0 bg-${type === 'success' ? 'success' : 'danger'}`;
+      bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
+    }
+
+    function checkoutPage() {
+      return {
+        withMaterials: false,
+        materialsAmount: 50,
+        checkoutError: '',
+        _submitting: false,
+        today: new Date().toISOString().split('T')[0],
+
+        service: {
+          id: 'svc-001',
+          title: 'تنظيف منزلي شامل',
+          description: 'تنظيف عميق لجميع غرف المنزل بما في ذلك الحمامات والمطبخ واستخدام منتجات تنظيف عالية الجودة.',
+          providerName: 'خالد العمري',
+          providerInitial: 'خ',
+          rating: '4.8',
+          completedJobs: '127',
+          price: 250,
+        },
+
+        order: {
+          scheduledDate: '',
+          scheduledTime: '',
+          address: '',
+          notes: '',
+          paymentMethod: '',
+        },
+
+        paymentMethods: [
+          { id: 'card',     icon: '💳', name: 'بطاقة ائتمانية / مدى',  desc: 'Visa، Mastercard، مدى' },
+          { id: 'applepay', icon: '🍎', name: 'Apple Pay',              desc: 'ادفع بسرعة وأمان' },
+          { id: 'stcpay',   icon: '📱', name: 'STC Pay',                desc: 'محفظتك الرقمية' },
+        ],
+
+        timeSlots: [
+          '08:00 ص','09:00 ص','10:00 ص','11:00 ص','12:00 م',
+          '01:00 م','02:00 م','03:00 م','04:00 م','05:00 م','06:00 م',
+        ],
+
+        get subtotal() {
+          return this.service.price + (this.withMaterials ? (this.materialsAmount || 0) : 0);
+        },
+        get vat()         { return this.subtotal * 0.15; },
+        get total()       { return this.subtotal + this.vat; },
+        get platformFee() { return this.service.price * 0.15; },
+        get providerNet() { return this.service.price - this.platformFee; },
+
+        fmt(n) {
+          return Number(n).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        async confirmPayment() {
+          this.checkoutError = '';
+          if (!this.order.scheduledDate) { this.checkoutError = 'يرجى اختيار تاريخ الموعد'; return; }
+          if (!this.order.scheduledTime) { this.checkoutError = 'يرجى اختيار وقت الموعد'; return; }
+          if (!this.order.address.trim()) { this.checkoutError = 'يرجى إدخال العنوان'; return; }
+          if (!this.order.paymentMethod)  { this.checkoutError = 'يرجى اختيار طريقة الدفع'; return; }
+
+          this._submitting = true;
+          try {
+            const orderPayload = {
+              serviceId:     this.service.id,
+              providerId:    'prov-001',
+              scheduledAt:   this.order.scheduledDate + 'T' + this.order.scheduledTime.replace(' ص','').replace(' م','') + ':00',
+              address:       this.order.address,
+              notes:         this.order.notes,
+              serviceAmount: this.service.price,
+              materialsAmount: this.withMaterials ? (this.materialsAmount || 0) : 0,
+            };
+            const created = await API.orders.create(orderPayload);
+            const orderId = created.id || created.orderId;
+
+            await API.payments.initiate({
+              orderId,
+              paymentMethod: this.order.paymentMethod,
+              amount: this.total,
+            });
+
+            showToast('تم إنشاء الطلب وبدء عملية الدفع!');
+            setTimeout(() => location.href = `order-tracking.html?orderId=${encodeURIComponent(orderId)}`, 900);
+          } catch (e) {
+            this.checkoutError = e.message || 'حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مجدداً.';
+            showToast(this.checkoutError, 'error');
+          } finally {
+            this._submitting = false;
+          }
+        },
+
+        init() {
+          const tooltipEls = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+          tooltipEls.forEach(el => new bootstrap.Tooltip(el));
+        },
+      };
+    }
+  </script>
+</body>
+</html>

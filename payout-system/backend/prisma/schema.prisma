@@ -1,0 +1,303 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  CREATED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  AWAITING_RELEASE
+  RELEASED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum LedgerType {
+  PAYMENT_RECEIVED
+  COMMISSION_DEDUCTED
+  PROVIDER_ALLOCATION
+  ESCROW_HELD
+  ESCROW_RELEASED
+  PAYOUT_INITIATED
+  PAYOUT_COMPLETED
+  PAYOUT_FAILED
+  REFUND_ISSUED
+}
+
+enum WalletTxType {
+  CREDIT
+  DEBIT
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(CUSTOMER)
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phone        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  provider         Provider?
+  ordersAsCustomer Order[]        @relation("CustomerOrders")
+  wallet           Wallet?
+  refreshTokens    RefreshToken[]
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+model Provider {
+  id         String    @id @default(uuid())
+  userId     String    @unique @map("user_id")
+  kycStatus  KycStatus @default(PENDING) @map("kyc_status")
+  approvedAt DateTime? @map("approved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccounts     BankAccount[]
+  ordersAsProvider Order[]       @relation("ProviderOrders")
+  payouts          Payout[]
+
+  @@map("providers")
+}
+
+model BankAccount {
+  id            String   @id @default(uuid())
+  providerId    String   @map("provider_id")
+  fullName      String   @map("full_name")
+  bankName      String   @map("bank_name")
+  ibanEncrypted String   @map("iban_encrypted")
+  ibanLast4     String   @map("iban_last4")
+  isVerified    Boolean  @default(false) @map("is_verified")
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  payouts  Payout[]
+
+  @@map("bank_accounts")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  customerId      String      @map("customer_id")
+  providerId      String?     @map("provider_id")
+  serviceTitle    String      @map("service_title")
+  description     String?
+  totalAmount     Decimal     @map("total_amount") @db.Decimal(12, 2)
+  status          OrderStatus @default(CREATED)
+  hasMaterials    Boolean     @default(false) @map("has_materials")
+  materialsAmount Decimal?    @map("materials_amount") @db.Decimal(12, 2)
+  address         String?
+  scheduledAt     DateTime?   @map("scheduled_at")
+  acceptedAt      DateTime?   @map("accepted_at")
+  startedAt       DateTime?   @map("started_at")
+  completedAt     DateTime?   @map("completed_at")
+  releasedAt      DateTime?   @map("released_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  customer            User                 @relation("CustomerOrders", fields: [customerId], references: [id])
+  provider            Provider?            @relation("ProviderOrders", fields: [providerId], references: [id])
+  transaction         Transaction?
+  commissionBreakdown CommissionBreakdown?
+  escrow              Escrow?
+  ledgerEntries       LedgerEntry[]
+
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
+  @@map("orders")
+}
+
+model Transaction {
+  id               String        @id @default(uuid())
+  orderId          String        @unique @map("order_id")
+  gatewayReference String?       @unique @map("gateway_reference")
+  idempotencyKey   String        @unique @map("idempotency_key")
+  amount           Decimal       @db.Decimal(12, 2)
+  currency         String        @default("SAR")
+  status           PaymentStatus @default(PENDING)
+  gatewayResponse  Json?         @map("gateway_response")
+  paidAt           DateTime?     @map("paid_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@map("transactions")
+}
+
+model CommissionBreakdown {
+  id             String   @id @default(uuid())
+  orderId        String   @unique @map("order_id")
+  totalAmount    Decimal  @map("total_amount") @db.Decimal(12, 2)
+  commissionRate Decimal  @map("commission_rate") @db.Decimal(5, 4)
+  platformFee    Decimal  @map("platform_fee") @db.Decimal(12, 2)
+  providerAmount Decimal  @map("provider_amount") @db.Decimal(12, 2)
+  vatAmount      Decimal  @map("vat_amount") @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@map("commission_breakdowns")
+}
+
+model Escrow {
+  id             String       @id @default(uuid())
+  orderId        String       @unique @map("order_id")
+  providerAmount Decimal      @map("provider_amount") @db.Decimal(12, 2)
+  status         EscrowStatus @default(HELD)
+  heldAt         DateTime     @default(now()) @map("held_at")
+  releasedAt     DateTime?    @map("released_at")
+  refundedAt     DateTime?    @map("refunded_at")
+
+  order  Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payout Payout?
+
+  @@map("escrows")
+}
+
+model Wallet {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  availableBalance Decimal  @default(0) @map("available_balance") @db.Decimal(12, 2)
+  pendingBalance   Decimal  @default(0) @map("pending_balance") @db.Decimal(12, 2)
+  escrowBalance    Decimal  @default(0) @map("escrow_balance") @db.Decimal(12, 2)
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id             String       @id @default(uuid())
+  walletId       String       @map("wallet_id")
+  type           WalletTxType
+  amount         Decimal      @db.Decimal(12, 2)
+  balanceAfter   Decimal      @map("balance_after") @db.Decimal(12, 2)
+  description    String?
+  idempotencyKey String?      @unique @map("idempotency_key")
+  referenceId    String?      @map("reference_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@map("wallet_transactions")
+}
+
+model Payout {
+  id             String       @id @default(uuid())
+  providerId     String       @map("provider_id")
+  bankAccountId  String       @map("bank_account_id")
+  escrowId       String?      @unique @map("escrow_id")
+  amount         Decimal      @db.Decimal(12, 2)
+  idempotencyKey String       @unique @map("idempotency_key")
+  status         PayoutStatus @default(PENDING)
+  gatewayRef     String?      @map("gateway_ref")
+  failureReason  String?      @map("failure_reason")
+  attemptCount   Int          @default(0) @map("attempt_count")
+  processedAt    DateTime?    @map("processed_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  provider    Provider    @relation(fields: [providerId], references: [id])
+  bankAccount BankAccount @relation(fields: [bankAccountId], references: [id])
+  escrow      Escrow?     @relation(fields: [escrowId], references: [id])
+
+  @@index([providerId, status])
+  @@map("payouts")
+}
+
+model LedgerEntry {
+  id          String     @id @default(uuid())
+  type        LedgerType
+  referenceId String     @map("reference_id")
+  orderId     String?    @map("order_id")
+  amount      Decimal    @db.Decimal(12, 2)
+  description String?
+  metadata    Json?
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([referenceId])
+  @@index([orderId])
+  @@index([type, createdAt])
+  @@map("ledger_entries")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  body      String
+  type      String
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}

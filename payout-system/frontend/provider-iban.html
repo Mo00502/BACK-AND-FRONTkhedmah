@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إعدادات الحساب البنكي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background: #f0f4f8; padding: 2rem 0; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .btn-primary { background: #1a6b4a; border-color: #1a6b4a; border-radius: 10px; font-weight: 500; }
+    .btn-primary:hover { background: #155a3e; border-color: #155a3e; }
+    .btn-primary:disabled { background: #6c9e85; border-color: #6c9e85; }
+    .form-control, .form-select { border-radius: 10px; padding: 12px 16px; border: 1.5px solid #e2e8f0; font-family: 'Tajawal', sans-serif; }
+    .form-control:focus, .form-select:focus { border-color: #1a6b4a; box-shadow: 0 0 0 3px rgba(26,107,74,0.12); }
+    .badge-status { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; }
+    .bank-card { border: 2px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; background: #fff; transition: all 0.2s; }
+    .bank-card.is-default { border-color: #1a6b4a; background: #f0faf4; }
+    .bank-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+    .bank-logo { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+    .iban-display { font-family: 'Courier New', monospace; letter-spacing: 2px; font-size: 0.95rem; color: #334155; }
+    .iban-input { font-family: 'Courier New', monospace; letter-spacing: 2px; text-transform: uppercase; }
+    .iban-valid   { border-color: #22c55e !important; }
+    .iban-invalid { border-color: #ef4444 !important; }
+    .toast-container { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 320px; }
+    .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 14px; }
+    .empty-state { text-align: center; padding: 40px 20px; }
+    .breadcrumb-nav { font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem; }
+    .breadcrumb-nav a { color: #1a6b4a; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="toast-container">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-500" id="toastMsg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirm modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 rounded-4">
+        <div class="modal-body p-4 text-center">
+          <div style="font-size:2.2rem;margin-bottom:.75rem;">🗑️</div>
+          <h6 class="fw-700 mb-2">حذف الحساب البنكي</h6>
+          <p class="text-muted mb-0" style="font-size:0.88rem;">هل أنت متأكد من حذف هذا الحساب؟ لا يمكن التراجع.</p>
+        </div>
+        <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+          <button class="btn btn-outline-secondary rounded-3 px-4" data-bs-dismiss="modal">إلغاء</button>
+          <button class="btn btn-danger rounded-3 px-4" id="confirmDeleteBtn">حذف</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="max-width:680px;" x-data="ibanPage()">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+      <a href="provider-dashboard.html">الرئيسية</a>
+      <span class="mx-2">/</span>
+      <span>إعدادات الحساب البنكي</span>
+    </div>
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,#1a6b4a,#2d9e6e);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🏦</div>
+      <div>
+        <h5 class="fw-700 mb-0">إعدادات الحساب البنكي</h5>
+        <p class="text-muted mb-0" style="font-size:0.88rem;">إدارة حساباتك البنكية لاستقبال المدفوعات</p>
+      </div>
+    </div>
+
+    <!-- Current accounts -->
+    <div class="mb-4">
+      <div class="section-title">حساباتك البنكية</div>
+
+      <template x-if="loading">
+        <div class="card p-4 text-center">
+          <div class="spinner-border text-success mx-auto"></div>
+        </div>
+      </template>
+
+      <template x-if="!loading && accounts.length === 0">
+        <div class="card">
+          <div class="empty-state">
+            <div style="font-size:3rem;margin-bottom:1rem;">🏦</div>
+            <h6 class="fw-700">لا توجد حسابات بنكية</h6>
+            <p class="text-muted">أضف حسابك البنكي لاستقبال المدفوعات</p>
+          </div>
+        </div>
+      </template>
+
+      <div class="d-flex flex-column gap-3" x-show="!loading && accounts.length > 0">
+        <template x-for="acc in accounts" :key="acc.id">
+          <div class="bank-card" :class="acc.isDefault ? 'is-default' : ''">
+            <div class="d-flex align-items-center gap-3">
+              <div class="bank-logo" style="background:#f0faf4;">🏦</div>
+              <div class="flex-fill">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="fw-700" x-text="escHtml(acc.bankName)"></span>
+                  <template x-if="acc.isDefault">
+                    <span class="badge bg-success text-white" style="font-size:0.72rem;padding:4px 10px;border-radius:20px;">الحساب الافتراضي ✓</span>
+                  </template>
+                </div>
+                <div class="iban-display" x-text="maskIban(acc.iban)"></div>
+                <div class="text-muted mt-1" style="font-size:0.8rem;" x-text="escHtml(acc.accountHolderName)"></div>
+              </div>
+              <div class="d-flex flex-column gap-2">
+                <template x-if="!acc.isDefault">
+                  <button class="btn btn-sm btn-outline-success rounded-3"
+                    @click="setDefault(acc.id)" :disabled="acc._acting"
+                    style="font-size:0.8rem;white-space:nowrap;">
+                    <span x-show="!acc._acting">تعيين كافتراضي</span>
+                    <span x-show="acc._acting"><span class="spinner-border spinner-border-sm"></span></span>
+                  </button>
+                </template>
+                <button class="btn btn-sm btn-outline-danger rounded-3"
+                  @click="confirmDelete(acc.id)" :disabled="acc._acting"
+                  style="font-size:0.8rem;">حذف</button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Add new account form -->
+    <div class="card p-4">
+      <div class="section-title">إضافة حساب بنكي جديد</div>
+
+      <form @submit.prevent="addAccount">
+        <div class="mb-3">
+          <label class="form-label fw-500">الاسم الكامل (كما في الجهة المصرفية)</label>
+          <input type="text" class="form-control" x-model="form.accountHolderName" placeholder="محمد عبدالله الأحمد" required>
+          <template x-if="formErrors.accountHolderName">
+            <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;" x-text="formErrors.accountHolderName"></p>
+          </template>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-500">اسم البنك</label>
+          <select class="form-select" x-model="form.bankName" required>
+            <option value="">-- اختر البنك --</option>
+            <template x-for="bank in banks" :key="bank">
+              <option :value="bank" x-text="bank"></option>
+            </template>
+          </select>
+          <template x-if="formErrors.bankName">
+            <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;" x-text="formErrors.bankName"></p>
+          </template>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-500">رقم الآيبان</label>
+          <div class="position-relative">
+            <input
+              type="text"
+              class="form-control iban-input"
+              :class="ibanState === 'valid' ? 'iban-valid' : ibanState === 'invalid' ? 'iban-invalid' : ''"
+              x-model="form.iban"
+              placeholder="SA0000000000000000000000"
+              dir="ltr"
+              maxlength="24"
+              @input="onIbanInput"
+              required>
+            <div class="position-absolute" style="top:50%;transform:translateY(-50%);left:14px;">
+              <template x-if="ibanState === 'valid'">
+                <span style="color:#22c55e;font-size:1.1rem;">✓</span>
+              </template>
+              <template x-if="ibanState === 'invalid'">
+                <span style="color:#ef4444;font-size:1.1rem;">✗</span>
+              </template>
+            </div>
+          </div>
+          <div class="mt-1" style="font-size:0.8rem;">
+            <template x-if="ibanState === 'valid'">
+              <span class="text-success">رقم آيبان سعودي صالح (24 خانة)</span>
+            </template>
+            <template x-if="ibanState === 'invalid'">
+              <span class="text-danger">يجب أن يبدأ بـ SA ويحتوي على 24 رقماً وحرفاً</span>
+            </template>
+            <template x-if="ibanState === 'idle'">
+              <span class="text-muted">مثال: SA0380000000608010167519</span>
+            </template>
+          </div>
+        </div>
+
+        <template x-if="generalError">
+          <div class="alert alert-danger rounded-3 py-2 mb-3" x-text="generalError"></div>
+        </template>
+
+        <button type="submit" class="btn btn-primary px-5" :disabled="_submitting || ibanState !== 'valid'">
+          <span x-show="!_submitting">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            إضافة الحساب
+          </span>
+          <span x-show="_submitting">
+            <span class="spinner-border spinner-border-sm me-2"></span>جارٍ الحفظ...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      msgEl.textContent = msg;
+      el.className = `toast align-items-center text-white border-0 bg-${type === 'success' ? 'success' : 'danger'}`;
+      bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
+    }
+
+    function ibanPage() {
+      return {
+        accounts: [],
+        loading: true,
+        _submitting: false,
+        generalError: '',
+        formErrors: {},
+        ibanState: 'idle', // idle | valid | invalid
+
+        form: { accountHolderName: '', bankName: '', iban: '' },
+
+        banks: [
+          'البنك الأهلي السعودي', 'مصرف الراجحي', 'بنك الرياض',
+          'البنك العربي الوطني', 'بنك سامبا', 'بنك البلاد',
+          'بنك الإنماء', 'بنك الجزيرة', 'بنك ساب', 'البنك السعودي للاستثمار',
+        ],
+
+        maskIban(iban) {
+          if (!iban || iban.length < 6) return iban;
+          return iban.substring(0, 2) + '••••••••••••••••••' + iban.substring(iban.length - 4);
+        },
+
+        onIbanInput() {
+          const v = this.form.iban.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          this.form.iban = v;
+          if (v.length === 0) { this.ibanState = 'idle'; return; }
+          if (/^SA\d{22}$/.test(v)) { this.ibanState = 'valid'; }
+          else { this.ibanState = 'invalid'; }
+        },
+
+        confirmDelete(id) {
+          const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+          modal.show();
+          document.getElementById('confirmDeleteBtn').onclick = async () => {
+            modal.hide();
+            const acc = this.accounts.find(a => a.id === id);
+            if (!acc) return;
+            acc._acting = true;
+            try {
+              await API.payouts.deleteBankAccount(id);
+              showToast('تم حذف الحساب البنكي');
+              await this.loadAccounts();
+            } catch (e) {
+              showToast(e.message || 'حدث خطأ أثناء الحذف', 'error');
+              acc._acting = false;
+            }
+          };
+        },
+
+        async setDefault(id) {
+          const acc = this.accounts.find(a => a.id === id);
+          if (!acc) return;
+          acc._acting = true;
+          try {
+            await API.payouts.setDefault(id);
+            showToast('تم تعيين الحساب كافتراضي ✓');
+            await this.loadAccounts();
+          } catch (e) {
+            showToast(e.message || 'حدث خطأ', 'error');
+            acc._acting = false;
+          }
+        },
+
+        validateForm() {
+          this.formErrors = {};
+          let ok = true;
+          if (!this.form.accountHolderName.trim()) { this.formErrors.accountHolderName = 'الاسم الكامل مطلوب'; ok = false; }
+          if (!this.form.bankName) { this.formErrors.bankName = 'اسم البنك مطلوب'; ok = false; }
+          if (this.ibanState !== 'valid') { ok = false; }
+          return ok;
+        },
+
+        async addAccount() {
+          if (!this.validateForm()) return;
+          this.generalError = '';
+          this._submitting = true;
+          try {
+            await API.payouts.addBankAccount({
+              accountHolderName: this.form.accountHolderName.trim(),
+              bankName: this.form.bankName,
+              iban: this.form.iban,
+            });
+            showToast('تم إضافة الحساب البنكي بنجاح ✓');
+            this.form = { accountHolderName: '', bankName: '', iban: '' };
+            this.ibanState = 'idle';
+            await this.loadAccounts();
+          } catch (e) {
+            this.generalError = e.message || 'حدث خطأ أثناء إضافة الحساب. يرجى المحاولة مجدداً.';
+          } finally {
+            this._submitting = false;
+          }
+        },
+
+        async loadAccounts() {
+          this.loading = true;
+          try {
+            const data = await API.payouts.bankAccounts();
+            this.accounts = (Array.isArray(data) ? data : (data.items || [])).map(a => ({ ...a, _acting: false }));
+          } catch (e) {
+            this.accounts = [];
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        init() {
+          this.loadAccounts();
+        },
+      };
+    }
+  </script>
+</body>
+</html>
