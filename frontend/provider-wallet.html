@@ -542,6 +542,11 @@
     withdrawSubmitting: false,
     feeOpen: false,
     transactions: TRANSACTIONS,
+    bankName: '',
+    ibanMasked: '',
+    _ibanFull: '',
+    _bankNameFull: '',
+    _beneficiaryName: '',
     get filteredTransactions() {
       let list = this.transactions;
 
@@ -569,21 +574,29 @@
       const amount = Number(this.withdrawAmount);
       if (!amount || amount <= 0) return;
       if (amount < 100) {
-        showToast('❌ الحد الأدنى للسحب 100 ريال');
+        API.toast('❌ الحد الأدنى للسحب 100 ريال', 'danger');
+        return;
+      }
+      if (!this._ibanFull) {
+        API.toast('❌ يرجى إضافة حسابك البنكي أولاً من إعدادات الحساب البنكي', 'danger');
+        setTimeout(() => { window.location.href = 'provider-bank-settings.html'; }, 1500);
         return;
       }
       if (this.withdrawSubmitting) return;
       this.withdrawSubmitting = true;
       try {
-        await API.wallet.withdraw({ amount });
-        API.toast('✅ تم إرسال طلب السحب بنجاح', 'success');
+        await API.wallet.withdraw({
+          amount,
+          iban: this._ibanFull,
+          bankName: this._bankNameFull,
+          beneficiaryName: this._beneficiaryName,
+        });
+        API.toast('✅ تم إرسال طلب السحب بنجاح — سيتم التحويل خلال 1-3 أيام عمل', 'success');
         this.withdrawAmount = '';
-        // Reload balance
         const w = await API.wallet.balance();
         if (w) updateBalanceCards(w);
       } catch(err) {
-        API.toast('❌ ' + API.errorMsg(err));
-        this.withdrawSubmitting = false;
+        API.toast('❌ ' + API.errorMsg(err), 'danger');
       } finally {
         this.withdrawSubmitting = false;
       }
@@ -666,11 +679,14 @@
           <span class="av-amount">SAR 3,240</span>
         </div>
 
-        <!-- Bank account -->
+        <!-- Bank account (loaded from provider profile) -->
         <div class="bank-row">
           <div>
-            <div class="bank-name"><i class="fas fa-university me-1" style="color:var(--primary)"></i> بنك الراجحي</div>
-            <div class="bank-num">****4521</div>
+            <div class="bank-name">
+              <i class="fas fa-university me-1" style="color:var(--primary)"></i>
+              <span x-text="bankName || 'لم يتم إضافة حساب بنكي بعد'" :style="bankName ? '' : 'color:var(--error)'"></span>
+            </div>
+            <div class="bank-num" x-text="ibanMasked || '—'"></div>
           </div>
           <a href="provider-bank-settings.html" class="bank-edit"><i class="fas fa-pen me-1"></i>تعديل</a>
         </div>
@@ -907,12 +923,15 @@
 
   async function initWalletData(comp) {
     try {
-      const [walletRes, txRes, userRes] = await Promise.allSettled([
+      const [walletRes, txRes, userRes, profileRes] = await Promise.allSettled([
         API.wallet.balance(),
         API.wallet.transactions({ limit: 50 }),
         API.auth.me(),
+        API.providers.myProfile(),
       ]);
+
       if (walletRes.status === 'fulfilled') updateBalanceCards(walletRes.value);
+
       if (txRes.status === 'fulfilled') {
         const items = txRes.value?.items ?? txRes.value ?? [];
         if (items.length) {
@@ -927,6 +946,7 @@
           }));
         }
       }
+
       if (userRes.status === 'fulfilled') {
         const u = userRes.value;
         const name = u.profile?.nameAr || u.username || 'مزود';
@@ -935,7 +955,27 @@
         const avatarEl = document.querySelector('.avatar-circle');
         if (avatarEl) avatarEl.textContent = name.charAt(0);
       }
-    } catch(e) { /* silent */ }
+
+      // Load bank settings from provider profile for withdrawal form
+      if (profileRes.status === 'fulfilled') {
+        const p = profileRes.value;
+        if (p?.bankName) {
+          comp.bankName = p.bankName;
+          comp._bankNameFull = p.bankName;
+        }
+        if (p?.ibanNumber) {
+          comp._ibanFull = p.ibanNumber;
+          // Mask: show first 4 + last 4, asterisks in between  (SA12 **** **** 5678)
+          const iban = p.ibanNumber.replace(/\s/g, '');
+          comp.ibanMasked = iban.slice(0, 4) + ' **** **** ' + iban.slice(-4);
+        }
+        if (p?.crNumber || userRes.status === 'fulfilled') {
+          // Use provider's registered name as beneficiary
+          const u = userRes.status === 'fulfilled' ? userRes.value : null;
+          comp._beneficiaryName = u?.profile?.nameAr || u?.profile?.nameEn || u?.username || '';
+        }
+      }
+    } catch(e) { /* silent — page is still usable with demo data */ }
   }
 </script>
 </body>

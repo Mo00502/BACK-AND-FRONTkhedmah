@@ -387,12 +387,23 @@ export class PaymentsService {
     const escrow = await this.prisma.escrow.findUnique({ where: { requestId } });
     if (!escrow || escrow.status !== 'HELD') throw new BadRequestException('No held escrow found');
 
-    // Auto-reconcile materials before releasing service fee
+    // Auto-reconcile materials before releasing service fee.
+    // Swallow only the "already reconciled" case — propagate all other errors so
+    // escrow is NOT released when the materials budget is in an inconsistent state.
     if (request.hasMaterials) {
       try {
         await this.materials.reconcile(requestId, customerId);
-      } catch {
-        // Already reconciled — that's fine
+      } catch (err: any) {
+        const msg: string = err?.message ?? '';
+        const alreadyDone =
+          msg.toLowerCase().includes('already reconciled') ||
+          msg.toLowerCase().includes('no active materials payment');
+        if (!alreadyDone) {
+          this.logger.error(
+            `Materials reconciliation failed for request ${requestId} before escrow release: ${msg}`,
+          );
+          throw err; // block escrow release until materials are resolved
+        }
       }
     }
 

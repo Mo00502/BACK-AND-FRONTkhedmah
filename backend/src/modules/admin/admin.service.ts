@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserStatus, ProviderVerificationStatus, DisputeStatus } from '@prisma/client';
@@ -276,11 +276,35 @@ export class AdminService {
     });
     if (!dispute) throw new NotFoundException('Dispute not found');
 
+    // Conflict-of-interest guard: an admin who is a party to this dispute
+    // must not be allowed to resolve it in their own favour.
+    if (dispute.reporterId === adminId || dispute.againstId === adminId) {
+      throw new ForbiddenException('لا يمكن للمشرف حل نزاع هو طرف فيه — يجب تعيين مشرف آخر');
+    }
+
     const escrow = dispute.request?.escrow;
     const escrowHeld = escrow?.status === 'HELD';
 
-    const updates: any[] = [
-      this.prisma.dispute.update({
+    // For SPLIT resolution: validate amounts before touching any DB state
+    if (resolution === 'SPLIT' && escrowHeld && escrow) {
+      const escrowAmount = Number(escrow.amount);
+      if (escrowAmount <= 0) {
+        throw new BadRequestException('Escrow amount must be > 0 for a SPLIT resolution');
+      }
+      // Use the actual stored platformFee — never recalculate from amount (race condition risk)
+      const storedFee = Number(escrow.platformFee ?? 0);
+      const halfAmount = escrowAmount / 2;
+      if (storedFee >= halfAmount) {
+        throw new BadRequestException(
+          `Platform fee (${storedFee} SAR) exceeds half the escrow (${halfAmount} SAR) — ` +
+          `SPLIT would result in zero or negative provider credit. Use REFUND or RELEASE instead.`,
+        );
+      }
+    }
+
+    // Use interactive transaction so all DB changes are atomic
+    await this.prisma.$transaction(async (tx) => {
+      await tx.dispute.update({
         where: { id: disputeId },
         data: {
           status: 'RESOLVED',
@@ -289,52 +313,45 @@ export class AdminService {
           resolutionNotes: notes,
           resolution,
         },
-      }),
-    ];
+      });
 
-    if (escrowHeld && escrow) {
+      if (!escrowHeld || !escrow) return;
+
       if (resolution === 'REFUND') {
-        // Full refund to customer — escrow marked REFUNDED, request cancelled
-        updates.push(
-          this.prisma.escrow.update({
-            where: { id: escrow.id },
-            data: { status: 'REFUNDED', releasedAt: new Date() },
-          }),
-          this.prisma.serviceRequest.update({
-            where: { id: dispute.requestId },
-            data: { status: 'CANCELLED' },
-          }),
-        );
+        // Guard: only transition from HELD — prevents RELEASED→REFUNDED corruption
+        const { count } = await tx.escrow.updateMany({
+          where: { id: escrow.id, status: 'HELD' },
+          data: { status: 'REFUNDED', releasedAt: new Date() },
+        });
+        if (count === 0) throw new BadRequestException('Escrow is no longer HELD — cannot refund');
+        await tx.serviceRequest.update({
+          where: { id: dispute.requestId },
+          data: { status: 'CANCELLED' },
+        });
       } else if (resolution === 'RELEASE' || resolution === 'DISMISSED') {
-        // Full release to provider — provider wins (or dispute dismissed)
-        updates.push(
-          this.prisma.escrow.update({
-            where: { id: escrow.id },
-            data: { status: 'RELEASED', releasedAt: new Date() },
-          }),
-          this.prisma.serviceRequest.update({
-            where: { id: dispute.requestId },
-            data: { status: 'COMPLETED', completedAt: new Date() },
-          }),
-        );
+        const { count } = await tx.escrow.updateMany({
+          where: { id: escrow.id, status: 'HELD' },
+          data: { status: 'RELEASED', releasedAt: new Date() },
+        });
+        if (count === 0) throw new BadRequestException('Escrow is no longer HELD — cannot release');
+        await tx.serviceRequest.update({
+          where: { id: dispute.requestId },
+          data: { status: 'COMPLETED', completedAt: new Date() },
+        });
       } else if (resolution === 'SPLIT') {
-        // 50/50 split — provider gets half, customer refunded half
-        updates.push(
-          this.prisma.escrow.update({
-            where: { id: escrow.id },
-            data: { status: 'RELEASED', releasedAt: new Date() },
-          }),
-          this.prisma.serviceRequest.update({
-            where: { id: dispute.requestId },
-            data: { status: 'COMPLETED', completedAt: new Date() },
-          }),
-        );
+        const { count } = await tx.escrow.updateMany({
+          where: { id: escrow.id, status: 'HELD' },
+          data: { status: 'RELEASED', releasedAt: new Date() },
+        });
+        if (count === 0) throw new BadRequestException('Escrow is no longer HELD — cannot split');
+        await tx.serviceRequest.update({
+          where: { id: dispute.requestId },
+          data: { status: 'COMPLETED', completedAt: new Date() },
+        });
       }
-    }
+    });
 
-    await this.prisma.$transaction(updates);
-
-    // Emit financial events so the event-driven wallet/refund flows fire
+    // Emit financial events after transaction commits so wallet credits are safe
     if (escrowHeld && escrow) {
       if (resolution === 'RELEASE' || resolution === 'DISMISSED') {
         this.events.emit('escrow.released', {
@@ -351,21 +368,19 @@ export class AdminService {
         });
       } else if (resolution === 'SPLIT') {
         const halfAmount = Number(escrow.amount) / 2;
-        const totalPlatformFee = Number(escrow.platformFee ?? (Number(escrow.amount) * 0.15));
-        const platformFeeHalf = totalPlatformFee / 2;
-        // Credit provider with their half minus platform fee
+        // Use the stored platformFee — never recalculate after validation above
+        const platformFeeHalf = Number(escrow.platformFee ?? 0) / 2;
         this.events.emit('dispute.split_release', {
           requestId: dispute.requestId,
           providerId: dispute.request?.providerId,
-          providerAmount: halfAmount - platformFeeHalf,
+          providerAmount: +(halfAmount - platformFeeHalf).toFixed(2),
           escrowId: escrow.id,
         });
-        // Refund customer their half via Moyasar
         this.events.emit('dispute.split_refund', {
           disputeId,
           requestId: dispute.requestId,
           paymentId: escrow.paymentId,
-          refundAmount: halfAmount,
+          refundAmount: +halfAmount.toFixed(2),
           adminId,
         });
       }
@@ -420,7 +435,7 @@ export class AdminService {
       timestamp: now,
       activity: { newUsersToday, requestsToday, failedPaymentsToday },
       pendingActions: { openDisputes, pendingVerifications },
-      escrow: { count: heldEscrow._count.id, totalHeld: heldEscrow._sum.amount || 0 },
+      escrow: { count: heldEscrow._count.id, totalHeld: Number(heldEscrow._sum.amount ?? 0) },
       schedulerHealth: lastJobLogs,
     };
   }

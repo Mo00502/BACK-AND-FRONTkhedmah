@@ -23,10 +23,12 @@ export class WalletService {
 
   async getBalance(userId: string) {
     const wallet = await this.getOrCreate(userId);
+    // Convert Prisma Decimals to plain numbers for JSON serialisation.
+    // Returning a Decimal object produces unexpected output (object, not number) in HTTP responses.
     return {
-      balance: wallet.balance,
-      heldBalance: wallet.heldBalance,
-      available: new Decimal(wallet.balance).minus(wallet.heldBalance),
+      balance: Number(wallet.balance),
+      heldBalance: Number(wallet.heldBalance),
+      available: Number(new Decimal(wallet.balance).minus(wallet.heldBalance)),
     };
   }
 
@@ -120,7 +122,9 @@ export class WalletService {
   async creditReferralReward(referrerId: string, refereeId: string, amount: number) {
     await this.credit(referrerId, amount, 'مكافأة الإحالة', refereeId, 'referral');
     await this.credit(refereeId, amount, 'مكافأة ترحيب', referrerId, 'referral');
-    this.events.emit('referral.rewarded', { referrerId, refereeId, amount });
+    // Emit separate events so each user gets their own notification
+    this.events.emit('referral.credited_referrer', { userId: referrerId, refereeId, amount });
+    this.events.emit('referral.credited_referee', { userId: refereeId, referrerId, amount });
   }
 
   // ── Withdrawal requests ──────────────────────────────────────────────────

@@ -805,6 +805,36 @@ export class EventListenerService {
     }
   }
 
+  // ── Referral reward notifications ────────────────────────────────────────
+
+  @OnEvent('referral.credited_referrer')
+  async onReferralCreditedReferrer(payload: { userId: string; refereeId: string; amount: number }) {
+    try {
+      await this.notif.notifyUser(
+        payload.userId,
+        '🎁 مكافأة الإحالة',
+        `حصلت على ${payload.amount} ريال مكافأة لدعوتك صديقاً للانضمام إلى خدمة`,
+        { refereeId: payload.refereeId, amount: payload.amount },
+      );
+    } catch (err) {
+      this.logger.error(`onReferralCreditedReferrer failed: ${err}`);
+    }
+  }
+
+  @OnEvent('referral.credited_referee')
+  async onReferralCreditedReferee(payload: { userId: string; referrerId: string; amount: number }) {
+    try {
+      await this.notif.notifyUser(
+        payload.userId,
+        '🎉 مكافأة ترحيب',
+        `تم إضافة ${payload.amount} ريال إلى محفظتك كمكافأة ترحيب بانضمامك عبر رابط الإحالة`,
+        { referrerId: payload.referrerId, amount: payload.amount },
+      );
+    } catch (err) {
+      this.logger.error(`onReferralCreditedReferee failed: ${err}`);
+    }
+  }
+
   // ── Tender bid submitted ──────────────────────────────────────────────────
 
   @OnEvent('tender.bid_submitted')
