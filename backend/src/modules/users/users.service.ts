@@ -93,6 +93,9 @@ export class UsersService {
   }
 
   async suspend(adminId: string, targetId: string, reason?: string) {
+    if (adminId === targetId) {
+      throw new ForbiddenException('Cannot suspend yourself');
+    }
     const target = await this.findById(targetId);
     if (target.role === UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Cannot suspend a SUPER_ADMIN');

@@ -12,7 +12,7 @@ export class LoginDto {
 
   @ApiProperty({ example: 'SecurePass123!' })
   @IsString()
-  @MinLength(1)
+  @MinLength(8)
   @MaxLength(64)
   password: string;
 }

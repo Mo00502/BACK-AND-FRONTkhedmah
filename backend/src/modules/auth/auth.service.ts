@@ -13,6 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { Prisma } from '@prisma/client';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { RegisterProviderDto } from './dto/register-provider.dto';
@@ -20,6 +21,9 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+
+// Dummy hash used for constant-time comparison when user is not found (prevents timing attacks)
+const DUMMY_HASH = '$2a$12$WZXyIhpNhxLHRJFJv7YUeePXCwcE1FuWs6rNfPm/LPdaGMBMbnj4m';
 
 const BCRYPT_ROUNDS = 12;
 const EMAIL_TOKEN_BYTES = 32; // 256-bit raw token → 64-char hex
@@ -42,21 +46,32 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email.toLowerCase(),
-        username: dto.username.toLowerCase(),
-        passwordHash,
-        role: 'CUSTOMER',
-        status: 'PENDING_VERIFICATION',
-        profile: {
-          create: {
-            nameAr: dto.nameAr ?? null,
-            nameEn: dto.nameEn ?? null,
+    let user: Awaited<ReturnType<typeof this.prisma.user.create>>;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email.toLowerCase(),
+          username: dto.username.toLowerCase(),
+          passwordHash,
+          role: 'CUSTOMER',
+          status: 'PENDING_VERIFICATION',
+          profile: {
+            create: {
+              nameAr: dto.nameAr ?? null,
+              nameEn: dto.nameEn ?? null,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        // Race condition: two concurrent requests both passed assertEmailAndUsernameAvailable
+        const target = (err.meta?.target as string[]) ?? [];
+        if (target.some((f) => f.includes('email'))) throw new ConflictException('Email already registered');
+        if (target.some((f) => f.includes('username'))) throw new ConflictException('Username already taken');
+      }
+      throw err;
+    }
 
     const { rawToken, tokenHash, expiresAt } = await this.createEmailVerificationToken(user.id);
     this.events.emit('auth.email_verification_requested', {
@@ -86,27 +101,38 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email.toLowerCase(),
-        username: dto.username.toLowerCase(),
-        passwordHash,
-        phone: dto.phone ?? null,
-        role: 'PROVIDER',
-        status: 'PENDING_VERIFICATION',
-        profile: {
-          create: {
-            nameAr: dto.nameAr ?? null,
-            nameEn: dto.nameEn ?? null,
+    let user: Awaited<ReturnType<typeof this.prisma.user.create>>;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email.toLowerCase(),
+          username: dto.username.toLowerCase(),
+          passwordHash,
+          phone: dto.phone ?? null,
+          role: 'PROVIDER',
+          status: 'PENDING_VERIFICATION',
+          profile: {
+            create: {
+              nameAr: dto.nameAr ?? null,
+              nameEn: dto.nameEn ?? null,
+            },
+          },
+          providerProfile: {
+            create: {
+              verificationStatus: 'PENDING_SUBMISSION',
+            },
           },
         },
-        providerProfile: {
-          create: {
-            verificationStatus: 'PENDING_SUBMISSION',
-          },
-        },
-      },
-    });
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        const target = (err.meta?.target as string[]) ?? [];
+        if (target.some((f) => f.includes('email'))) throw new ConflictException('Email already registered');
+        if (target.some((f) => f.includes('username'))) throw new ConflictException('Username already taken');
+        if (target.some((f) => f.includes('phone'))) throw new ConflictException('Phone number already registered');
+      }
+      throw err;
+    }
 
     const { rawToken, expiresAt } = await this.createEmailVerificationToken(user.id);
     this.events.emit('auth.email_verification_requested', {
@@ -190,6 +216,8 @@ export class AuthService {
     });
 
     if (!user) {
+      // Run dummy compare to equalise timing and prevent user-enumeration attacks
+      await bcrypt.compare(dto.password, DUMMY_HASH);
       this.events.emit('auth.login_failed', { identifier: dto.identifier, reason: 'user_not_found', ip });
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -293,8 +321,23 @@ export class AuthService {
   async refreshTokens(dto: RefreshTokenDto) {
     const stored = await this.prisma.refreshToken.findUnique({ where: { id: dto.tokenId } });
 
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    if (!stored || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token invalid or expired');
+    }
+
+    if (stored.revokedAt) {
+      // Token already revoked — potential theft/reuse attack
+      this.events.emit('auth.token_reuse_detected', {
+        userId: stored.userId,
+        tokenId: dto.tokenId,
+        revokedAt: stored.revokedAt,
+      });
+      // Revoke ALL tokens for this user as a precaution
+      await this.prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      throw new UnauthorizedException('Security alert: refresh token already used. Please log in again.');
     }
 
     const valid = await bcrypt.compare(dto.refreshToken, stored.tokenHash);
@@ -365,6 +408,9 @@ export class AuthService {
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Current password is incorrect');
 
+    const same = await bcrypt.compare(newPassword, user.passwordHash);
+    if (same) throw new BadRequestException('New password must be different from current password');
+
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
     await this.prisma.$transaction([
@@ -394,6 +440,7 @@ export class AuthService {
         data: { revokedAt: new Date() },
       });
     }
+    this.events.emit('auth.logout', { userId, tokenId: tokenId ?? null });
     return { message: 'Logged out successfully' };
   }
 

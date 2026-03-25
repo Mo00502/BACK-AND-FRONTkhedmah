@@ -28,6 +28,11 @@ import {
 } from '../../common/decorators/throttle.decorator';
 import { UserRole } from '@prisma/client';
 
+interface AuthUser {
+  id: string;
+  role: UserRole;
+}
+
 class SuspendUserDto {
   @ApiProperty({ required: false })
   @IsOptional()
@@ -53,7 +58,7 @@ export class UsersController {
   @Get('me')
   @ThrottleDefault()
   @ApiOperation({ summary: 'Get current user profile' })
-  getMe(@CurrentUser() user: any) {
+  getMe(@CurrentUser() user: AuthUser) {
     return this.users.findById(user.id);
   }
 
@@ -74,7 +79,7 @@ export class UsersController {
   @Get(':id')
   @ThrottleDefault()
   @ApiOperation({ summary: 'Get user by ID (self or admin only)' })
-  findOne(@Param('id') id: string, @CurrentUser() currentUser: any) {
+  findOne(@Param('id') id: string, @CurrentUser() currentUser: AuthUser) {
     const isAdmin = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPER_ADMIN;
     if (currentUser.id !== id && !isAdmin) {
       throw new ForbiddenException('Access denied');
