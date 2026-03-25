@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ReviewsService {
@@ -40,7 +41,9 @@ export class ReviewsService {
     });
     if (existing) throw new ConflictException('You already reviewed this request');
 
-    const review = await this.prisma.$transaction(async (tx) => {
+    let review;
+    try {
+    review = await this.prisma.$transaction(async (tx) => {
       const created = await tx.review.create({
         data: {
           requestId,
@@ -71,6 +74,12 @@ export class ReviewsService {
 
       return created;
     });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('You already reviewed this request');
+      }
+      throw err;
+    }
 
     this.events.emit('review.submitted', {
       reviewId: review.id,

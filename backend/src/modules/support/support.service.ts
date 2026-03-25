@@ -182,7 +182,11 @@ export class SupportService {
     if (!ticket) throw new NotFoundException('Ticket not found');
     const data: any = { status };
     if (status === 'RESOLVED') data.resolvedAt = new Date();
-    if (status === 'CLOSED') data.closedAt = new Date();
+    if (status === 'CLOSED') {
+      data.closedAt = new Date();
+      // Ensure resolvedAt is set for SLA metric queries that filter on resolved_at IS NOT NULL
+      if (!ticket.resolvedAt) data.resolvedAt = new Date();
+    }
     return this.prisma.supportTicket.update({ where: { id: ticketId }, data });
   }
 

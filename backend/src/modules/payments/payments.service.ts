@@ -479,7 +479,10 @@ export class PaymentsService {
         { amount: partialAmount ? Math.round(partialAmount * 100) : Math.round(Number(payment.amount) * 100) },
         { auth: { username: this.config.getOrThrow('MOYASAR_API_KEY'), password: '' } },
       );
-    } catch {
+    } catch (err: any) {
+      const detail = err?.response?.data ?? err?.message ?? String(err);
+      this.logger.error(`Moyasar refund failed for payment ${paymentId} (ref ${payment.moyasarRef}): ${JSON.stringify(detail)}`);
+      this.events.emit('payment.refund_failed', { paymentId, adminId, reason, detail });
       throw new BadRequestException('Refund request to Moyasar failed');
     }
 
