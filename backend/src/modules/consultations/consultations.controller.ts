@@ -66,6 +66,14 @@ export class ConsultationsController {
     return this.consultations.cancel(customerId, id);
   }
 
+  @Patch(':id/provider-cancel')
+  @Roles(UserRole.PROVIDER)
+  @ThrottleDefault()
+  @ApiOperation({ summary: 'Provider: cancel a pending or accepted consultation' })
+  providerCancel(@Param('id') id: string, @CurrentUser('id') providerId: string) {
+    return this.consultations.cancelByProvider(providerId, id);
+  }
+
   @Post(':id/rate')
   @Roles(UserRole.CUSTOMER)
   @ThrottleDefault()

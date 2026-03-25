@@ -267,10 +267,50 @@ export class ConsultationsService {
       );
     }
 
-    return this.prisma.consultation.update({
+    const updated = await this.prisma.consultation.update({
       where: { id: consultationId },
       data: { status: ConsultationStatus.CANCELLED },
     });
+    this.events.emit('consultation.cancelled', {
+      consultationId,
+      cancelledBy: 'customer',
+      customerId,
+      providerId: c.providerId,
+    });
+    return updated;
+  }
+
+  // ── Provider: cancel (PENDING or ACCEPTED only) ───────────────────────────
+  async cancelByProvider(providerId: string, consultationId: string) {
+    const c = await this.prisma.consultation.findUnique({
+      where: { id: consultationId },
+    });
+
+    if (!c) throw new NotFoundException('Consultation not found');
+    if (c.providerId !== providerId) throw new ForbiddenException('Not your consultation');
+
+    // Provider cannot cancel once the session is underway
+    const cancellable: ConsultationStatus[] = [
+      ConsultationStatus.PENDING,
+      ConsultationStatus.ACCEPTED,
+    ];
+    if (!cancellable.includes(c.status)) {
+      throw new BadRequestException(
+        'يمكن إلغاء الاستشارة فقط قبل بدء الجلسة',
+      );
+    }
+
+    const updated = await this.prisma.consultation.update({
+      where: { id: consultationId },
+      data: { status: ConsultationStatus.CANCELLED },
+    });
+    this.events.emit('consultation.cancelled', {
+      consultationId,
+      cancelledBy: 'provider',
+      customerId: c.customerId,
+      providerId,
+    });
+    return updated;
   }
 
   // ── Customer: rate completed session ─────────────────────────────────────

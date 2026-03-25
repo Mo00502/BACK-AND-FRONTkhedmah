@@ -612,6 +612,30 @@ export class EventListenerService {
     ]);
   }
 
+  // ── Consultation cancelled by customer or provider ───────────────────────
+
+  @OnEvent('consultation.cancelled')
+  async onConsultationCancelled(payload: {
+    consultationId: string;
+    cancelledBy: 'customer' | 'provider';
+    customerId: string;
+    providerId: string;
+  }) {
+    const byCustomer = payload.cancelledBy === 'customer';
+    // Notify the OTHER party
+    const notifyId  = byCustomer ? payload.providerId : payload.customerId;
+    const notifyMsg = byCustomer
+      ? 'ألغى العميل الاستشارة قبل بدء الجلسة'
+      : 'ألغى المزود الاستشارة قبل بدء الجلسة';
+
+    await this.notif.notifyUser(
+      notifyId,
+      '❌ تم إلغاء الاستشارة',
+      notifyMsg,
+      { consultationId: payload.consultationId },
+    );
+  }
+
   // ── Materials adjustment batch expired ───────────────────────────────────
 
   @OnEvent('materials.adjustment.batch_expired')

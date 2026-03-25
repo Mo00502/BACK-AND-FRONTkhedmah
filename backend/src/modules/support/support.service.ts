@@ -35,6 +35,23 @@ export class SupportService {
     attachments: string[] = [],
     relatedRequestId?: string,
   ) {
+    const MAX_ATTACHMENTS = 10;
+    if (attachments.length > MAX_ATTACHMENTS) {
+      throw new BadRequestException(`Maximum ${MAX_ATTACHMENTS} attachments per ticket`);
+    }
+    // Validate each attachment is a well-formed absolute URL (no data: / javascript: URIs)
+    const safeAttachments = attachments.filter((url) => {
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    });
+    if (safeAttachments.length !== attachments.length) {
+      throw new BadRequestException('All attachments must be valid HTTPS URLs');
+    }
+
     const ticket = await this.prisma.supportTicket.create({
       data: {
         userId,
@@ -42,7 +59,7 @@ export class SupportService {
         description,
         category,
         priority,
-        attachments,
+        attachments: safeAttachments,
         relatedRequestId,
         status: 'OPEN',
       },
