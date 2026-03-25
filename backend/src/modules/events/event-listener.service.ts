@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WalletService } from '../wallet/wallet.service';
+import { WalletCreditProducer } from '../wallet/wallet-credit.queue';
 import { PaymentsService } from '../payments/payments.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { WalletTxType } from '@prisma/client';
@@ -24,6 +25,7 @@ export class EventListenerService {
     private prisma: PrismaService,
     private notif: NotificationsService,
     private wallet: WalletService,
+    private walletCreditProducer: WalletCreditProducer,
     private payments: PaymentsService,
     private readonly config: ConfigService,
   ) {}
@@ -62,10 +64,18 @@ export class EventListenerService {
       const netPayout = Number(escrow.amount) - Number(escrow.platformFee);
       if (netPayout <= 0) return;
 
-      await this.wallet.credit(providerId, netPayout, 'مستحقات خدمة — إطلاق الضمان', escrow.id);
+      await this.walletCreditProducer.enqueueCredit({
+        userId: providerId,
+        amount: netPayout,
+        type: 'ESCROW_RELEASE',
+        referenceId: escrow.id,
+        refType: 'escrow',
+        description: 'مستحقات خدمة — إطلاق الضمان',
+        idempotencyKey: `escrow-release-${escrow.id}`,
+      });
 
       this.logger.log(
-        `Wallet credited: provider ${providerId} +${netPayout} SAR (escrow ${escrow.id})`,
+        `Wallet credit enqueued: provider ${providerId} +${netPayout} SAR (escrow ${escrow.id})`,
       );
     } catch (err) {
       this.logger.error(`onEscrowReleased failed for request ${event.requestId}: ${err}`);
@@ -75,13 +85,15 @@ export class EventListenerService {
   @OnEvent('escrow.refund_on_cancel')
   async onEscrowRefundOnCancel(payload: { escrowId: string; requestId: string; customerId: string; amount: any }) {
     try {
-      await this.wallet.credit(
-        payload.customerId,
-        Number(payload.amount),
-        `استرداد مبلغ الطلب ${payload.requestId}`,
-        payload.escrowId,
-        'refund',
-      );
+      await this.walletCreditProducer.enqueueCredit({
+        userId: payload.customerId,
+        amount: Number(payload.amount),
+        type: 'REFUND',
+        referenceId: payload.escrowId,
+        refType: 'refund',
+        description: `استرداد مبلغ الطلب ${payload.requestId}`,
+        idempotencyKey: `escrow-refund-cancel-${payload.escrowId}`,
+      });
       await this.notif.notifyUser(
         payload.customerId,
         'تم استرداد المبلغ',
@@ -164,13 +176,16 @@ export class EventListenerService {
   }) {
     try {
       if (!payload.providerId || payload.providerAmount <= 0) return;
-      await this.wallet.credit(
-        payload.providerId,
-        payload.providerAmount,
-        'حل نزاع — نصف مستحقات الخدمة',
-        payload.escrowId,
-      );
-      this.logger.log(`Split release: provider ${payload.providerId} credited ${payload.providerAmount} SAR`);
+      await this.walletCreditProducer.enqueueCredit({
+        userId: payload.providerId,
+        amount: payload.providerAmount,
+        type: 'DISPUTE_SPLIT',
+        referenceId: payload.escrowId,
+        refType: 'escrow',
+        description: 'حل نزاع — نصف مستحقات الخدمة',
+        idempotencyKey: `dispute-split-release-${payload.escrowId}`,
+      });
+      this.logger.log(`Split release enqueued: provider ${payload.providerId} +${payload.providerAmount} SAR`);
     } catch (err) {
       this.logger.error(`onDisputeSplitRelease failed for request ${payload.requestId}: ${err}`);
     }
@@ -393,15 +408,17 @@ export class EventListenerService {
   }) {
     try {
       const ownerPayout = payload.totalPrice - payload.platformFee;
-      await this.wallet.credit(
-        payload.ownerId,
-        ownerPayout,
-        `إيرادات تأجير معدة`,
-        payload.rentalId,
-        'equipment_rental',
-      );
+      await this.walletCreditProducer.enqueueCredit({
+        userId: payload.ownerId,
+        amount: ownerPayout,
+        type: 'RENTAL_COMPLETE',
+        referenceId: payload.rentalId,
+        refType: 'equipment_rental',
+        description: 'إيرادات تأجير معدة',
+        idempotencyKey: `equipment-rental-complete-${payload.rentalId}`,
+      });
       this.logger.log(
-        `Equipment rental completed: owner ${payload.ownerId} credited ${ownerPayout} SAR (rental ${payload.rentalId})`,
+        `Equipment rental credit enqueued: owner ${payload.ownerId} +${ownerPayout} SAR (rental ${payload.rentalId})`,
       );
     } catch (err) {
       this.logger.error(`onEquipmentRentalCompleted failed: ${err}`);

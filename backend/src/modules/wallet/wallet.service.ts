@@ -36,6 +36,7 @@ export class WalletService {
     description: string,
     refId?: string,
     refType?: string,
+    idempotencyKey?: string,
   ) {
     const wallet = await this.getOrCreate(userId);
     const newBalance = new Decimal(wallet.balance).plus(amount);
@@ -54,6 +55,7 @@ export class WalletService {
           description,
           refId,
           refType,
+          ...(idempotencyKey && { idempotencyKey }),
         },
       }),
     ]);

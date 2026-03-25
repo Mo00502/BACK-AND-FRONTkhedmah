@@ -787,15 +787,16 @@ model Wallet {
 }
 
 model WalletTransaction {
-  id          String       @id @default(uuid())
-  walletId    String       @map("wallet_id")
-  type        WalletTxType
-  amount      Decimal      @db.Decimal(10, 2)
-  balanceAfter Decimal     @map("balance_after") @db.Decimal(10, 2)
-  description String?
-  refId       String?      @map("ref_id")
-  refType     String?      @map("ref_type")
-  createdAt   DateTime     @default(now()) @map("created_at")
+  id             String       @id @default(uuid())
+  walletId       String       @map("wallet_id")
+  type           WalletTxType
+  amount         Decimal      @db.Decimal(10, 2)
+  balanceAfter   Decimal      @map("balance_after") @db.Decimal(10, 2)
+  description    String?
+  refId          String?      @map("ref_id")
+  refType        String?      @map("ref_type")
+  idempotencyKey String?      @unique @map("idempotency_key")
+  createdAt      DateTime     @default(now()) @map("created_at")
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
