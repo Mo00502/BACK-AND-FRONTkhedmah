@@ -156,7 +156,7 @@ export class TendersService {
     );
 
     return this.prisma.tender.create({
-      data: { companyId: company.id, ...safeData } as Prisma.TenderCreateInput & { companyId: string },
+      data: { companyId: company.id, ...safeData } as Prisma.TenderUncheckedCreateInput,
     });
   }
 
@@ -399,7 +399,7 @@ export class TendersService {
       tenderId: current.tenderId,
       from: current.status,
       to: status,
-      amount: Number(current.amount),
+      amount: Number(current.commissionAmount),
     });
 
     return updated;
@@ -424,7 +424,7 @@ export class TendersService {
     );
 
     return this.prisma.projectRequirement.create({
-      data: { tenderId, ...safeData } as Prisma.ProjectRequirementCreateInput & { tenderId: string },
+      data: { tenderId, ...safeData } as Prisma.ProjectRequirementUncheckedCreateInput,
     });
   }
 
@@ -485,7 +485,7 @@ export class TendersService {
         companyId,
         status: SupplierOfferStatus.PENDING,
         ...safeData,
-      } as Prisma.SupplierOfferCreateInput & { requirementId: string; supplierId: string },
+      } as Prisma.SupplierOfferUncheckedCreateInput,
     });
   }
 

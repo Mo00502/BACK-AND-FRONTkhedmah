@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -340,6 +341,10 @@ export class EquipmentService {
     if (eq.status !== 'ACTIVE') throw new BadRequestException('Equipment is not active');
     if (eq.ownerId === userId) throw new ForbiddenException('You cannot rent your own equipment');
 
+    // Resolve start/end dates from incoming data for the overlap check below
+    const startDate: Date | undefined = data.startDate ? new Date(data.startDate) : undefined;
+    const endDate: Date | undefined = data.endDate ? new Date(data.endDate) : undefined;
+
     // Atomically mark as unavailable before creating rental — prevents double-booking race
     const rental = await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.equipment.updateMany({
@@ -348,6 +353,23 @@ export class EquipmentService {
       });
       if (count === 0)
         throw new BadRequestException('Equipment was just booked by another customer');
+
+      // Check for date-range conflicts with existing active rentals
+      if (startDate && endDate) {
+        const conflict = await tx.equipmentRental.findFirst({
+          where: {
+            equipmentId,
+            status: { in: [RentalStatus.PENDING, RentalStatus.CONFIRMED, RentalStatus.ACTIVE] },
+            AND: [
+              { startDate: { lt: endDate } },
+              { endDate: { gt: startDate } },
+            ],
+          },
+        });
+        if (conflict) {
+          throw new ConflictException('المعدة محجوزة في هذه الفترة الزمنية');
+        }
+      }
 
       return tx.equipmentRental.create({
         data: { equipmentId, renterId: userId, status: RentalStatus.PENDING, ...data } as any,
@@ -395,7 +417,16 @@ export class EquipmentService {
       data: { status: status as RentalStatus, ...timestamps },
     });
 
-    if (status === 'COMPLETED') {
+    if (status === 'CONFIRMED' && rental.totalPrice) {
+      // Charge a 30% deposit upfront when the owner confirms the rental
+      const depositAmount = parseFloat((Number(rental.totalPrice) * 0.30).toFixed(2));
+      this.events.emit('equipment.rental.deposit_required', {
+        rentalId: rental.id,
+        renterId: rental.renterId,
+        depositAmount,
+        totalPrice: Number(rental.totalPrice),
+      });
+    } else if (status === 'COMPLETED') {
       await this.prisma.equipment.update({
         where: { id: rental.equipmentId },
         data: { isAvailable: true, rentalCount: { increment: 1 } },

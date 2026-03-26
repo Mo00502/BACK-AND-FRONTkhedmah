@@ -94,6 +94,14 @@ export class WalletController {
     return this.wallet.getWithdrawals(userId, +page, +limit);
   }
 
+  @Get('referral/my-code')
+  @Roles(UserRole.CUSTOMER, UserRole.PROVIDER)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Get my referral code and stats (total referrals + earned amount)' })
+  getMyReferralCode(@CurrentUser('id') userId: string) {
+    return this.wallet.getMyReferralCode(userId);
+  }
+
   // ── Admin endpoints ────────────────────────────────────────────────────────
 
   @Get('admin/withdrawals')

@@ -25,7 +25,17 @@ import {
 } from '../../common/decorators/throttle.decorator';
 import { UserRole, CommissionStatus } from '@prisma/client';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+
+class ListTendersQueryDto extends PaginationDto {
+  @IsOptional() @IsString() status?: string;
+  @IsOptional() @IsString() category?: string;
+  @IsOptional() @IsString() region?: string;
+}
+
+class ListCommissionsQueryDto extends PaginationDto {
+  @IsOptional() @IsString() status?: string;
+}
 import {
   CreateTenderDto,
   SubmitBidDto,
@@ -52,16 +62,14 @@ export class TendersController {
   @Public()
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'List open tenders (no bid counts exposed)' })
-  list(
-    @Query('status') status?: string,
-    @Query('category') category?: string,
-    @Query('region') region?: string,
-    @Query() pagination?: PaginationDto,
-  ) {
-    return this.tenders.list({ status, category, region }, pagination);
+  list(@Query() query?: ListTendersQueryDto) {
+    const { status, category, region, ...pagination } = query ?? {};
+    return this.tenders.list({ status, category, region }, pagination as PaginationDto);
   }
 
   @Get('my-bids')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER)
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'Get my submitted bids' })
   myBids(@CurrentUser() user: any, @Query() pagination?: PaginationDto) {
@@ -77,8 +85,9 @@ export class TendersController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ThrottleRelaxed()
   @ApiOperation({ summary: 'List all commissions (admin only)' })
-  commissions(@Query('status') status?: string, @Query() pagination?: PaginationDto) {
-    return this.tenders.listCommissions({ status }, pagination);
+  commissions(@Query() query?: ListCommissionsQueryDto) {
+    const { status, ...pagination } = query ?? {};
+    return this.tenders.listCommissions({ status }, pagination as PaginationDto);
   }
 
   @Get(':id')

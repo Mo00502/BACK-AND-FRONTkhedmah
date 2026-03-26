@@ -16,7 +16,7 @@ services:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB:       khedmah_db
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redisdata:/data
     healthcheck:
@@ -96,7 +96,7 @@ services:
     build:
       context: .
       target:  builder
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
+    command: npx prisma migrate deploy
     env_file: .env
     depends_on:
       postgres:
@@ -105,6 +105,22 @@ services:
       DATABASE_URL: postgresql://khedmah:secret@postgres:5432/khedmah_db?schema=public
     profiles:
       - migrate
+
+  # ── Seed demo data (DEVELOPMENT ONLY — never run in production) ────────
+  seed:
+    build:
+      context: .
+      target:  builder
+    command: npx prisma db seed
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV:     development      # seed.ts refuses to run if NODE_ENV=production
+      DATABASE_URL: postgresql://khedmah:secret@postgres:5432/khedmah_db?schema=public
+    profiles:
+      - seed
 
   # ── pgAdmin 4 (DB GUI) ─────────────────────────────────────────────────
   pgadmin:

@@ -123,7 +123,7 @@ describe('ProvidersService', () => {
       const dto = new PaginationDto();
       const result = await service.findAll(dto);
 
-      expect(result.data).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
       expect(result.total).toBe(2);
     });
   });

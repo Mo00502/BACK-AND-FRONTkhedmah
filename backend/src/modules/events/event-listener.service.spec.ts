@@ -4,6 +4,7 @@ import { EventListenerService } from './event-listener.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WalletService } from '../wallet/wallet.service';
+import { WalletCreditProducer } from '../wallet/wallet-credit.queue';
 import { PaymentsService } from '../payments/payments.service';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -31,6 +32,10 @@ const mockPayments = {
   initiateRefund: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockWalletCreditProducer = {
+  enqueueCredit: jest.fn().mockResolvedValue(undefined),
+};
+
 const mockConfig = {
   get: jest.fn(),
 };
@@ -51,6 +56,7 @@ describe('EventListenerService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotif },
         { provide: WalletService, useValue: mockWallet },
+        { provide: WalletCreditProducer, useValue: mockWalletCreditProducer },
         { provide: PaymentsService, useValue: mockPayments },
         { provide: ConfigService, useValue: mockConfig },
       ],
@@ -73,11 +79,13 @@ describe('EventListenerService', () => {
 
       await service.onEscrowReleased({ requestId: 'req-1' });
 
-      expect(mockWallet.credit).toHaveBeenCalledWith(
-        'provider-1',
-        850, // 1000 − 150
-        expect.any(String),
-        'escrow-1',
+      expect(mockWalletCreditProducer.enqueueCredit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'provider-1',
+          amount: 850, // 1000 − 150
+          type: 'ESCROW_RELEASE',
+          referenceId: 'escrow-1',
+        }),
       );
     });
 
@@ -92,11 +100,13 @@ describe('EventListenerService', () => {
 
       await service.onEscrowReleased({ requestId: 'req-2', providerId: 'correct-provider' });
 
-      expect(mockWallet.credit).toHaveBeenCalledWith(
-        'correct-provider',
-        425,
-        expect.any(String),
-        'escrow-2',
+      expect(mockWalletCreditProducer.enqueueCredit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'correct-provider',
+          amount: 425,
+          type: 'ESCROW_RELEASE',
+          referenceId: 'escrow-2',
+        }),
       );
     });
 
@@ -104,7 +114,7 @@ describe('EventListenerService', () => {
       mockPrisma.escrow.findUnique.mockResolvedValue(null);
 
       await expect(service.onEscrowReleased({ requestId: 'missing-req' })).resolves.toBeUndefined();
-      expect(mockWallet.credit).not.toHaveBeenCalled();
+      expect(mockWalletCreditProducer.enqueueCredit).not.toHaveBeenCalled();
     });
 
     it('skips wallet credit when netPayout is zero', async () => {
@@ -117,7 +127,7 @@ describe('EventListenerService', () => {
       });
 
       await service.onEscrowReleased({ requestId: 'req-3' });
-      expect(mockWallet.credit).not.toHaveBeenCalled();
+      expect(mockWalletCreditProducer.enqueueCredit).not.toHaveBeenCalled();
     });
 
     it('skips wallet credit when no providerId available', async () => {
@@ -130,7 +140,7 @@ describe('EventListenerService', () => {
       });
 
       await service.onEscrowReleased({ requestId: 'req-4' });
-      expect(mockWallet.credit).not.toHaveBeenCalled();
+      expect(mockWalletCreditProducer.enqueueCredit).not.toHaveBeenCalled();
     });
 
     it('does not throw when wallet.credit fails (error is caught)', async () => {
@@ -141,7 +151,7 @@ describe('EventListenerService', () => {
         requestId: 'req-5',
         request: { providerId: 'provider-1' },
       });
-      mockWallet.credit.mockRejectedValue(new Error('DB connection lost'));
+      mockWalletCreditProducer.enqueueCredit.mockRejectedValue(new Error('queue connection lost'));
 
       await expect(service.onEscrowReleased({ requestId: 'req-5' })).resolves.toBeUndefined();
     });

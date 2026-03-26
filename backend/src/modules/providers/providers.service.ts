@@ -194,12 +194,12 @@ export class ProvidersService {
     if (!profile) throw new NotFoundException('Provider profile not found');
 
     // ── 1. Lifetime totals ─────────────────────────────────────────────────
-    const releasedEscrows = await this.prisma.escrow.findMany({
+    const escrowAgg = await this.prisma.escrow.aggregate({
       where: { request: { providerId: userId }, status: 'RELEASED' },
-      select: { amount: true },
+      _sum: { amount: true },
     });
 
-    const grossLifetime = releasedEscrows.reduce((sum, e) => sum + Number(e.amount), 0);
+    const grossLifetime = Number(escrowAgg._sum.amount ?? 0);
     const commissionLifetime = +(grossLifetime * HOME_SERVICES_COMMISSION).toFixed(2);
     const netLifetime = +(grossLifetime - commissionLifetime).toFixed(2);
 

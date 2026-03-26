@@ -24,6 +24,7 @@ import {
   ThrottleDefault,
   ThrottleRelaxed,
 } from '../../common/decorators/throttle.decorator';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 class SuspendDto {
   @ApiProperty() @IsString() reason: string;
@@ -177,6 +178,33 @@ export class AdminController {
   @ApiOperation({ summary: 'Generate weekly platform report on-demand' })
   getWeeklyReport() {
     return this.reports.getWeeklyReportData();
+  }
+
+  // ── Equipment moderation ──────────────────────────────────────────────────
+
+  @Get('equipment/pending')
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'List pending equipment awaiting approval' })
+  getPendingEquipment(@Query() dto: PaginationDto) {
+    return this.admin.getPendingEquipment(dto);
+  }
+
+  @Patch('equipment/:id/approve')
+  @ThrottleStrict()
+  @ApiOperation({ summary: 'Approve equipment listing' })
+  approveEquipment(@Param('id') id: string, @CurrentUser('id') adminId: string) {
+    return this.admin.approveEquipment(id, adminId);
+  }
+
+  @Patch('equipment/:id/reject')
+  @ThrottleStrict()
+  @ApiOperation({ summary: 'Reject equipment listing' })
+  rejectEquipment(
+    @Param('id') id: string,
+    @CurrentUser('id') adminId: string,
+    @Body() body: { reason: string },
+  ) {
+    return this.admin.rejectEquipment(id, adminId, body.reason);
   }
 
   // ── Consultation management ───────────────────────────────────────────────

@@ -1,8 +1,23 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { IsString, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DisputesService } from './disputes.service';
+import { FilesService } from '../files/files.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
@@ -27,7 +42,10 @@ class AddEvidenceDto {
 @UseGuards(JwtAuthGuard)
 @Controller('disputes')
 export class DisputesController {
-  constructor(private disputes: DisputesService) {}
+  constructor(
+    private disputes: DisputesService,
+    private files: FilesService,
+  ) {}
 
   @ThrottleRelaxed()
   @Get()
@@ -67,6 +85,23 @@ export class DisputesController {
     @Body() dto: AddEvidenceDto,
   ) {
     return this.disputes.addEvidence(userId, disputeId, dto.fileUrls);
+  }
+
+  @ThrottleDefault()
+  @Post(':disputeId/evidence/upload')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload a file directly as dispute evidence (uploads to S3 then attaches)' })
+  async uploadEvidence(
+    @CurrentUser('id') userId: string,
+    @Param('disputeId') disputeId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('No file provided');
+
+    // Upload to S3 via files service, then register the URL as evidence
+    const uploaded = await this.files.upload(userId, file);
+    return this.disputes.addEvidence(userId, disputeId, [uploaded.url]);
   }
 
   @ThrottleStrict()

@@ -126,8 +126,12 @@ describe('WalletService', () => {
 
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2); // once per credit
       expect(mockEvents.emit).toHaveBeenCalledWith(
-        'referral.rewarded',
-        expect.objectContaining({ referrerId: 'ref-1', refereeId: 'new-1', amount: 50 }),
+        'referral.credited_referrer',
+        expect.objectContaining({ userId: 'ref-1', refereeId: 'new-1', amount: 50 }),
+      );
+      expect(mockEvents.emit).toHaveBeenCalledWith(
+        'referral.credited_referee',
+        expect.objectContaining({ userId: 'new-1', referrerId: 'ref-1', amount: 50 }),
       );
     });
   });

@@ -3,6 +3,7 @@ import { SchedulerService } from './scheduler.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
+import { ConfigService } from '@nestjs/config';
 import { DisputeStatus, QuoteStatus, JobStatus } from '@prisma/client';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -87,6 +88,7 @@ describe('SchedulerService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: mockEvents },
         { provide: MaterialsPaymentService, useValue: mockMaterials },
+        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('') } },
       ],
     }).compile();
 

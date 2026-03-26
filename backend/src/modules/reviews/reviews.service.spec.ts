@@ -35,7 +35,7 @@ const makeReview = (overrides: any = {}) => ({
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-const mockPrisma = {
+const mockPrisma: Record<string, any> = {
   serviceRequest: {
     findUnique: jest.fn(),
   },

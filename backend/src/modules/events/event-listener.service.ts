@@ -149,6 +149,24 @@ export class EventListenerService {
     }
   }
 
+  @OnEvent('admin.reconcile_failures')
+  async onReconcileFailures(payload: {
+    failedCount: number;
+    succeededCount: number;
+    timestamp: string;
+  }) {
+    const adminEmail = this.config.get<string>('ADMIN_EMAIL', '');
+    if (!adminEmail) return;
+
+    await this.notif.sendEmail(
+      adminEmail,
+      `⚠️ تنبيه: فشل ${payload.failedCount} عملية مطابقة مواد`,
+      `<p>فشلت <strong>${payload.failedCount}</strong> عملية مطابقة من أصل ` +
+        `${payload.failedCount + payload.succeededCount} في ${payload.timestamp}.</p>` +
+        `<p>يرجى مراجعة سجلات النظام ومعالجة الطلبات يدوياً إذا لزم الأمر.</p>`,
+    );
+  }
+
   // ── Support ticket events ───────────────────────────────────────────────
 
   @OnEvent('support.ticket_opened')
@@ -451,6 +469,34 @@ export class EventListenerService {
       );
     } catch (err) {
       this.logger.error(`onEquipmentRentalCompleted failed: ${err}`);
+    }
+  }
+
+  @OnEvent('equipment.rental.deposit_required')
+  async onEquipmentDepositRequired(payload: {
+    rentalId: string;
+    renterId: string;
+    depositAmount: number;
+    totalPrice: number;
+  }) {
+    const idempotencyKey = `rental-deposit-${payload.rentalId}`;
+    try {
+      await this.wallet.debit(
+        payload.renterId,
+        payload.depositAmount,
+        `عربون تأجير معدة — ${payload.rentalId.slice(0, 8).toUpperCase()}`,
+        payload.rentalId,
+        'equipment_deposit',
+        idempotencyKey,
+      );
+      await this.notif.notifyUser(
+        payload.renterId,
+        'تم خصم عربون التأجير',
+        `تم خصم ${payload.depositAmount} ريال كعربون لتأجير المعدة`,
+        { rentalId: payload.rentalId, amount: String(payload.depositAmount) },
+      );
+    } catch (err) {
+      this.logger.error(`onEquipmentDepositRequired failed for rental ${payload.rentalId}: ${err}`);
     }
   }
 
@@ -882,7 +928,7 @@ export class EventListenerService {
         payload.userId,
         '🎁 مكافأة الإحالة',
         `حصلت على ${payload.amount} ريال مكافأة لدعوتك صديقاً للانضمام إلى خدمة`,
-        { refereeId: payload.refereeId, amount: payload.amount },
+        { refereeId: payload.refereeId, amount: String(payload.amount) },
       );
     } catch (err) {
       this.logger.error(`onReferralCreditedReferrer failed: ${err}`);
@@ -896,7 +942,7 @@ export class EventListenerService {
         payload.userId,
         '🎉 مكافأة ترحيب',
         `تم إضافة ${payload.amount} ريال إلى محفظتك كمكافأة ترحيب بانضمامك عبر رابط الإحالة`,
-        { referrerId: payload.referrerId, amount: payload.amount },
+        { referrerId: payload.referrerId, amount: String(payload.amount) },
       );
     } catch (err) {
       this.logger.error(`onReferralCreditedReferee failed: ${err}`);

@@ -44,6 +44,16 @@ class RefundPaymentDto {
   reason: string;
 }
 
+class MaterialsAdjustmentPaymentDto {
+  @ApiProperty({ description: 'ID of the approved MaterialsAdjustmentRequest' })
+  @IsString()
+  adjustmentId: string;
+
+  @ApiProperty({ enum: PaymentMethod })
+  @IsEnum(PaymentMethod)
+  method: PaymentMethod;
+}
+
 class WebhookDto {
   @ApiProperty()
   @IsString()
@@ -119,6 +129,18 @@ export class PaymentsController {
     return this.payments.initiateRefund(adminId, paymentId, dto.reason);
   }
 
+  @Post('materials/adjustment')
+  @Roles(UserRole.CUSTOMER)
+  @ApiBearerAuth()
+  @ThrottleStrict()
+  @ApiOperation({ summary: 'Pay for an approved materials budget adjustment request' })
+  payMaterialsAdjustment(
+    @CurrentUser('id') customerId: string,
+    @Body() dto: MaterialsAdjustmentPaymentDto,
+  ) {
+    return this.payments.initiateMaterialsAdjustmentPayment(customerId, dto.adjustmentId, dto.method);
+  }
+
   @Public()
   @Post('webhook/moyasar')
   @SkipThrottle() // Moyasar calls this — never throttle
@@ -128,6 +150,6 @@ export class PaymentsController {
     @Body() payload: WebhookDto,
     @Headers('x-moyasar-signature') sig: string,
   ) {
-    return this.payments.handleWebhook(payload, sig, req.rawBody ?? Buffer.from(JSON.stringify(payload)));
+    return this.payments.handleWebhook(payload as any, sig, req.rawBody ?? Buffer.from(JSON.stringify(payload)));
   }
 }

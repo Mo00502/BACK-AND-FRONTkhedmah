@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MaterialsPaymentService } from '../materials-payment/materials-payment.service';
@@ -14,6 +15,7 @@ export class SchedulerService {
     private prisma: PrismaService,
     private events: EventEmitter2,
     private materials: MaterialsPaymentService,
+    private config: ConfigService,
   ) {}
 
   /** Every hour: auto-release escrow older than 48h after completion */
@@ -147,16 +149,17 @@ export class SchedulerService {
       having: { score: { _count: { gt: 0 } } },
     });
 
-    let updated = 0;
-    for (const g of grouped) {
-      const avg = parseFloat((g._avg.score ?? 0).toFixed(2));
-      const cnt = g._count.score;
-      const res = await this.prisma.providerProfile.updateMany({
-        where: { userId: g.rateeId },
-        data: { ratingAvg: avg, ratingCount: cnt },
-      });
-      if (res.count > 0) updated++;
-    }
+    const updateResults = await Promise.all(
+      grouped.map((g) => {
+        const avg = parseFloat((g._avg.score ?? 0).toFixed(2));
+        const cnt = g._count.score;
+        return this.prisma.providerProfile.updateMany({
+          where: { userId: g.rateeId },
+          data: { ratingAvg: avg, ratingCount: cnt },
+        });
+      }),
+    );
+    const updated = updateResults.filter((r) => r.count > 0).length;
 
     await this.logJob('recalc_provider_ratings', JobStatus.SUCCESS, `Updated ${updated} providers`, Date.now() - start);
   }
@@ -181,18 +184,17 @@ export class SchedulerService {
       select: { requestId: true },
     });
 
-    let reconciled = 0;
-    let errors = 0;
+    const results = await Promise.allSettled(
+      pending.map((mp) => this.materials.reconcile(mp.requestId, 'system')),
+    );
 
-    for (const mp of pending) {
-      try {
-        await this.materials.reconcile(mp.requestId, 'system');
-        reconciled++;
-      } catch (err) {
-        errors++;
-        this.logger.error(`autoReconcileMaterials failed for request ${mp.requestId}: ${err}`);
+    const reconciled = results.filter((r) => r.status === 'fulfilled').length;
+    const errors = results.filter((r) => r.status === 'rejected').length;
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        this.logger.error(`autoReconcileMaterials failed for request ${pending[i].requestId}: ${r.reason}`);
       }
-    }
+    });
 
     await this.logJob(
       'auto_reconcile_materials',
@@ -200,6 +202,21 @@ export class SchedulerService {
       `Reconciled ${reconciled} materials payments (${errors} errors)`,
       Date.now() - start,
     );
+
+    if (errors > 0) {
+      const adminEmail = this.config.get<string>('ADMIN_EMAIL');
+      if (adminEmail) {
+        this.events.emit('admin.reconcile_failures', {
+          failedCount: errors,
+          succeededCount: reconciled,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      this.logger.error(
+        `autoReconcileMaterials: ${errors} failures out of ${pending.length} items. ` +
+        `Succeeded: ${reconciled}. Manual review required.`,
+      );
+    }
 
     if (reconciled > 0) {
       this.logger.log(`Auto-reconciled ${reconciled} materials payments`);

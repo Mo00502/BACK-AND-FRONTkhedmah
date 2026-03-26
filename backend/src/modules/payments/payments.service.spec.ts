@@ -117,7 +117,16 @@ describe('PaymentsService', () => {
         status: 'ACCEPTED',
         quotes: [{ amount: 500, status: 'ACCEPTED' }],
       });
-      mockPrisma.payment.create.mockResolvedValue({ id: 'pay-1', amount: 500 });
+      const paymentRow = { id: 'pay-1', amount: 500 };
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        const tx = {
+          payment: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue(paymentRow),
+          },
+        };
+        return cb(tx);
+      });
       mockPrisma.payment.update.mockResolvedValue({});
       mockedAxios.post.mockResolvedValue({
         data: { id: 'moyasar-ref-1', source: { url: 'https://checkout.moyasar.com/pay/xxx' } },
@@ -125,7 +134,7 @@ describe('PaymentsService', () => {
 
       const result = await service.initiatePayment(customerId, requestId, 'MADA');
 
-      expect(mockPrisma.payment.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1); // payment created inside tx
       expect(mockedAxios.post).toHaveBeenCalledTimes(1);
       expect(result).toHaveProperty('paymentId', 'pay-1');
       expect(result).toHaveProperty('checkoutUrl');
@@ -137,7 +146,15 @@ describe('PaymentsService', () => {
         status: 'ACCEPTED',
         quotes: [{ amount: 500, status: 'ACCEPTED' }],
       });
-      mockPrisma.payment.create.mockResolvedValue({ id: 'pay-1', amount: 500 });
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        const tx = {
+          payment: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue({ id: 'pay-1', amount: 500 }),
+          },
+        };
+        return cb(tx);
+      });
       mockPrisma.payment.update.mockResolvedValue({});
       mockedAxios.post.mockRejectedValue(new Error('network error'));
 

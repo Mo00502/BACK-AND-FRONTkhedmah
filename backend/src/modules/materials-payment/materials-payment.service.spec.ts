@@ -197,13 +197,14 @@ describe('MaterialsPaymentService', () => {
     it('should set REFUNDED_PARTIAL and emit refund event when unused amount > 0', async () => {
       const mp = mockMP({ paidAmount: 350, usedAmount: 220, refundedAmount: 0 });
       prisma.materialsPayment.findUnique.mockResolvedValue(mp);
+      prisma.materialsPayment.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds
       prisma.materialsPayment.update.mockResolvedValue({
         ...mp,
         status: MaterialsPaymentStatus.REFUNDED_PARTIAL,
         refundedAmount: 130,
       });
 
-      const result = await service.reconcile('req-1', 'admin-1');
+      const result = await service.reconcile('req-1', 'admin-1') as any;
 
       expect(result.refundTriggered).toBe(true);
       expect(result.refundAmount).toBe(130);
@@ -216,20 +217,23 @@ describe('MaterialsPaymentService', () => {
     it('should set FULLY_USED when all budget is consumed', async () => {
       const mp = mockMP({ paidAmount: 350, usedAmount: 350, refundedAmount: 0 });
       prisma.materialsPayment.findUnique.mockResolvedValue(mp);
+      prisma.materialsPayment.updateMany.mockResolvedValue({ count: 1 }); // claim succeeds
       prisma.materialsPayment.update.mockResolvedValue({
         ...mp,
         status: MaterialsPaymentStatus.FULLY_USED,
       });
 
-      const result = await service.reconcile('req-1', 'admin-1');
+      const result = await service.reconcile('req-1', 'admin-1') as any;
       expect(result.refundTriggered).toBe(false);
     });
 
-    it('should throw BadRequestException if already reconciled', async () => {
+    it('returns already-reconciled message for terminal status', async () => {
       prisma.materialsPayment.findUnique.mockResolvedValue(
         mockMP({ status: MaterialsPaymentStatus.REFUNDED_FULL }),
       );
-      await expect(service.reconcile('req-1', 'admin-1')).rejects.toThrow(BadRequestException);
+      prisma.materialsPayment.updateMany.mockResolvedValue({ count: 0 }); // terminal — excluded from claim
+      const result = await service.reconcile('req-1', 'admin-1') as any;
+      expect(result.message).toBe('Already reconciled');
     });
   });
 

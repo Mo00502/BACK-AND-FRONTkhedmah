@@ -45,9 +45,10 @@ export class CreateConsultationDto {
   @IsDateString()
   scheduledAt?: string;
 
-  @ApiPropertyOptional({ example: 150, description: 'Provider hourly rate in SAR' })
+  @ApiPropertyOptional({ example: 150, description: 'Provider hourly rate in SAR (min 50, max 10000)' })
   @IsOptional()
   @IsNumber()
-  @Min(0)
+  @Min(50, { message: 'السعر لا يقل عن 50 ريال في الساعة' })
+  @Max(10000, { message: 'السعر لا يتجاوز 10,000 ريال في الساعة' })
   pricePerHour?: number;
 }

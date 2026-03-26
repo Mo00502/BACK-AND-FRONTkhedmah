@@ -204,21 +204,33 @@ export class PaymentsService {
       return { received: true, duplicate: true };
     }
 
-    switch (payload.type) {
-      case 'payment_paid':
-        await this._confirmPayment(payload.data.id, payload.data);
-        break;
-      case 'payment_failed':
-        await this._handlePaymentFailed(payload.data.id);
-        break;
-      case 'refund_paid':
-        await this._handleRefundPaid(payload.data.id);
-        break;
-      default:
-        this.logger.log(`Unhandled Moyasar webhook type: ${payload.type}`);
-    }
+    // Process asynchronously — return immediately so Moyasar does not retry on slow DB ops
+    setImmediate(() => this._processWebhookAsync(eventId, payload).catch((err) =>
+      this.logger.error(`Webhook async processing failed for ${eventId}: ${err}`),
+    ));
 
     return { received: true };
+  }
+
+  private async _processWebhookAsync(eventId: string, payload: MoyasarWebhookPayload): Promise<void> {
+    try {
+      switch (payload.type) {
+        case 'payment_paid':
+          await this._confirmPayment(payload.data.id, payload.data);
+          break;
+        case 'payment_failed':
+          await this._handlePaymentFailed(payload.data.id);
+          break;
+        case 'refund_paid':
+          await this._handleRefundPaid(payload.data.id);
+          break;
+        default:
+          this.logger.log(`Unhandled Moyasar webhook type: ${payload.type}`);
+      }
+    } catch (err) {
+      this.logger.error(`Webhook processing error for ${eventId}: ${err}`);
+      throw err;
+    }
   }
 
   /**
@@ -304,12 +316,13 @@ export class PaymentsService {
     if (!confirmedPayment) return;
 
     if (isAdjustment && adjustmentMeta) {
+      const adjMeta = adjustmentMeta as { adjustmentId: string; materialsPaymentId: string };
       await this.materials.onAdjustmentPaymentConfirmed(
-        adjustmentMeta.adjustmentId,
-        adjustmentMeta.materialsPaymentId,
+        adjMeta.adjustmentId,
+        adjMeta.materialsPaymentId,
         Number((confirmedPayment as any).amount),
       );
-      this.logger.log(`Adjustment payment confirmed: adjustmentId=${adjustmentMeta.adjustmentId}`);
+      this.logger.log(`Adjustment payment confirmed: adjustmentId=${adjMeta.adjustmentId}`);
       return;
     }
 
@@ -548,6 +561,15 @@ export class PaymentsService {
           }
         : null,
     };
+  }
+
+  // ── Materials adjustment payment (pass-through to MaterialsPaymentService) ─
+  async initiateMaterialsAdjustmentPayment(
+    customerId: string,
+    adjustmentId: string,
+    method: string,
+  ) {
+    return this.materials.payForAdjustment(customerId, adjustmentId, method);
   }
 
   private methodToMoyasar(method: string): string {

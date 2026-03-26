@@ -47,7 +47,10 @@ const buildPrismaMock = () => ({
   $transaction: jest.fn().mockImplementation(async (fn: any) => {
     const tx = {
       equipment: { updateMany: jest.fn().mockResolvedValue({ count: 1 }), create: jest.fn() },
-      equipmentRental: { create: jest.fn() },
+      equipmentRental: {
+        create: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null), // no conflict by default
+      },
     };
     return fn(tx);
   }),
@@ -191,7 +194,10 @@ describe('EquipmentService', () => {
       (prisma.$transaction as jest.Mock).mockImplementationOnce(async (fn: any) => {
         const tx = {
           equipment: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
-          equipmentRental: { create: jest.fn().mockResolvedValue(rental) },
+          equipmentRental: {
+            create: jest.fn().mockResolvedValue(rental),
+            findFirst: jest.fn().mockResolvedValue(null), // no conflict
+          },
         };
         return fn(tx);
       });

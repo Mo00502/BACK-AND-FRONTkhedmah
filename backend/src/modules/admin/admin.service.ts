@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserStatus, ProviderVerificationStatus, DisputeStatus } from '@prisma/client';
+import { UserStatus, ProviderVerificationStatus, DisputeStatus, EquipmentStatus } from '@prisma/client';
+import { PaginationDto, paginate } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class AdminService {
@@ -501,6 +502,53 @@ export class AdminService {
     ]);
 
     return { data: logs, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
+  // ── Equipment moderation ──────────────────────────────────────────────────
+  async getPendingEquipment(dto: PaginationDto) {
+    const [items, total] = await Promise.all([
+      this.prisma.equipment.findMany({
+        where: { status: EquipmentStatus.PENDING },
+        include: { owner: { include: { profile: true } } },
+        skip: dto.skip,
+        take: dto.limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.equipment.count({ where: { status: EquipmentStatus.PENDING } }),
+    ]);
+    return paginate(items, total, dto);
+  }
+
+  async approveEquipment(equipmentId: string, adminId: string) {
+    const equipment = await this.prisma.equipment.findUnique({ where: { id: equipmentId } });
+    if (!equipment) throw new NotFoundException('Equipment not found');
+    if (equipment.status !== EquipmentStatus.PENDING) {
+      throw new BadRequestException(`Equipment is not in PENDING status (current: ${equipment.status})`);
+    }
+
+    const updated = await this.prisma.equipment.update({
+      where: { id: equipmentId },
+      data: { status: EquipmentStatus.ACTIVE },
+    });
+
+    this.events.emit('equipment.approved', { equipmentId, adminId });
+    return updated;
+  }
+
+  async rejectEquipment(equipmentId: string, adminId: string, reason: string) {
+    const equipment = await this.prisma.equipment.findUnique({ where: { id: equipmentId } });
+    if (!equipment) throw new NotFoundException('Equipment not found');
+    if (equipment.status !== EquipmentStatus.PENDING) {
+      throw new BadRequestException(`Equipment is not in PENDING status (current: ${equipment.status})`);
+    }
+
+    const updated = await this.prisma.equipment.update({
+      where: { id: equipmentId },
+      data: { status: EquipmentStatus.SUSPENDED },
+    });
+
+    this.events.emit('equipment.rejected', { equipmentId, adminId, reason });
+    return updated;
   }
 
   async cancelConsultationByAdmin(consultationId: string, adminId: string, reason: string) {

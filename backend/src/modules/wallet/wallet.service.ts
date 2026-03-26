@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -6,6 +6,8 @@ import { WalletTxType, WithdrawalStatus } from '@prisma/client';
 
 @Injectable()
 export class WalletService {
+  private readonly logger = new Logger(WalletService.name);
+
   constructor(
     private prisma: PrismaService,
     private events: EventEmitter2,
@@ -72,7 +74,19 @@ export class WalletService {
     description: string,
     refId?: string,
     refType?: string,
+    idempotencyKey?: string,
   ) {
+    // Idempotency guard: skip if this exact debit was already processed
+    if (idempotencyKey) {
+      const existing = await this.prisma.walletTransaction.findFirst({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        this.logger.log(`Debit already processed, skipping: ${idempotencyKey}`);
+        return { balance: existing.balanceAfter };
+      }
+    }
+
     const wallet = await this.getOrCreate(userId);
     const available = new Decimal(wallet.balance).minus(wallet.heldBalance);
 
@@ -96,6 +110,7 @@ export class WalletService {
           description,
           refId,
           refType,
+          ...(idempotencyKey && { idempotencyKey }),
         },
       }),
     ]);
@@ -125,6 +140,38 @@ export class WalletService {
     // Emit separate events so each user gets their own notification
     this.events.emit('referral.credited_referrer', { userId: referrerId, refereeId, amount });
     this.events.emit('referral.credited_referee', { userId: refereeId, referrerId, amount });
+  }
+
+  async getMyReferralCode(
+    userId: string,
+  ): Promise<{ code: string; totalReferrals: number; totalEarned: number }> {
+    // Find the user's existing referral code record (each user has at most one code)
+    let referral = await this.prisma.referral.findFirst({
+      where: { referrerId: userId },
+    });
+
+    if (!referral) {
+      // Generate a short unique code: first 8 chars of userId (uppercase) + 4 random alphanumerics
+      const code =
+        userId.slice(0, 8).toUpperCase() +
+        Math.random().toString(36).slice(2, 6).toUpperCase();
+      referral = await this.prisma.referral.create({
+        data: { referrerId: userId, code },
+      });
+    }
+
+    // Count completed (reward paid) referrals and sum their reward amounts
+    const stats = await this.prisma.referral.aggregate({
+      where: { referrerId: userId, rewardPaid: true },
+      _count: { id: true },
+      _sum: { rewardAmount: true },
+    });
+
+    return {
+      code: referral.code,
+      totalReferrals: stats._count.id ?? 0,
+      totalEarned: Number(stats._sum.rewardAmount ?? 0),
+    };
   }
 
   // ── Withdrawal requests ──────────────────────────────────────────────────
