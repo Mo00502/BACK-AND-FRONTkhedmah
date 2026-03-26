@@ -92,13 +92,26 @@ export class EquipmentController {
 
   @Get('rentals/mine')
   @ThrottleRelaxed()
-  @ApiOperation({ summary: 'My rental history' })
+  @ApiOperation({ summary: 'My rental history (as renter)' })
   myRentals(
     @CurrentUser() user: any,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
     return this.equipment.myRentals(user.id, page, limit);
+  }
+
+  @Get('rentals/my-equipment')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROVIDER)
+  @ThrottleRelaxed()
+  @ApiOperation({ summary: 'Rentals placed on my equipment listings (owner dashboard)' })
+  myEquipmentRentals(
+    @CurrentUser() user: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.equipment.myEquipmentRentals(user.id, page, limit);
   }
 
   @Get('inquiries/mine')

@@ -20,6 +20,11 @@ export class RequestsService {
   ) {}
 
   async create(customerId: string, dto: CreateRequestDto) {
+    // Validate service exists before attempting the insert to return a clean 404
+    // instead of a Prisma foreign-key violation error.
+    const service = await this.prisma.service.findUnique({ where: { id: dto.serviceId } });
+    if (!service) throw new NotFoundException('Service not found');
+
     const request = await this.prisma.serviceRequest.create({
       data: {
         customerId,
@@ -249,6 +254,16 @@ export class RequestsService {
     if (request.providerId !== providerId) throw new ForbiddenException('Not your request');
     if (request.status !== RequestStatus.IN_PROGRESS) {
       throw new BadRequestException('Request must be IN_PROGRESS before marking complete');
+    }
+
+    // Guard: require a HELD escrow before allowing completion.
+    // Without this check a provider could mark work complete with no payment on file,
+    // leaving the customer financially unprotected (no escrow to release or refund).
+    const escrow = await this.prisma.escrow.findUnique({ where: { requestId } });
+    if (!escrow || escrow.status !== 'HELD') {
+      throw new BadRequestException(
+        'لا يمكن إتمام الطلب — لم يتم دفع الضمان بعد',
+      );
     }
 
     // Atomic: only the caller that transitions the status is allowed to increment completedJobs

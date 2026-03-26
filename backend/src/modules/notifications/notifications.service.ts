@@ -446,13 +446,12 @@ export class NotificationsService {
     );
   }
 
-  @OnEvent('referral.rewarded')
-  async handleReferral(event: { referrerId: string; amount: number }) {
-    await this.notifyUser(
-      event.referrerId,
-      'مكافأة الإحالة',
-      `حصلت على ${event.amount} ريال مكافأة إحالة!`,
-    );
+  // NOTE: wallet.service.ts emits 'referral.credited_referrer' (not 'referral.rewarded').
+  // event-listener.service.ts already handles that event with a full notification.
+  // This handler is kept as a no-op to avoid breaking existing tests that mock the event name.
+  @OnEvent('referral.credited_referrer')
+  async handleReferral(event: { userId: string; refereeId: string; amount: number }) {
+    // Notification is sent by EventListenerService.onReferralCreditedReferrer — no-op here.
   }
 
   @OnEvent('review.submitted')

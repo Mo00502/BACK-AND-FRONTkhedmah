@@ -385,6 +385,48 @@ export class EventListenerService {
     }
   }
 
+  // ── Equipment moderation events ───────────────────────────────────────────
+
+  @OnEvent('equipment.approved')
+  async onEquipmentApproved(payload: { equipmentId: string; adminId: string }) {
+    try {
+      const equipment = await this.prisma.equipment.findUnique({
+        where: { id: payload.equipmentId },
+        select: { ownerId: true, name: true },
+      });
+      if (equipment?.ownerId) {
+        await this.notif.notifyUser(
+          equipment.ownerId,
+          '✅ تمت الموافقة على معدتك',
+          `تمت الموافقة على إعلان المعدة "${equipment.name}" وأصبح متاحاً للإيجار.`,
+          { equipmentId: payload.equipmentId },
+        );
+      }
+    } catch (err) {
+      this.logger.error(`onEquipmentApproved failed for ${payload.equipmentId}: ${err}`);
+    }
+  }
+
+  @OnEvent('equipment.rejected')
+  async onEquipmentRejected(payload: { equipmentId: string; adminId: string; reason: string }) {
+    try {
+      const equipment = await this.prisma.equipment.findUnique({
+        where: { id: payload.equipmentId },
+        select: { ownerId: true, name: true },
+      });
+      if (equipment?.ownerId) {
+        await this.notif.notifyUser(
+          equipment.ownerId,
+          '❌ رُفض إعلان معدتك',
+          `رُفض إعلان المعدة "${equipment.name}". السبب: ${payload.reason}`,
+          { equipmentId: payload.equipmentId },
+        );
+      }
+    } catch (err) {
+      this.logger.error(`onEquipmentRejected failed for ${payload.equipmentId}: ${err}`);
+    }
+  }
+
   // ── Equipment events ─────────────────────────────────────────────────────
 
   @OnEvent('equipment.rental.status_changed')
@@ -501,6 +543,24 @@ export class EventListenerService {
   }
 
   // ── Consultation events ──────────────────────────────────────────────────
+
+  @OnEvent('consultation.conflict_detected')
+  async onConsultationConflictDetected(payload: {
+    providerId: string;
+    requestedAt: Date;
+    consultationId?: string;
+  }) {
+    try {
+      await this.notif.notifyUser(
+        payload.providerId,
+        '⚠️ تعارض في المواعيد',
+        'يوجد تعارض مع موعد استشارة آخر. يرجى مراجعة جدول المواعيد وتعديل التوافر.',
+        payload.consultationId ? { consultationId: payload.consultationId } : {},
+      );
+    } catch (err) {
+      this.logger.error(`onConsultationConflictDetected failed: ${err}`);
+    }
+  }
 
   @OnEvent('consultation.charge_required')
   async onConsultationChargeRequired(payload: {

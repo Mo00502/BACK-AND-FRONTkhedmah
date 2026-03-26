@@ -18,6 +18,9 @@ const mockPrisma = {
     update: jest.fn(),
     count: jest.fn(),
   },
+  service: {
+    findUnique: jest.fn().mockResolvedValue({ id: 'svc-1', name: 'Test Service' }),
+  },
   providerProfile: {
     findUnique: jest.fn(),
   },

@@ -42,6 +42,18 @@ export class WalletService {
     refType?: string,
     idempotencyKey?: string,
   ) {
+    // Idempotency guard: skip if this exact credit was already processed.
+    // Prevents double-crediting on event retry or duplicate webhook delivery.
+    if (idempotencyKey) {
+      const existing = await this.prisma.walletTransaction.findFirst({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        this.logger.log(`Credit already processed, skipping: ${idempotencyKey}`);
+        return { balance: existing.balanceAfter };
+      }
+    }
+
     const wallet = await this.getOrCreate(userId);
     const newBalance = new Decimal(wallet.balance).plus(amount);
 
@@ -226,18 +238,37 @@ export class WalletService {
       throw new BadRequestException('Insufficient available balance');
     }
 
-    // Hold the amount and create the withdrawal record atomically
+    // Hold the amount and create the withdrawal record atomically.
+    // Re-read wallet inside the transaction to prevent TOCTOU races, and guard
+    // against a second concurrent withdrawal being submitted before the first is processed.
     const withdrawal = await this.prisma.$transaction(async (tx) => {
+      // Guard: block if a pending or processing withdrawal already exists.
+      const existingPending = await tx.withdrawalRequest.findFirst({
+        where: { userId, status: { in: [WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING] } },
+      });
+      if (existingPending) {
+        throw new BadRequestException(
+          'لديك طلب سحب قائم بالفعل — يرجى انتظار معالجته قبل تقديم طلب جديد',
+        );
+      }
+
+      // Re-read wallet balance inside transaction for accurate snapshot.
+      const freshWallet = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id } });
+      const freshAvailable = new Decimal(freshWallet.balance).minus(freshWallet.heldBalance);
+      if (freshAvailable.lessThan(amount)) {
+        throw new BadRequestException('Insufficient available balance');
+      }
+
       await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { heldBalance: new Decimal(wallet.heldBalance).plus(amount) },
+        where: { id: freshWallet.id },
+        data: { heldBalance: new Decimal(freshWallet.heldBalance).plus(amount) },
       });
       await tx.walletTransaction.create({
         data: {
-          walletId: wallet.id,
+          walletId: freshWallet.id,
           type: WalletTxType.HOLD,
           amount,
-          balanceAfter: wallet.balance, // total balance unchanged; only heldBalance increases
+          balanceAfter: freshWallet.balance, // total balance unchanged; only heldBalance increases
           description: 'حجز مبلغ طلب السحب',
           refType: 'withdrawal',
         },
@@ -299,13 +330,26 @@ export class WalletService {
     if (!([WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING] as WithdrawalStatus[]).includes(wr.status))
       throw new BadRequestException('Withdrawal is not in a processable state');
 
-    const wallet = await this.getOrCreate(wr.userId);
-    const newBalance = new Decimal(wallet.balance).minus(wr.amount);
-    const newHeldBalance = new Decimal(wallet.heldBalance).minus(wr.amount);
+    // Read wallet id for the transaction — getOrCreate only to ensure the record exists.
+    const walletMeta = await this.getOrCreate(wr.userId);
 
     // Debit balance + mark COMPLETED atomically so a crash cannot leave
     // the record stuck in PROCESSING with funds already debited.
+    // IMPORTANT: balance is re-read INSIDE the transaction to prevent a TOCTOU
+    // race where a concurrent credit/hold between the outer read and this update
+    // would silently corrupt the balance (lost update).
     await this.prisma.$transaction(async (tx) => {
+      // Re-read wallet inside the transaction for an accurate, locked snapshot.
+      const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: walletMeta.id } });
+      const newBalance = new Decimal(wallet.balance).minus(wr.amount);
+      const newHeldBalance = new Decimal(wallet.heldBalance).minus(wr.amount);
+
+      if (newBalance.lessThan(0) || newHeldBalance.lessThan(0)) {
+        throw new BadRequestException(
+          'Wallet balance is insufficient to complete this withdrawal — balance may have changed',
+        );
+      }
+
       await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: newBalance, heldBalance: newHeldBalance },

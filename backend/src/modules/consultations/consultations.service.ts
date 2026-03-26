@@ -124,13 +124,29 @@ export class ConsultationsService {
       const durationMs = (consultation.durationMinutes || 60) * 60 * 1000;
       const endTime = new Date(scheduledAt.getTime() + durationMs);
 
-      const conflict = await this.prisma.consultation.findFirst({
+      // Full overlap check: fetch candidates whose scheduledAt falls within the 8-hour
+      // window before the new booking ends, then filter in JS for full bidirectional
+      // overlap (existing.start < newEnd AND existing.end > newStart).
+      // 8h = maximum allowed durationMinutes — any consultation that started more than
+      // 8 hours before our new start cannot possibly still be running when we begin.
+      const candidates = await this.prisma.consultation.findMany({
         where: {
           providerId,
           id: { not: consultationId },
           status: { in: [ConsultationStatus.ACCEPTED, ConsultationStatus.IN_SESSION] },
-          scheduledAt: { gte: scheduledAt, lt: endTime },
+          scheduledAt: {
+            gte: new Date(scheduledAt.getTime() - 8 * 60 * 60 * 1000),
+            lt: endTime,
+          },
         },
+        select: { id: true, scheduledAt: true, durationMinutes: true },
+      });
+      const conflict = candidates.find((existing) => {
+        if (!existing.scheduledAt) return false;
+        const existingEnd = new Date(
+          existing.scheduledAt.getTime() + (existing.durationMinutes || 60) * 60 * 1000,
+        );
+        return existingEnd > scheduledAt;
       });
       if (conflict) {
         this.events.emit('consultation.conflict_detected', {
@@ -265,6 +281,17 @@ export class ConsultationsService {
       throw new BadRequestException(
         'Cannot cancel a consultation that is already in session or completed',
       );
+    }
+
+    // 2-hour cancellation policy: once a consultation is ACCEPTED and within 2 hours
+    // of its scheduled start, the customer can no longer cancel without penalty.
+    if (c.status === ConsultationStatus.ACCEPTED && c.scheduledAt) {
+      const twoHoursBefore = new Date(c.scheduledAt.getTime() - 2 * 60 * 60 * 1000);
+      if (new Date() >= twoHoursBefore) {
+        throw new BadRequestException(
+          'لا يمكن إلغاء الاستشارة في غضون ساعتين من موعدها المحدد',
+        );
+      }
     }
 
     const updated = await this.prisma.consultation.update({

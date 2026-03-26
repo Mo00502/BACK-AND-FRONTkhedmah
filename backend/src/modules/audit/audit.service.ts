@@ -214,6 +214,28 @@ export class AuditService {
     }).catch((err) => this.logger.error('Audit log for refund_failed failed', err));
   }
 
+  // ── Security events ────────────────────────────────────────────────────────
+  @OnEvent('auth.login_failed')
+  handleLoginFailed(event: { identifier: string; reason: string; ip?: string }) {
+    this.log({
+      action: AuditAction.LOGIN,
+      entityType: 'auth_login_failed',
+      metadata: { identifier: event.identifier, reason: event.reason },
+      ipAddress: event.ip,
+    }).catch((err) => this.logger.error('Audit log for login_failed failed', err));
+  }
+
+  @OnEvent('auth.token_reuse_detected')
+  handleTokenReuse(event: { userId: string; tokenId: string; ip?: string }) {
+    this.log({
+      userId: event.userId,
+      action: AuditAction.LOGOUT,
+      entityType: 'auth_token_reuse',
+      entityId: event.tokenId,
+      metadata: { ip: event.ip },
+    }).catch((err) => this.logger.error('Audit log for token_reuse failed', err));
+  }
+
   // ── Admin query: audit log viewer ─────────────────────────────────────────
   async getLogs(filters: {
     userId?: string;

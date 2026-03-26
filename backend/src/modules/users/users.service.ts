@@ -137,8 +137,33 @@ export class UsersService {
    * Self-delete: user requests account closure.
    * Revokes all sessions and soft-deletes the account.
    * Irreversible — data is preserved for legal/financial audit.
+   *
+   * Blocked when:
+   *  - User has active service requests (PENDING / QUOTED / ACCEPTED / IN_PROGRESS)
+   *  - User has a non-zero held wallet balance (funds in escrow or pending withdrawal)
    */
   async selfDelete(userId: string) {
+    // Block deletion if active orders exist (as customer or provider)
+    const activeOrderCount = await this.prisma.serviceRequest.count({
+      where: {
+        OR: [{ customerId: userId }, { providerId: userId }],
+        status: { in: ['PENDING', 'QUOTED', 'ACCEPTED', 'IN_PROGRESS'] as any[] },
+      },
+    });
+    if (activeOrderCount > 0) {
+      throw new ForbiddenException(
+        'Cannot delete account while you have active service orders. Please complete or cancel them first.',
+      );
+    }
+
+    // Block deletion if provider has held wallet balance (funds in escrow or pending withdrawal)
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (wallet && Number(wallet.heldBalance) > 0) {
+      throw new ForbiddenException(
+        'Cannot delete account while you have a held wallet balance. Please resolve pending withdrawals or disputes first.',
+      );
+    }
+
     await this.prisma.$transaction([
       this.prisma.refreshToken.updateMany({
         where: { userId, revokedAt: null },

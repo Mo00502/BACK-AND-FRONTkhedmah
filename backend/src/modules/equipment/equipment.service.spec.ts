@@ -40,6 +40,7 @@ const buildPrismaMock = () => ({
   equipmentRental: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn().mockResolvedValue(null), // no active rentals by default
     update: jest.fn(),
     findMany: jest.fn(),
     count: jest.fn(),
@@ -204,7 +205,7 @@ describe('EquipmentService', () => {
 
       const result = await service.createRental('eq-1', 'renter-1', {
         startDate: new Date(),
-        endDate: new Date(),
+        endDate: new Date(Date.now() + 86400000), // tomorrow
       });
 
       expect(emitter.emit).toHaveBeenCalledWith(

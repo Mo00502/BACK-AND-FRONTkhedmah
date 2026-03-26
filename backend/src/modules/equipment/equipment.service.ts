@@ -211,6 +211,20 @@ export class EquipmentService {
     const eq = await this.prisma.equipment.findUnique({ where: { id } });
     if (!eq) throw new NotFoundException();
     if (eq.ownerId !== userId) throw new ForbiddenException();
+
+    // Block archiving if there are any active or pending rentals
+    const activeRental = await this.prisma.equipmentRental.findFirst({
+      where: {
+        equipmentId: id,
+        status: { in: [RentalStatus.PENDING, RentalStatus.CONFIRMED, RentalStatus.ACTIVE] },
+      },
+    });
+    if (activeRental) {
+      throw new BadRequestException(
+        'لا يمكن أرشفة المعدة — يوجد حجز نشط أو قيد الانتظار',
+      );
+    }
+
     return this.prisma.equipment.update({ where: { id }, data: { status: 'ARCHIVED' } });
   }
 
@@ -345,6 +359,15 @@ export class EquipmentService {
     const startDate: Date | undefined = data.startDate ? new Date(data.startDate) : undefined;
     const endDate: Date | undefined = data.endDate ? new Date(data.endDate) : undefined;
 
+    // Validate that startDate is strictly before endDate
+    if (startDate && endDate && startDate >= endDate) {
+      throw new BadRequestException('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+    }
+    // Prevent booking in the past
+    if (startDate && startDate < new Date()) {
+      throw new BadRequestException('لا يمكن حجز معدة بتاريخ في الماضي');
+    }
+
     // Atomically mark as unavailable before creating rental — prevents double-booking race
     const rental = await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.equipment.updateMany({
@@ -395,8 +418,25 @@ export class EquipmentService {
     const isOwner = rental.equipment.ownerId === userId;
     const isRenter = rental.renterId === userId;
 
-    // Only owner can CONFIRM / COMPLETE; only renter (or owner) can CANCEL
-    if (status === 'CONFIRMED' || status === 'COMPLETED') {
+    // State machine: enforce valid transitions
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      PENDING:    ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED:  ['ACTIVE', 'CANCELLED'],
+      ACTIVE:     ['COMPLETED', 'CANCELLED'],
+      COMPLETED:  [],
+      CANCELLED:  [],
+    };
+    const currentStatus = rental.status as string;
+    const allowed = VALID_TRANSITIONS[currentStatus] ?? [];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status transition: ${currentStatus} → ${status}. ` +
+        `Allowed: [${allowed.join(', ') || 'none'}]`,
+      );
+    }
+
+    // Only owner can CONFIRM / ACTIVE / COMPLETE; only renter (or owner) can CANCEL
+    if (status === 'CONFIRMED' || status === 'ACTIVE' || status === 'COMPLETED') {
       if (!isOwner)
         throw new ForbiddenException('Only the equipment owner can confirm or complete rentals');
     } else if (status === 'CANCELLED') {
@@ -449,6 +489,26 @@ export class EquipmentService {
 
     this.events.emit('equipment.rental.status_changed', { id, status });
     return updated;
+  }
+
+  /** Equipment owner: see all rentals placed on their listings. */
+  async myEquipmentRentals(ownerId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { equipment: { ownerId } };
+    const [items, total] = await Promise.all([
+      this.prisma.equipmentRental.findMany({
+        where,
+        include: {
+          equipment: { select: { id: true, name: true, category: true, region: true } },
+          renter: { select: { id: true, profile: { select: { nameAr: true, nameEn: true, avatarUrl: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.equipmentRental.count({ where }),
+    ]);
+    return { items, total, page, pages: Math.ceil(total / limit) };
   }
 
   async myRentals(userId: string, page = 1, limit = 20) {
