@@ -56,6 +56,7 @@ import { SupportModule } from './modules/support/support.module';
 import { ConsultationsModule } from './modules/consultations/consultations.module';
 import { AiModule } from './modules/ai/ai.module';
 import { MapsModule } from './modules/maps/maps.module';
+import { AddressesModule } from './modules/addresses/addresses.module';
 
 @Module({
   imports: [
@@ -202,6 +203,9 @@ import { MapsModule } from './modules/maps/maps.module';
 
     // ── Maps (geocoding, distance, autocomplete) ──────────
     MapsModule,
+
+    // ── Customer Saved Addresses ──────────────────────────
+    AddressesModule,
 
     // ── Admin & Analytics ─────────────────────────────────
     AdminModule,
