@@ -204,8 +204,8 @@ describe('EquipmentService', () => {
       });
 
       const result = await service.createRental('eq-1', 'renter-1', {
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 86400000), // tomorrow
+        startDate: new Date(Date.now() + 86400000),     // tomorrow
+        endDate: new Date(Date.now() + 2 * 86400000),   // day after
       });
 
       expect(emitter.emit).toHaveBeenCalledWith(
